@@ -672,8 +672,8 @@ async def request_otp(data: OTPRequest):
     # Send email with OTP via Resend
     if RESEND_API_KEY:
         try:
-            resend.emails.send({
-                "from": EMAIL_FROM,
+            params = {
+                "from": "Creator Incubator <onboarding@resend.dev>",
                 "to": [data.email],
                 "subject": f"🔐 Votre code de connexion : {otp_code}",
                 "html": f"""
@@ -702,7 +702,8 @@ async def request_otp(data: OTPRequest):
                     </p>
                 </div>
                 """
-            })
+            }
+            resend.Emails.send(params)
             logging.info(f"OTP email sent to {data.email}")
         except Exception as e:
             logging.error(f"Failed to send OTP email: {e}")
