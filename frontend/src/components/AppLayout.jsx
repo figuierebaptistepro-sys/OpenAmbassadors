@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 
@@ -21,6 +21,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
+    { icon: Wallet, label: "Cagnotte", path: "/wallet" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
