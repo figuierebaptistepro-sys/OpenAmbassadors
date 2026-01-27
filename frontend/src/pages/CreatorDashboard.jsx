@@ -271,25 +271,25 @@ const CreatorDashboard = ({ user }) => {
           <div className="space-y-4">
             {/* Wallet Widget */}
             <Card className="border-0 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 text-white">
-                <div className="flex items-center justify-between">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Wallet className="w-5 h-5" />
-                    <span className="font-semibold text-sm">Ma Cagnotte</span>
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Wallet className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <span className="font-semibold text-gray-900 text-sm">Ma Cagnotte</span>
                   </div>
                   {user?.is_premium && (
-                    <Badge className="bg-white/20 text-white text-xs">0% frais</Badge>
+                    <Badge className="bg-primary/10 text-primary text-xs">0% frais</Badge>
                   )}
                 </div>
-              </div>
-              <CardContent className="p-3">
-                <div className="text-center mb-3">
-                  <p className="text-gray-500 text-xs">Solde disponible</p>
-                  <p className="font-heading text-2xl font-bold text-gray-900">
+                <div className="bg-gray-50 rounded-xl p-3 mb-3">
+                  <p className="text-gray-500 text-xs mb-1">Solde disponible</p>
+                  <p className="font-heading text-xl font-bold text-gray-900">
                     {((wallet?.balance || 0) - (wallet?.pending_amount || 0)).toFixed(2)}€
                   </p>
                   {wallet?.pending_amount > 0 && (
-                    <p className="text-yellow-600 text-xs">{wallet.pending_amount.toFixed(2)}€ en attente</p>
+                    <p className="text-yellow-600 text-xs mt-1">{wallet.pending_amount.toFixed(2)}€ en attente</p>
                   )}
                 </div>
                 <Button 
