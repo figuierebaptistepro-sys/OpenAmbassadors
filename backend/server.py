@@ -927,22 +927,32 @@ async def select_pack(request: Request, user: dict = Depends(get_current_user)):
 
 @api_router.post("/projects")
 async def create_project(project_data: ProjectCreate, user: dict = Depends(get_current_user)):
-    """Create a new project - requires pack selection"""
+    """Create a new project - requires pack selection and banner image"""
     # Check if business has selected a pack
     profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     if not profile or not profile.get("selected_pack"):
         raise HTTPException(status_code=400, detail="Sélectionnez un pack pour continuer")
+    
+    # Banner is required
+    if not project_data.banner_url:
+        raise HTTPException(status_code=400, detail="Une image de couverture est requise pour le projet")
     
     project = Project(
         business_id=user["user_id"],
         pack_id=project_data.pack_id,
         title=project_data.title,
         description=project_data.description,
+        brief=project_data.brief,
         budget=project_data.budget,
         content_type=project_data.content_type,
         target_creators=project_data.target_creators,
         requirements=project_data.requirements,
+        deliverables=project_data.deliverables,
         deadline=project_data.deadline,
+        duration=project_data.duration,
+        location=project_data.location,
+        remote_ok=project_data.remote_ok,
+        banner_url=project_data.banner_url,
         incubator_only=project_data.incubator_only
     )
     
