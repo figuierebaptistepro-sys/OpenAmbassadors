@@ -82,11 +82,10 @@ class TestProjectBannerUpload:
     
     def test_upload_project_banner_unauthenticated(self):
         """Test upload without authentication"""
-        new_session = requests.Session()
         image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
+        files = {'file': ('test_banner.png', image_data, 'image/png')}
         
-        response = new_session.post(f"{BASE_URL}/api/upload/project-banner", files=files)
+        response = requests.post(f"{BASE_URL}/api/upload/project-banner", files=files)
         
         assert response.status_code == 401, f"Should require authentication: {response.text}"
         print("✓ Unauthenticated upload correctly rejected")
