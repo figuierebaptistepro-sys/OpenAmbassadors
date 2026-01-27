@@ -285,6 +285,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               <Shield className="w-5 h-5" />
               <span>Administration</span>
             </Link>
+            )}
           </div>
         </nav>
 
