@@ -193,18 +193,20 @@ const AppLayout = ({ children, user, currentPlan }) => {
               </button>
             ))}
             
-            {/* Admin Link - Mobile */}
-            <button
-              onClick={() => handleNavClick("/admin")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
-                isActive("/admin")
-                  ? "bg-gray-900 text-white font-semibold"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              }`}
-            >
-              <Shield className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">Administration</span>
-            </button>
+            {/* Admin Link - Mobile (only for admins) */}
+            {isAdmin && (
+              <button
+                onClick={() => handleNavClick("/admin")}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
+                  isActive("/admin")
+                    ? "bg-gray-900 text-white font-semibold"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                }`}
+              >
+                <Shield className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">Administration</span>
+              </button>
+            )}
           </div>
         </nav>
 
