@@ -110,12 +110,13 @@ async def send_email(to: str, subject: str, html: str):
         return False
     
     try:
-        resend.emails.send({
-            "from": EMAIL_FROM,
+        params = {
+            "from": "Creator Incubator <onboarding@resend.dev>",
             "to": [to],
             "subject": subject,
             "html": html
-        })
+        }
+        resend.Emails.send(params)
         logging.info(f"Email sent: {subject} to {to}")
         return True
     except Exception as e:
