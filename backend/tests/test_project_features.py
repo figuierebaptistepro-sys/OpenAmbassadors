@@ -49,15 +49,13 @@ class TestProjectBannerUpload:
         # Create a simple test image (1x1 pixel PNG)
         image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
         
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
+        files = {'file': ('test_banner.png', image_data, 'image/png')}
         
-        # Remove Content-Type header for multipart upload
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
-        
-        response = self.session.post(
+        # Use cookies from session but don't set Content-Type (let requests handle it)
+        response = requests.post(
             f"{BASE_URL}/api/upload/project-banner",
             files=files,
-            headers=headers
+            cookies=self.session.cookies
         )
         
         assert response.status_code == 200, f"Upload failed: {response.text}"
@@ -71,13 +69,12 @@ class TestProjectBannerUpload:
     
     def test_upload_project_banner_invalid_type(self):
         """Test upload with invalid file type"""
-        files = {'file': ('test.txt', io.BytesIO(b'not an image'), 'text/plain')}
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
+        files = {'file': ('test.txt', b'not an image', 'text/plain')}
         
-        response = self.session.post(
+        response = requests.post(
             f"{BASE_URL}/api/upload/project-banner",
             files=files,
-            headers=headers
+            cookies=self.session.cookies
         )
         
         assert response.status_code == 400, f"Should reject invalid file type: {response.text}"
