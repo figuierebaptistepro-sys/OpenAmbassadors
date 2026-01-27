@@ -653,19 +653,95 @@ const CreatorDashboard = ({ user }) => {
       </Sheet>
 
       {/* Add Video Dialog */}
-      <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-xl mx-4 max-w-sm">
+      <Dialog open={videoDialogOpen} onOpenChange={(open) => { setVideoDialogOpen(open); if (!open) { setNewVideoUrl(""); setUploadMode("file"); } }}>
+        <DialogContent className="bg-white border-0 shadow-xl mx-4 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Ajouter une vidéo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <Label className="text-sm">URL de la vidéo</Label>
-              <Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)}
-                className="bg-gray-50 border-gray-200 mt-1" placeholder="https://tiktok.com/..." />
-              <p className="text-gray-400 text-xs mt-1">TikTok, Instagram, YouTube</p>
+            {/* Mode Toggle */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                onClick={() => setUploadMode("file")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                  uploadMode === "file" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Upload className="w-4 h-4" />
+                Uploader
+              </button>
+              <button
+                onClick={() => setUploadMode("url")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                  uploadMode === "url" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <LinkIcon className="w-4 h-4" />
+                Lien externe
+              </button>
             </div>
-            <Button onClick={handleAddVideo} className="w-full bg-primary hover:bg-primary-hover">Ajouter</Button>
+
+            {uploadMode === "file" ? (
+              <div className="space-y-3">
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/mpeg"
+                  onChange={handleVideoFileUpload}
+                  className="hidden"
+                />
+                
+                {uploading ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-center">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                        <p className="text-gray-600 text-sm">Upload en cours...</p>
+                        <p className="text-primary font-semibold">{uploadProgress}%</p>
+                      </div>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                ) : (
+                  <div 
+                    onClick={() => videoInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
+                  >
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <Upload className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-gray-900 font-medium text-sm mb-1">Cliquez ou glissez une vidéo</p>
+                    <p className="text-gray-400 text-xs">MP4, MOV, WebM, AVI • Max 100MB</p>
+                  </div>
+                )}
+                
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <p className="text-blue-700 text-xs">
+                    💡 Vos vidéos sont stockées sur Cloudflare R2 pour un chargement rapide partout dans le monde.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm">URL de la vidéo</Label>
+                  <Input 
+                    value={newVideoUrl} 
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    className="bg-gray-50 border-gray-200 mt-1" 
+                    placeholder="https://tiktok.com/..." 
+                  />
+                  <p className="text-gray-400 text-xs mt-1">TikTok, Instagram, YouTube, Vimeo...</p>
+                </div>
+                <Button 
+                  onClick={handleAddVideo} 
+                  disabled={!newVideoUrl}
+                  className="w-full bg-primary hover:bg-primary-hover"
+                >
+                  Ajouter le lien
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
