@@ -277,13 +277,27 @@ class IncubateurAPITester:
         # Test creator stats
         self.test_endpoint('GET', 'stats/creator', 200, headers=headers, description="- Get Creator Stats")
         
-        # Test profile update
+        # Test profile update with new scoring system
         update_data = {
-            "bio": "Test bio for automated testing",
+            "bio": "Test bio for automated testing of Incubateur des Créateurs",
             "city": "Paris",
+            "can_travel": True,
+            "works_remote": True,
+            "content_types": ["UGC", "Micro-trottoir"],
+            "equipment": ["Smartphone", "Caméra"],
+            "experience_level": "intermediate",
             "available": True
         }
         self.test_endpoint('PUT', 'creators/me/profile', 200, data=update_data, headers=headers, description="- Update Creator Profile")
+        
+        # Test trainings endpoint
+        self.test_endpoint('GET', 'trainings', 200, headers=headers, description="- Get Trainings")
+        
+        # Test projects endpoint
+        self.test_endpoint('GET', 'projects', 200, headers=headers, description="- Get Projects")
+        
+        # Test incubator info
+        self.test_endpoint('GET', 'incubator/info', 200, description="- Get Incubator Info")
 
     def test_creators_endpoint(self):
         """Test creators browsing endpoint"""
