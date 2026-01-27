@@ -351,7 +351,7 @@ const CreatorDashboard = ({ user }) => {
               <CardHeader className="px-4 pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-gray-900 text-sm">Portfolio</CardTitle>
-                  <Button onClick={() => setVideoDialogOpen(true)} size="sm" variant="outline" className="border-gray-200 text-xs">
+                  <Button onClick={() => { setUploadMode("file"); setVideoDialogOpen(true); }} size="sm" variant="outline" className="border-gray-200 text-xs">
                     <Plus className="w-4 h-4 mr-1" />
                     Vidéo
                   </Button>
@@ -361,17 +361,45 @@ const CreatorDashboard = ({ user }) => {
                 {profile?.portfolio_videos?.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {profile.portfolio_videos.map((video, i) => (
-                      <a key={i} href={video.url} target="_blank" rel="noopener noreferrer"
-                         className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <Video className="w-6 h-6 text-gray-400" />
-                      </a>
+                      <div key={i} className="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                        {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
+                          <video 
+                            src={getImageUrl(video.url)} 
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            onMouseOver={(e) => e.target.play()}
+                            onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                          />
+                        ) : (
+                          <a href={video.url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex items-center justify-center hover:bg-gray-200 transition-colors">
+                            <Play className="w-6 h-6 text-gray-400" />
+                          </a>
+                        )}
+                        {/* Overlay avec bouton supprimer */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <a href={video.url?.startsWith('http') ? video.url : getImageUrl(video.url)} target="_blank" rel="noopener noreferrer" 
+                             className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
+                            <Play className="w-4 h-4 text-white" />
+                          </a>
+                          <button onClick={() => handleDeleteVideo(i)} className="p-2 bg-red-500/80 rounded-full hover:bg-red-500 transition-colors">
+                            <Trash2 className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                        {/* Badge pour les vidéos uploadées */}
+                        {video.type === 'uploaded' && (
+                          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-primary/90 text-white text-xs rounded">
+                            R2
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-6">
                     <Video className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-500 text-xs mb-2">Ajoutez vos meilleures vidéos</p>
-                    <Button onClick={() => setVideoDialogOpen(true)} size="sm" variant="outline" className="border-gray-200 text-xs">
+                    <Button onClick={() => { setUploadMode("file"); setVideoDialogOpen(true); }} size="sm" variant="outline" className="border-gray-200 text-xs">
                       <Plus className="w-4 h-4 mr-1" />
                       Ajouter
                     </Button>
