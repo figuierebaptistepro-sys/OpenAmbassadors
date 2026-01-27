@@ -43,17 +43,11 @@ const BusinessDashboard = ({ user }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [editForm, setEditForm] = useState({
     company_name: "", description: "", business_type: "",
     city: "", industry: "", website: "",
-  });
-
-  const [projectForm, setProjectForm] = useState({
-    title: "", description: "", content_type: "UGC",
-    budget: "", target_creators: 1, incubator_only: false,
   });
 
   useEffect(() => {
@@ -104,38 +98,6 @@ const BusinessDashboard = ({ user }) => {
       if (response.ok) {
         toast.success("Profil mis à jour !");
         setEditSheetOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      toast.error("Erreur");
-    }
-  };
-
-  const handleCreateProject = async () => {
-    if (!stats?.selected_pack) {
-      toast.error("Vous devez d'abord choisir un pack");
-      navigate("/billing");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/projects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ...projectForm,
-          pack_id: stats.selected_pack,
-          budget: parseInt(projectForm.budget) || 0,
-        }),
-      });
-      if (response.ok) {
-        toast.success("Projet créé !");
-        setProjectDialogOpen(false);
-        setProjectForm({
-          title: "", description: "", content_type: "UGC",
-          budget: "", target_creators: 1, incubator_only: false,
-        });
         fetchData();
       }
     } catch (error) {
