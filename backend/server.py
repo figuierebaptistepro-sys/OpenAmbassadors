@@ -1622,6 +1622,55 @@ async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depe
     
     return {"message": "Premium mis à jour", "is_premium": is_premium}
 
+@api_router.put("/admin/users/{user_id}/ban")
+async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Ban or unban a user"""
+    body = await request.json()
+    is_banned = body.get("is_banned", True)
+    reason = body.get("reason", "")
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "is_banned": is_banned,
+                "ban_reason": reason if is_banned else None,
+                "banned_at": datetime.now(timezone.utc).isoformat() if is_banned else None
+            }
+        }
+    )
+    
+    return {"message": "Utilisateur banni" if is_banned else "Utilisateur débanni", "is_banned": is_banned}
+
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, user: dict = Depends(get_current_user)):
+    """Admin: Permanently delete a user and all their data"""
+    # Get user info first
+    target_user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    user_type = target_user.get("user_type")
+    
+    # Delete user
+    await db.users.delete_one({"user_id": user_id})
+    
+    # Delete profile based on type
+    if user_type == "creator":
+        await db.creator_profiles.delete_one({"user_id": user_id})
+        # Delete wallet
+        await db.wallets.delete_one({"user_id": user_id})
+        await db.wallet_transactions.delete_many({"user_id": user_id})
+    else:
+        await db.business_profiles.delete_one({"user_id": user_id})
+        # Delete their projects
+        await db.projects.delete_many({"business_id": user_id})
+    
+    # Delete reviews
+    await db.reviews.delete_many({"$or": [{"reviewer_id": user_id}, {"reviewed_id": user_id}]})
+    
+    return {"message": "Utilisateur et données supprimés", "user_id": user_id}
+
 @api_router.get("/admin/withdrawals")
 async def get_admin_withdrawals(
     user: dict = Depends(get_current_user),
