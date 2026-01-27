@@ -360,7 +360,7 @@ const CreatorDashboard = ({ user }) => {
                   <h4 className="font-heading font-bold text-sm mb-1">Passer Premium</h4>
                   <p className="text-white/80 text-xs mb-3">Boostez votre visibilité et accédez aux missions exclusives</p>
                   <Button onClick={() => setPremiumDialogOpen(true)} size="sm" className="w-full bg-white text-primary hover:bg-gray-100 text-xs">
-                    49€/mois
+                    19.99€/mois
                   </Button>
                 </CardContent>
               </Card>
@@ -556,7 +556,7 @@ const CreatorDashboard = ({ user }) => {
           </DialogHeader>
           <div className="py-4">
             <div className="text-center mb-4">
-              <p className="font-heading text-3xl font-bold text-gray-900">49€<span className="text-sm font-normal text-gray-500">/mois</span></p>
+              <p className="font-heading text-3xl font-bold text-gray-900">19.99€<span className="text-sm font-normal text-gray-500">/mois</span></p>
             </div>
             <ul className="space-y-2 mb-4">
               {["Visibilité boostée", "Missions exclusives", "Formations premium", "Badge vérifié"].map((item, i) => (
