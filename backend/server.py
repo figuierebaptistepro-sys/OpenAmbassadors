@@ -713,6 +713,7 @@ async def get_creator(user_id: str):
         profile["name"] = user.get("name")
         profile["email"] = user.get("email")
         profile["picture"] = user.get("picture")
+        profile["banner"] = user.get("banner")
         profile["is_premium"] = user.get("is_premium", False)
     
     # Get reviews
@@ -737,6 +738,7 @@ async def get_my_creator_profile(user: dict = Depends(get_current_user)):
     profile["name"] = user.get("name")
     profile["email"] = user.get("email")
     profile["picture"] = user.get("picture")
+    profile["banner"] = user.get("banner")
     profile["is_premium"] = user.get("is_premium", False)
     
     # Portfolio status
