@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Video, MapPin, Edit, Plus, CheckCircle, Star, Trophy, TrendingUp, 
-  BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera, Wallet, ShieldCheck
+  BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera, Wallet, ShieldCheck,
+  Upload, Link as LinkIcon, X, Play, Trash2
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
