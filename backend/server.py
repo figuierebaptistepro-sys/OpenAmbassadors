@@ -1501,6 +1501,239 @@ async def admin_process_withdrawal(request: Request, user: dict = Depends(get_cu
     
     return {"message": f"Retrait {new_status}", "status": new_status}
 
+# ==================== ADMIN DASHBOARD ROUTES ====================
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(user: dict = Depends(get_current_user)):
+    """Get admin dashboard statistics"""
+    # Count users by type
+    total_creators = await db.users.count_documents({"user_type": "creator"})
+    total_businesses = await db.users.count_documents({"user_type": "business"})
+    premium_creators = await db.users.count_documents({"user_type": "creator", "is_premium": True})
+    
+    # Pending items
+    pending_withdrawals = await db.wallet_transactions.count_documents({"transaction_type": "withdrawal", "status": "pending"})
+    pending_access_requests = await db.access_requests.count_documents({"status": "pending"})
+    
+    # Projects
+    total_projects = await db.projects.count_documents({})
+    open_projects = await db.projects.count_documents({"status": "open"})
+    
+    # Revenue (sum of completed withdrawals = money paid out)
+    pipeline = [
+        {"$match": {"transaction_type": "earning", "status": "completed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$fee_amount"}}}
+    ]
+    fee_result = await db.wallet_transactions.aggregate(pipeline).to_list(1)
+    total_fees_collected = fee_result[0]["total"] if fee_result else 0
+    
+    # Pending withdrawal amount
+    pending_pipeline = [
+        {"$match": {"transaction_type": "withdrawal", "status": "pending"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    pending_result = await db.wallet_transactions.aggregate(pending_pipeline).to_list(1)
+    pending_withdrawal_amount = pending_result[0]["total"] if pending_result else 0
+    
+    return {
+        "users": {
+            "total_creators": total_creators,
+            "total_businesses": total_businesses,
+            "premium_creators": premium_creators,
+            "total": total_creators + total_businesses
+        },
+        "pending": {
+            "withdrawals": pending_withdrawals,
+            "withdrawal_amount": pending_withdrawal_amount,
+            "access_requests": pending_access_requests
+        },
+        "projects": {
+            "total": total_projects,
+            "open": open_projects
+        },
+        "revenue": {
+            "total_fees_collected": total_fees_collected
+        }
+    }
+
+@api_router.get("/admin/users")
+async def get_admin_users(
+    user: dict = Depends(get_current_user),
+    user_type: Optional[str] = None,
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get all users for admin management"""
+    query = {}
+    if user_type:
+        query["user_type"] = user_type
+    if status == "premium":
+        query["is_premium"] = True
+    elif status == "verified":
+        query["verification_status"] = {"$in": ["portfolio_validated", "incubator_certified"]}
+    
+    users = await db.users.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Enrich with profile data
+    enriched = []
+    for u in users:
+        if u.get("user_type") == "creator":
+            profile = await db.creator_profiles.find_one({"user_id": u["user_id"]}, {"_id": 0})
+        else:
+            profile = await db.business_profiles.find_one({"user_id": u["user_id"]}, {"_id": 0})
+        
+        u["profile"] = profile
+        # Convert datetime
+        if isinstance(u.get("created_at"), datetime):
+            u["created_at"] = u["created_at"].isoformat()
+        enriched.append(u)
+    
+    total = await db.users.count_documents(query)
+    return {"users": enriched, "total": total}
+
+@api_router.put("/admin/users/{user_id}/verify")
+async def admin_verify_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Update user verification status"""
+    body = await request.json()
+    new_status = body.get("status")  # "verified", "portfolio_validated", "incubator_certified", "suspended"
+    
+    valid_statuses = ["unverified", "verified", "portfolio_validated", "incubator_certified", "suspended"]
+    if new_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Statut invalide")
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"verification_status": new_status}}
+    )
+    
+    return {"message": "Statut mis à jour", "status": new_status}
+
+@api_router.put("/admin/users/{user_id}/premium")
+async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Toggle user premium status"""
+    body = await request.json()
+    is_premium = body.get("is_premium", False)
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_premium": is_premium}}
+    )
+    
+    return {"message": "Premium mis à jour", "is_premium": is_premium}
+
+@api_router.get("/admin/withdrawals")
+async def get_admin_withdrawals(
+    user: dict = Depends(get_current_user),
+    status: Optional[str] = "pending",
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get all withdrawal requests"""
+    query = {"transaction_type": "withdrawal"}
+    if status:
+        query["status"] = status
+    
+    withdrawals = await db.wallet_transactions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Enrich with user data
+    enriched = []
+    for w in withdrawals:
+        user_data = await db.users.find_one({"user_id": w["user_id"]}, {"_id": 0, "name": 1, "email": 1, "picture": 1})
+        w["user"] = user_data
+        if isinstance(w.get("created_at"), datetime):
+            w["created_at"] = w["created_at"].isoformat()
+        if isinstance(w.get("processed_at"), datetime):
+            w["processed_at"] = w["processed_at"].isoformat()
+        enriched.append(w)
+    
+    total = await db.wallet_transactions.count_documents(query)
+    return {"withdrawals": enriched, "total": total}
+
+@api_router.get("/admin/projects")
+async def get_admin_projects(
+    user: dict = Depends(get_current_user),
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get all projects for admin"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    projects = await db.projects.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Enrich with business data
+    enriched = []
+    for p in projects:
+        business = await db.users.find_one({"user_id": p["business_id"]}, {"_id": 0, "name": 1, "email": 1})
+        business_profile = await db.business_profiles.find_one({"user_id": p["business_id"]}, {"_id": 0, "company_name": 1})
+        p["business"] = business
+        p["company_name"] = business_profile.get("company_name") if business_profile else None
+        if isinstance(p.get("created_at"), datetime):
+            p["created_at"] = p["created_at"].isoformat()
+        enriched.append(p)
+    
+    total = await db.projects.count_documents(query)
+    return {"projects": enriched, "total": total}
+
+@api_router.put("/admin/projects/{project_id}/status")
+async def admin_update_project_status(project_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Update project status"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    valid_statuses = ["open", "in_progress", "completed", "cancelled", "suspended"]
+    if new_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Statut invalide")
+    
+    await db.projects.update_one(
+        {"project_id": project_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    return {"message": "Statut mis à jour", "status": new_status}
+
+@api_router.get("/admin/access-requests")
+async def get_admin_access_requests(
+    user: dict = Depends(get_current_user),
+    status: Optional[str] = "pending",
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get all access requests"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    requests = await db.access_requests.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    for r in requests:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+    
+    total = await db.access_requests.count_documents(query)
+    return {"requests": requests, "total": total}
+
+@api_router.put("/admin/access-requests/{request_id}")
+async def admin_process_access_request(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Approve or reject access request"""
+    body = await request.json()
+    action = body.get("action")  # "approve" or "reject"
+    
+    if action not in ["approve", "reject"]:
+        raise HTTPException(status_code=400, detail="Action invalide")
+    
+    new_status = "approved" if action == "approve" else "rejected"
+    
+    await db.access_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": new_status, "processed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": f"Demande {new_status}", "status": new_status}
+
 # Include router
 app.include_router(api_router)
 
