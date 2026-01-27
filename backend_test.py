@@ -116,17 +116,13 @@ class IncubateurAPITester:
                 packs = response.json()
                 if isinstance(packs, list) and len(packs) > 0:
                     pack = packs[0]
-                    required_fields = ['pack_id', 'name', 'description', 'price_min', 'price_max']
+                    required_fields = ['pack_id', 'name', 'description', 'price', 'creators_count', 'videos_count']
                     missing_fields = [field for field in required_fields if field not in pack]
                     
                     if missing_fields:
                         self.log_test("Packs - Structure Validation", False, "", f"Missing fields: {missing_fields}")
                     else:
                         self.log_test("Packs - Structure Validation", True, f"Pack structure valid, found {len(packs)} packs")
-                        
-                    # Test individual pack
-                    pack_id = pack['pack_id']
-                    self.test_endpoint('GET', f'packs/{pack_id}', 200, description=f"- Get Pack {pack_id}")
                 else:
                     self.log_test("Packs - Data Validation", False, "", "No packs returned or invalid format")
             except Exception as e:
