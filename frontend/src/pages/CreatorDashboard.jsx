@@ -123,6 +123,98 @@ const CreatorDashboard = ({ user }) => {
     }
   };
 
+  const handleVideoFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    const allowedTypes = ["video/mp4", "video/quicktime", "video/webm", "video/x-msvideo", "video/mpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Format non supporté. Utilisez MP4, MOV, WebM ou AVI");
+      return;
+    }
+
+    // Vérifier la taille (max 100MB)
+    const maxSize = 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("Fichier trop volumineux (max 100MB)");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Simuler la progression (car fetch ne supporte pas le suivi natif)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 500);
+
+      const response = await fetch(`${API_URL}/api/upload/portfolio`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Ajouter la vidéo au portfolio
+        const portfolioResponse = await fetch(`${API_URL}/api/creators/me/portfolio`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ 
+            url: data.media_url,
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            type: "uploaded"
+          }),
+        });
+
+        if (portfolioResponse.ok) {
+          toast.success("Vidéo uploadée avec succès !");
+          setVideoDialogOpen(false);
+          fetchData();
+        } else {
+          toast.error("Erreur lors de l'ajout au portfolio");
+        }
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de l'upload");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Erreur lors de l'upload");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      if (videoInputRef.current) videoInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteVideo = async (videoIndex) => {
+    try {
+      const response = await fetch(`${API_URL}/api/creators/me/portfolio/${videoIndex}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (response.ok) {
+        toast.success("Vidéo supprimée");
+        fetchData();
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
   const handleAddVideo = async () => {
     if (!newVideoUrl) return;
     try {
