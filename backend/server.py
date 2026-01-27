@@ -380,6 +380,18 @@ async def get_current_user_optional(request: Request) -> Optional[dict]:
     except:
         return None
 
+def is_admin(user: dict) -> bool:
+    """Check if user is admin"""
+    return user.get("email") in ADMIN_EMAILS
+
+async def get_admin_user(request: Request) -> dict:
+    """Get current user and verify admin access"""
+    user = await get_current_user(request)
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")
+    return user
+        return None
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/otp/request")
