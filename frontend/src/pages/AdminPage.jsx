@@ -665,7 +665,7 @@ const AdminPage = ({ user }) => {
                           <p className="font-medium text-gray-900 text-sm">{p.title}</p>
                           <p className="text-gray-500 text-xs">{p.company_name || p.business?.name || "Entreprise"}</p>
                           <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                            <span>{p.budget}€</span>
+                            <span>{p.budget}</span>
                             <span>{p.content_type}</span>
                             <span>{p.applications?.length || 0} candidatures</span>
                           </div>
