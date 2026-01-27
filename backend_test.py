@@ -371,18 +371,21 @@ class IncubateurAPITester:
         # Test invalid endpoints
         self.test_endpoint('GET', 'invalid-endpoint', 404, description="- Invalid Endpoint")
         
-        # Test invalid login
-        invalid_login = {
+        # Test invalid OTP
+        invalid_otp = {
             "email": "invalid@test.com",
-            "password": "wrongpassword"
+            "code": "000000"
         }
-        self.test_endpoint('POST', 'auth/login', 401, data=invalid_login, description="- Invalid Login")
-        
-        # Test duplicate registration
-        self.test_endpoint('POST', 'auth/register', 400, data=self.test_creator, description="- Duplicate Registration")
+        self.test_endpoint('POST', 'auth/otp/verify', 400, data=invalid_otp, description="- Invalid OTP")
         
         # Test unauthorized access
         self.test_endpoint('GET', 'auth/me', 401, description="- Unauthorized Access")
+        
+        # Test invalid user type
+        if self.creator_token:
+            headers = {"Authorization": f"Bearer {self.creator_token}"}
+            invalid_type = {"user_type": "invalid"}
+            self.test_endpoint('POST', 'auth/set-type', 400, data=invalid_type, headers=headers, description="- Invalid User Type")
 
     def run_all_tests(self):
         """Run all tests"""
