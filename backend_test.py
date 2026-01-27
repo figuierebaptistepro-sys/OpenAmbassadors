@@ -352,19 +352,17 @@ class IncubateurAPITester:
         }
         self.test_endpoint('POST', 'projects', 200, data=project_data, headers=headers, description="- Create Project")
 
-    def test_quote_request(self):
-        """Test quote request functionality"""
-        print("\n💬 Testing Quote Request...")
+    def test_access_request(self):
+        """Test access request functionality"""
+        print("\n💬 Testing Access Request...")
         
-        quote_data = {
-            "company_name": "Test Company",
-            "email": "test@company.com",
-            "phone": "0123456789",
-            "pack_id": "pack_local_impact",
-            "message": "Test quote request"
+        access_data = {
+            "name": "Test User",
+            "email": "test@example.com",
+            "reason": "Test access request for automated testing"
         }
         
-        self.test_endpoint('POST', 'quote-request', 200, data=quote_data, description="- Submit Quote Request")
+        self.test_endpoint('POST', 'auth/request-access', 200, data=access_data, description="- Submit Access Request")
 
     def test_error_handling(self):
         """Test error handling"""
