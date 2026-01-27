@@ -1070,6 +1070,75 @@ async def get_business_projects(user: dict = Depends(get_current_user)):
     projects = await db.projects.find({"business_id": user["user_id"]}, {"_id": 0}).to_list(100)
     return projects
 
+@api_router.get("/projects/business/{project_id}")
+async def get_business_project_detail(project_id: str, user: dict = Depends(get_current_user)):
+    """Get a specific project with enriched applications data for business owner"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    project = await db.projects.find_one({"project_id": project_id, "business_id": user["user_id"]}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    
+    # Enrich applications with creator data
+    enriched_applications = []
+    for app in project.get("applications", []):
+        creator = await db.users.find_one({"user_id": app["creator_id"]}, {"_id": 0, "password": 0})
+        if creator:
+            enriched_applications.append({
+                **app,
+                "creator": {
+                    "user_id": creator.get("user_id"),
+                    "name": creator.get("name"),
+                    "email": creator.get("email"),
+                    "picture": creator.get("picture"),
+                    "city": creator.get("city"),
+                    "specialties": creator.get("specialties", []),
+                    "follower_range": creator.get("follower_range"),
+                    "is_premium": creator.get("is_premium", False),
+                    "is_verified": creator.get("is_verified", False),
+                    "rating": creator.get("rating", 5.0),
+                    "social_links": creator.get("social_links", {}),
+                }
+            })
+    
+    project["applications"] = enriched_applications
+    return project
+
+@api_router.put("/projects/business/{project_id}/application/{creator_id}")
+async def update_application_status(project_id: str, creator_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update the status of an application (accept/reject)"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    body = await request.json()
+    new_status = body.get("status")  # "accepted", "rejected", "pending"
+    
+    if new_status not in ["accepted", "rejected", "pending"]:
+        raise HTTPException(status_code=400, detail="Statut invalide")
+    
+    project = await db.projects.find_one({"project_id": project_id, "business_id": user["user_id"]}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    
+    # Update the application status
+    result = await db.projects.update_one(
+        {"project_id": project_id, "applications.creator_id": creator_id},
+        {"$set": {"applications.$.status": new_status}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Candidature non trouvée")
+    
+    # If accepting, optionally update project status to in_progress
+    if new_status == "accepted":
+        await db.projects.update_one(
+            {"project_id": project_id},
+            {"$set": {"status": "in_progress"}}
+        )
+    
+    return {"message": "Statut mis à jour"}
+
 @api_router.post("/projects/{project_id}/apply")
 async def apply_to_project(project_id: str, user: dict = Depends(get_current_user)):
     """Creator applies to a project"""
