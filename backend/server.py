@@ -1688,7 +1688,7 @@ async def admin_delete_user(user_id: str, user: dict = Depends(get_admin_user)):
 
 @api_router.get("/admin/withdrawals")
 async def get_admin_withdrawals(
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_admin_user),
     status: Optional[str] = "pending",
     skip: int = 0,
     limit: int = 50
