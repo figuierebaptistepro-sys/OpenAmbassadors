@@ -14,7 +14,7 @@ import {
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_7ee6e6e1-0cf6-4931-9f0c-4da21229b3f4/artifacts/qas3m7dl_Sketch-annotation-element-brush-pen-illustrations-sun-weather.png";
+const LOGO_URL = "/logo-sun.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();

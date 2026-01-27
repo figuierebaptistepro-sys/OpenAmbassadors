@@ -4,7 +4,7 @@ import {
   Settings, HelpCircle, Crown, LogOut
 } from "lucide-react";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_7ee6e6e1-0cf6-4931-9f0c-4da21229b3f4/artifacts/qas3m7dl_Sketch-annotation-element-brush-pen-illustrations-sun-weather.png";
+const LOGO_URL = "/logo-sun.png";
 
 const Sidebar = ({ userType, isPremium, onLogout }) => {
   const location = useLocation();
