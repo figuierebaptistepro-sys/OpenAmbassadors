@@ -214,6 +214,14 @@ function AppRouter() {
         }
       />
       <Route
+        path="/business/projects/:projectId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ProjectApplicationsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/creators"
         element={
           <ProtectedRoute requireType>
