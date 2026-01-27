@@ -223,7 +223,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 onClick={() => handleNavClick("/dashboard")}
                 className="w-full py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-xs"
               >
-                49€/mois
+                19.99€/mois
               </button>
             </div>
           </div>
