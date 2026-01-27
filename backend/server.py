@@ -561,7 +561,7 @@ async def process_session(request: Request, response: Response):
     }
 
 @api_router.get("/auth/me")
-async def get_me(user: dict = Depends(get_admin_user)):
+async def get_me(user: dict = Depends(get_current_user)):
     return {
         "user_id": user["user_id"],
         "email": user["email"],
@@ -573,7 +573,7 @@ async def get_me(user: dict = Depends(get_admin_user)):
     }
 
 @api_router.post("/auth/set-type")
-async def set_user_type(data: SetUserType, user: dict = Depends(get_admin_user)):
+async def set_user_type(data: SetUserType, user: dict = Depends(get_current_user)):
     """Set user type (creator or business) - Required after first login"""
     if data.user_type not in ["creator", "business"]:
         raise HTTPException(status_code=400, detail="Invalid user type")
@@ -821,7 +821,7 @@ async def get_creator(user_id: str):
     return profile
 
 @api_router.get("/creators/me/profile")
-async def get_my_creator_profile(user: dict = Depends(get_admin_user)):
+async def get_my_creator_profile(user: dict = Depends(get_current_user)):
     profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     if not profile:
         # Create profile if doesn't exist
@@ -842,7 +842,7 @@ async def get_my_creator_profile(user: dict = Depends(get_admin_user)):
     return profile
 
 @api_router.put("/creators/me/profile")
-async def update_my_creator_profile(update_data: CreatorProfileUpdate, user: dict = Depends(get_admin_user)):
+async def update_my_creator_profile(update_data: CreatorProfileUpdate, user: dict = Depends(get_current_user)):
     update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
     update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -865,7 +865,7 @@ async def update_my_creator_profile(update_data: CreatorProfileUpdate, user: dic
 # ==================== BUSINESS ROUTES ====================
 
 @api_router.get("/business/me/profile")
-async def get_my_business_profile(user: dict = Depends(get_admin_user)):
+async def get_my_business_profile(user: dict = Depends(get_current_user)):
     profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     if not profile:
         # Create profile if doesn't exist
@@ -878,7 +878,7 @@ async def get_my_business_profile(user: dict = Depends(get_admin_user)):
     return profile
 
 @api_router.put("/business/me/profile")
-async def update_my_business_profile(update_data: BusinessProfileUpdate, user: dict = Depends(get_admin_user)):
+async def update_my_business_profile(update_data: BusinessProfileUpdate, user: dict = Depends(get_current_user)):
     update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
     update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -961,7 +961,7 @@ async def get_packs():
     return packs
 
 @api_router.post("/business/select-pack")
-async def select_pack(request: Request, user: dict = Depends(get_admin_user)):
+async def select_pack(request: Request, user: dict = Depends(get_current_user)):
     body = await request.json()
     pack_id = body.get("pack_id")
     
@@ -975,7 +975,7 @@ async def select_pack(request: Request, user: dict = Depends(get_admin_user)):
 # ==================== PROJECT ROUTES ====================
 
 @api_router.post("/projects")
-async def create_project(project_data: ProjectCreate, user: dict = Depends(get_admin_user)):
+async def create_project(project_data: ProjectCreate, user: dict = Depends(get_current_user)):
     """Create a new project - requires pack selection and banner image"""
     # Check if business has selected a pack
     profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
@@ -1009,7 +1009,7 @@ async def create_project(project_data: ProjectCreate, user: dict = Depends(get_a
     return {"project_id": project.project_id, "message": "Projet créé"}
 
 @api_router.get("/projects")
-async def get_projects(user: dict = Depends(get_admin_user)):
+async def get_projects(user: dict = Depends(get_current_user)):
     """Get projects based on user type"""
     if user.get("user_type") == "business":
         projects = await db.projects.find({"business_id": user["user_id"]}, {"_id": 0}).to_list(100)
@@ -1033,7 +1033,7 @@ async def get_projects(user: dict = Depends(get_admin_user)):
     return enriched_projects
 
 @api_router.get("/projects/business")
-async def get_business_projects(user: dict = Depends(get_admin_user)):
+async def get_business_projects(user: dict = Depends(get_current_user)):
     """Get all projects for the current business user"""
     if user.get("user_type") != "business":
         raise HTTPException(status_code=403, detail="Réservé aux entreprises")
@@ -1042,7 +1042,7 @@ async def get_business_projects(user: dict = Depends(get_admin_user)):
     return projects
 
 @api_router.post("/projects/{project_id}/apply")
-async def apply_to_project(project_id: str, user: dict = Depends(get_admin_user)):
+async def apply_to_project(project_id: str, user: dict = Depends(get_current_user)):
     """Creator applies to a project"""
     project = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
     if not project:
@@ -1072,7 +1072,7 @@ async def apply_to_project(project_id: str, user: dict = Depends(get_admin_user)
 # ==================== TRAINING ROUTES ====================
 
 @api_router.get("/trainings")
-async def get_trainings(user: dict = Depends(get_admin_user)):
+async def get_trainings(user: dict = Depends(get_current_user)):
     """Get available trainings"""
     trainings = [
         {
@@ -1121,7 +1121,7 @@ async def get_trainings(user: dict = Depends(get_admin_user)):
     return trainings
 
 @api_router.post("/trainings/{training_id}/complete")
-async def complete_training(training_id: str, user: dict = Depends(get_admin_user)):
+async def complete_training(training_id: str, user: dict = Depends(get_current_user)):
     """Mark training as completed - boosts visibility"""
     # Update creator profile with training completion
     await db.creator_profiles.update_one(
@@ -1157,7 +1157,7 @@ async def get_incubator_info():
     }
 
 @api_router.post("/incubator/join")
-async def join_incubator(user: dict = Depends(get_admin_user)):
+async def join_incubator(user: dict = Depends(get_current_user)):
     """Join incubator premium (mock - would integrate Stripe)"""
     await db.users.update_one(
         {"user_id": user["user_id"]},
@@ -1182,7 +1182,7 @@ async def get_platform_stats():
     }
 
 @api_router.get("/stats/creator")
-async def get_creator_stats(user: dict = Depends(get_admin_user)):
+async def get_creator_stats(user: dict = Depends(get_current_user)):
     profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     projects = await db.projects.find({"applications.creator_id": user["user_id"]}, {"_id": 0}).to_list(100)
     
@@ -1199,7 +1199,7 @@ async def get_creator_stats(user: dict = Depends(get_admin_user)):
     }
 
 @api_router.get("/stats/business")
-async def get_business_stats(user: dict = Depends(get_admin_user)):
+async def get_business_stats(user: dict = Depends(get_current_user)):
     profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     projects = await db.projects.find({"business_id": user["user_id"]}, {"_id": 0}).to_list(100)
     
@@ -1214,7 +1214,7 @@ async def get_business_stats(user: dict = Depends(get_admin_user)):
 # ==================== REVIEWS ROUTES ====================
 
 @api_router.post("/reviews")
-async def create_review(request: Request, user: dict = Depends(get_admin_user)):
+async def create_review(request: Request, user: dict = Depends(get_current_user)):
     body = await request.json()
     
     review = Review(
@@ -1241,7 +1241,7 @@ async def create_review(request: Request, user: dict = Depends(get_admin_user)):
 PLATFORM_FEE_PERCENT = 15  # 15% platform fee
 
 @api_router.get("/wallet")
-async def get_wallet(user: dict = Depends(get_admin_user)):
+async def get_wallet(user: dict = Depends(get_current_user)):
     """Get creator wallet info and transactions"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Réservé aux créateurs")
@@ -1295,7 +1295,7 @@ async def get_wallet(user: dict = Depends(get_admin_user)):
     }
 
 @api_router.put("/wallet/payment-methods")
-async def update_payment_methods(data: PaymentMethodUpdate, user: dict = Depends(get_admin_user)):
+async def update_payment_methods(data: PaymentMethodUpdate, user: dict = Depends(get_current_user)):
     """Update payment methods (PayPal or Bank)"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Réservé aux créateurs")
@@ -1320,7 +1320,7 @@ async def update_payment_methods(data: PaymentMethodUpdate, user: dict = Depends
     return {"message": "Méthodes de paiement mises à jour"}
 
 @api_router.post("/wallet/withdraw")
-async def request_withdrawal(data: WithdrawalRequest, user: dict = Depends(get_admin_user)):
+async def request_withdrawal(data: WithdrawalRequest, user: dict = Depends(get_current_user)):
     """Request a withdrawal from wallet"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Réservé aux créateurs")
@@ -1403,7 +1403,7 @@ async def get_wallet_transactions(
 
 # Admin route to add earnings to creator wallet (called when project payment validated)
 @api_router.post("/admin/wallet/add-earning")
-async def admin_add_earning(request: Request, user: dict = Depends(get_admin_user)):
+async def admin_add_earning(request: Request, user: dict = Depends(get_current_user)):
     """Admin: Add earning to creator wallet (manual validation)"""
     # In production, check if user is admin
     body = await request.json()
@@ -1464,7 +1464,7 @@ async def admin_add_earning(request: Request, user: dict = Depends(get_admin_use
 
 # Admin route to process withdrawal
 @api_router.post("/admin/wallet/process-withdrawal")
-async def admin_process_withdrawal(request: Request, user: dict = Depends(get_admin_user)):
+async def admin_process_withdrawal(request: Request, user: dict = Depends(get_current_user)):
     """Admin: Approve or reject withdrawal request"""
     body = await request.json()
     transaction_id = body.get("transaction_id")
@@ -1519,7 +1519,7 @@ async def admin_process_withdrawal(request: Request, user: dict = Depends(get_ad
 # ==================== ADMIN DASHBOARD ROUTES ====================
 
 @api_router.get("/admin/stats")
-async def get_admin_stats(user: dict = Depends(get_admin_user)):
+async def get_admin_stats(user: dict = Depends(get_current_user)):
     """Get admin dashboard statistics"""
     # Count users by type
     total_creators = await db.users.count_documents({"user_type": "creator"})
@@ -1608,7 +1608,7 @@ async def get_admin_users(
     return {"users": enriched, "total": total}
 
 @api_router.put("/admin/users/{user_id}/verify")
-async def admin_verify_user(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
+async def admin_verify_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Admin: Update user verification status"""
     body = await request.json()
     new_status = body.get("status")  # "verified", "portfolio_validated", "incubator_certified", "suspended"
@@ -1625,7 +1625,7 @@ async def admin_verify_user(user_id: str, request: Request, user: dict = Depends
     return {"message": "Statut mis à jour", "status": new_status}
 
 @api_router.put("/admin/users/{user_id}/premium")
-async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
+async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Admin: Toggle user premium status"""
     body = await request.json()
     is_premium = body.get("is_premium", False)
@@ -1638,7 +1638,7 @@ async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depe
     return {"message": "Premium mis à jour", "is_premium": is_premium}
 
 @api_router.put("/admin/users/{user_id}/ban")
-async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
+async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Admin: Ban or unban a user"""
     body = await request.json()
     is_banned = body.get("is_banned", True)
@@ -1658,7 +1658,7 @@ async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(ge
     return {"message": "Utilisateur banni" if is_banned else "Utilisateur débanni", "is_banned": is_banned}
 
 @api_router.delete("/admin/users/{user_id}")
-async def admin_delete_user(user_id: str, user: dict = Depends(get_admin_user)):
+async def admin_delete_user(user_id: str, user: dict = Depends(get_current_user)):
     """Admin: Permanently delete a user and all their data"""
     # Get user info first
     target_user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
@@ -1743,7 +1743,7 @@ async def get_admin_projects(
     return {"projects": enriched, "total": total}
 
 @api_router.put("/admin/projects/{project_id}/status")
-async def admin_update_project_status(project_id: str, request: Request, user: dict = Depends(get_admin_user)):
+async def admin_update_project_status(project_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Admin: Update project status"""
     body = await request.json()
     new_status = body.get("status")
@@ -1781,7 +1781,7 @@ async def get_admin_access_requests(
     return {"requests": requests, "total": total}
 
 @api_router.put("/admin/access-requests/{request_id}")
-async def admin_process_access_request(request_id: str, request: Request, user: dict = Depends(get_admin_user)):
+async def admin_process_access_request(request_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Admin: Approve or reject access request"""
     body = await request.json()
     action = body.get("action")  # "approve" or "reject"
