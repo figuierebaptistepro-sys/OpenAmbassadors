@@ -276,14 +276,11 @@ const WalletPage = ({ user }) => {
                 <Button
                   onClick={() => setWithdrawDialogOpen(true)}
                   className="w-full bg-primary hover:bg-primary-hover justify-start"
-                  disabled={availableBalance < 10}
+                  disabled={availableBalance <= 0}
                   data-testid="withdraw-btn"
                 >
                   <ArrowUpCircle className="w-5 h-5 mr-3" />
                   Demander un retrait
-                  {availableBalance < 10 && (
-                    <span className="ml-auto text-xs opacity-70">(Min. 10€)</span>
-                  )}
                 </Button>
 
                 <Button
