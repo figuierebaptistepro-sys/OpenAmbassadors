@@ -179,7 +179,11 @@ const CreatorDashboard = ({ user }) => {
                     <div className="pb-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="font-heading font-bold text-gray-900 text-sm sm:text-base">{profile?.name || "Créateur"}</h2>
-                        {user?.is_premium && <Badge className="bg-primary text-xs"><Crown className="w-3 h-3 mr-1" />Premium</Badge>}
+                        {user?.is_premium ? (
+                          <Badge className="bg-primary text-xs"><Crown className="w-3 h-3 mr-1" />Premium</Badge>
+                        ) : completedItems === checklistItems.length && (
+                          <Badge className="bg-blue-100 text-blue-700 text-xs"><ShieldCheck className="w-3 h-3 mr-1" />Vérifié</Badge>
+                        )}
                         {profile?.available && <Badge className="bg-green-100 text-green-700 text-xs">Dispo</Badge>}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
