@@ -1,10 +1,12 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import shutil
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
@@ -19,6 +21,13 @@ import string
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Create uploads directories
+UPLOADS_DIR = ROOT_DIR / "uploads"
+PROFILES_DIR = UPLOADS_DIR / "profiles"
+BANNERS_DIR = UPLOADS_DIR / "banners"
+PROFILES_DIR.mkdir(parents=True, exist_ok=True)
+BANNERS_DIR.mkdir(parents=True, exist_ok=True)
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -31,6 +40,9 @@ JWT_EXPIRATION_HOURS = 168  # 7 days
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+# Mount static files for uploads
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # ==================== MODELS ====================
 
