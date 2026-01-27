@@ -101,6 +101,162 @@ api_router = APIRouter(prefix="/api")
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
+# ==================== EMAIL FUNCTIONS ====================
+
+async def send_email(to: str, subject: str, html: str):
+    """Send email via Resend"""
+    if not RESEND_API_KEY:
+        logging.warning(f"Email not sent (no API key): {subject} to {to}")
+        return False
+    
+    try:
+        resend.emails.send({
+            "from": EMAIL_FROM,
+            "to": [to],
+            "subject": subject,
+            "html": html
+        })
+        logging.info(f"Email sent: {subject} to {to}")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        return False
+
+async def send_welcome_email(email: str, name: str, user_type: str):
+    """Send welcome email to new user"""
+    type_label = "créateur" if user_type == "creator" else "entreprise"
+    await send_email(
+        to=email,
+        subject=f"🎉 Bienvenue sur Creator Incubator !",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #E91E63; margin: 0;">Bienvenue {name or ''} ! 🚀</h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Votre compte <strong>{type_label}</strong> a été créé avec succès sur Creator Incubator.
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
+            </p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://creator-incubator.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Accéder à mon compte
+                </a>
+            </div>
+            <p style="color: #999; font-size: 12px; text-align: center;">
+                L'équipe Creator Incubator
+            </p>
+        </div>
+        """
+    )
+
+async def send_new_application_email(business_email: str, business_name: str, project_title: str, creator_name: str):
+    """Notify business of new application"""
+    await send_email(
+        to=business_email,
+        subject=f"📩 Nouvelle candidature pour '{project_title}'",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #E91E63; margin: 0;">Nouvelle candidature ! 🎯</h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour {business_name or ''},
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                <strong>{creator_name}</strong> vient de postuler à votre projet <strong>"{project_title}"</strong>.
+            </p>
+            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                <p style="color: #666; margin: 0;">
+                    Consultez son profil et décidez si vous souhaitez collaborer avec ce créateur.
+                </p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://creator-incubator.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Voir les candidatures
+                </a>
+            </div>
+        </div>
+        """
+    )
+
+async def send_application_status_email(creator_email: str, creator_name: str, project_title: str, status: str):
+    """Notify creator of application status change"""
+    is_accepted = status == "accepted"
+    await send_email(
+        to=creator_email,
+        subject=f"{'✅ Candidature acceptée' if is_accepted else '❌ Candidature refusée'} - {project_title}",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: {'#4CAF50' if is_accepted else '#F44336'}; margin: 0;">
+                    {'Félicitations ! 🎉' if is_accepted else 'Mise à jour de candidature'}
+                </h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour {creator_name or ''},
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                {'Votre candidature pour le projet' if is_accepted else 'Malheureusement, votre candidature pour le projet'} 
+                <strong>"{project_title}"</strong> 
+                {'a été acceptée ! L\\'entreprise souhaite collaborer avec vous.' if is_accepted else 'n\\'a pas été retenue cette fois-ci.'}
+            </p>
+            {f'''
+            <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                <p style="color: #2e7d32; margin: 0;">
+                    🚀 Prochaine étape : L'entreprise vous contactera pour discuter des détails du projet.
+                </p>
+            </div>
+            ''' if is_accepted else '''
+            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                <p style="color: #666; margin: 0;">
+                    💪 Ne vous découragez pas ! Continuez à postuler à d'autres projets.
+                </p>
+            </div>
+            '''}
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://creator-incubator.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Voir les missions
+                </a>
+            </div>
+        </div>
+        """
+    )
+
+async def send_withdrawal_status_email(creator_email: str, creator_name: str, amount: float, status: str):
+    """Notify creator of withdrawal status"""
+    is_approved = status == "approved"
+    await send_email(
+        to=creator_email,
+        subject=f"{'💰 Retrait approuvé' if is_approved else '⚠️ Retrait refusé'} - {amount:.2f}€",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: {'#4CAF50' if is_approved else '#F44336'}; margin: 0;">
+                    {'Retrait approuvé ! 💸' if is_approved else 'Retrait refusé'}
+                </h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour {creator_name or ''},
+            </p>
+            <div style="background: {'#e8f5e9' if is_approved else '#ffebee'}; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="font-size: 32px; font-weight: bold; color: {'#2e7d32' if is_approved else '#c62828'}; margin: 0;">
+                    {amount:.2f}€
+                </p>
+                <p style="color: #666; margin-top: 10px;">
+                    {'Le virement sera effectué sous 2-3 jours ouvrés.' if is_approved else 'Veuillez contacter le support pour plus d\\'informations.'}
+                </p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://creator-incubator.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Voir mon portefeuille
+                </a>
+            </div>
+        </div>
+        """
+    )
+
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
