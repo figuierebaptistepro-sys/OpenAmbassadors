@@ -21,6 +21,9 @@ import string
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Admin emails (only these can access admin panel)
+ADMIN_EMAILS = ["figuierebaptistepro@gmail.com"]
+
 # Create uploads directories
 UPLOADS_DIR = ROOT_DIR / "uploads"
 PROFILES_DIR = UPLOADS_DIR / "profiles"
