@@ -390,7 +390,6 @@ async def get_admin_user(request: Request) -> dict:
     if not is_admin(user):
         raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")
     return user
-        return None
 
 # ==================== AUTH ROUTES ====================
 
