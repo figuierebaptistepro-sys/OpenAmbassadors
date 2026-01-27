@@ -483,7 +483,7 @@ const CreatorDashboard = ({ user }) => {
                 </li>
               ))}
             </ul>
-            <Button className="w-full bg-primary hover:bg-primary-hover">S'abonner</Button>
+            <Button className="w-full bg-primary hover:bg-primary-hover">S&apos;abonner</Button>
             <p className="text-gray-400 text-xs text-center mt-2">Annulable à tout moment</p>
           </div>
         </DialogContent>
