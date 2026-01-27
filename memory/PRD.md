@@ -1,66 +1,84 @@
-# UGC Machine - Product Requirements Document
+# Incubateur des Créateurs - Product Requirements Document
 
 ## Vision
-La plateforme où les entreprises trouvent des créateurs qualifiés pour générer du contenu performant (UGC, micro-trottoir, vidéos virales, ads, etc.)
+Plateforme privée où les entreprises trouvent des créateurs qualifiés pour générer du contenu performant. Système de progression intelligent et non-bloquant.
 
 ## Problem Statement Original
-Plateforme marketplace créateurs/entreprises avec:
-- Positionnement: Pas une plateforme d'influence, pas juste un portfolio - Une machine à production de contenu rentable
-- Structure: Landing page, Espace Créateur, Espace Entreprise, Packs, Messagerie
+Refonte vers une plateforme privée avec:
+- Login only (pas de page marketing)
+- Onboarding non-bloquant (email + type seuls obligatoires)
+- Progression intelligente impactant visibilité
+- Incubateur Premium payant
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB
 - **Frontend**: React + Tailwind CSS + Shadcn UI
-- **Auth**: JWT + Google OAuth (Emergent)
-- **Storage**: MongoDB pour données, liens YouTube/Drive pour vidéos
+- **Auth**: Google OAuth + OTP Email
+- **UI**: Dark theme slate-900 avec accents secondary (lime)
 
 ## User Personas
-1. **Créateur de contenu**: Veut trouver des missions, valoriser son portfolio, fixer ses tarifs
-2. **Entreprise**: Veut trouver des créateurs qualifiés rapidement, avec garanties et résultats mesurables
+1. **Créateur**: Développer son activité, compléter son profil progressivement, accéder aux missions
+2. **Entreprise**: Trouver des créateurs qualifiés via filtres et recommandations, déposer des projets
 
 ## Core Requirements (Static)
-- Landing page avec hero, preuve sociale, CTAs
-- Authentification créateur/entreprise
-- Dashboard créateur avec profil, portfolio, stats
-- Dashboard entreprise avec recherche, packs
-- Système de packs (Local Impact, Visibilité Digitale, Massive Content)
-- Messagerie interne
-- Système de notation/avis
+- Plateforme privée (login-first)
+- Auth: Google + OTP Email + Demande d'accès
+- Sélection type utilisateur après 1ère connexion
+- Dashboard avec barre progression profil
+- Système de scores (complétion/fiabilité/performance)
+- Incubateur Premium (49€/mois)
+- Bibliothèque formations
+- Système projets/missions
 
 ## What's Been Implemented (December 2024)
-✅ Landing page complète avec hero, stats dynamiques, témoignages
-✅ Auth JWT + Google OAuth via Emergent
-✅ Dashboard créateur (profil éditable, portfolio vidéo, badges)
-✅ Dashboard entreprise (recherche, stats, packs)
-✅ Onboarding entreprise (wizard 4 étapes)
-✅ Browse créateurs avec filtres
-✅ Page profil créateur public
-✅ Page packs avec demande de devis
-✅ Messagerie interne
-✅ API complète (auth, creators, business, packs, messages, reviews)
+✅ Login page privée (Google + OTP + Demande accès)
+✅ Sélection type utilisateur
+✅ Dashboard créateur avec scores et progression
+✅ Profil éditable non-bloquant (sheet slide-out)
+✅ Portfolio avec warning <3 vidéos
+✅ CTA Incubateur Premium (49€/mois)
+✅ Bibliothèque formations (gratuites + premium verrouillées)
+✅ Page missions avec candidature
+✅ Dashboard entreprise avec sélection pack
+✅ Browse créateurs avec filtres (disponible, premium only)
+✅ Profil créateur public avec scores
+✅ Création projet (nécessite pack)
+
+## Scoring System
+- **Complétion** (0-100%): Bio, ville, spécialités, équipement, expérience, portfolio, tarifs
+- **Fiabilité**: Basé sur missions réalisées
+- **Performance**: Basé sur résultats et avis
+
+## Verification Statuses
+- Non vérifié
+- Identité vérifiée  
+- Portfolio validé
+- Certifié Incubateur
 
 ## Prioritized Backlog
 
 ### P0 - Done ✅
-- [x] Core auth flows
-- [x] Creator/Business dashboards
-- [x] Pack system
-- [x] Messaging
+- [x] Auth (Google + OTP)
+- [x] Dashboards créateur/entreprise
+- [x] Système progression/scores
+- [x] Incubateur Premium (mock)
+- [x] Formations
+- [x] Projets/Missions
 
 ### P1 - Next Phase
-- [ ] Intégration Stripe pour paiements escrow réels
-- [ ] Upload vidéo direct (S3/Cloud Storage)
-- [ ] Notifications push/email
-- [ ] Système de campagnes complet
+- [ ] Intégration Stripe réelle pour Incubateur
+- [ ] Envoi email OTP réel (SendGrid)
+- [ ] Système de matching créateurs/projets
+- [ ] Notifications
 
 ### P2 - Future
-- [ ] Matching intelligent créateurs/entreprises
+- [ ] Chat/messagerie via projets
 - [ ] Analytics avancés
-- [ ] Abonnements premium créateurs
+- [ ] Validation identité automatique
 - [ ] App mobile
 
 ## Next Tasks
-1. Intégrer Stripe pour paiements réels
-2. Ajouter upload vidéo direct
-3. Système de notifications
-4. Page de gestion des campagnes
+1. Intégrer Stripe pour paiement Incubateur
+2. Configurer envoi email OTP réel
+3. Ajouter matching intelligent
+4. Système notifications
