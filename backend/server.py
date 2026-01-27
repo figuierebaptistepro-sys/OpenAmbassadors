@@ -971,6 +971,25 @@ async def get_projects(user: dict = Depends(get_current_user)):
             query["incubator_only"] = False
         projects = await db.projects.find(query, {"_id": 0}).to_list(100)
     
+    # Enrich projects with business info
+    enriched_projects = []
+    for project in projects:
+        business_user = await db.users.find_one({"user_id": project["business_id"]}, {"_id": 0})
+        business_profile = await db.business_profiles.find_one({"user_id": project["business_id"]}, {"_id": 0})
+        
+        project["business_name"] = business_profile.get("company_name") if business_profile else None
+        project["business_logo"] = business_user.get("picture") if business_user else None
+        enriched_projects.append(project)
+    
+    return enriched_projects
+
+@api_router.get("/projects/business")
+async def get_business_projects(user: dict = Depends(get_current_user)):
+    """Get all projects for the current business user"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    projects = await db.projects.find({"business_id": user["user_id"]}, {"_id": 0}).to_list(100)
     return projects
 
 @api_router.post("/projects/{project_id}/apply")
