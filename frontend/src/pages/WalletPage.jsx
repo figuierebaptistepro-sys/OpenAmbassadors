@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Wallet, Euro, ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle,
-  XCircle, Building2, CreditCard, AlertCircle, Info, ExternalLink
+  XCircle, Building2, CreditCard, AlertCircle, Info, ExternalLink, Crown
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
