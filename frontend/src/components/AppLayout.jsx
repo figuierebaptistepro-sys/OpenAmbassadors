@@ -271,13 +271,14 @@ const AppLayout = ({ children, user, currentPlan }) => {
               </Link>
             ))}
             
-            {/* Admin Link */}
-            <Link
-              to="/admin"
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                isActive("/admin")
-                  ? "bg-gray-900 text-white font-semibold"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            {/* Admin Link - Only for admins */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  isActive("/admin")
+                    ? "bg-gray-900 text-white font-semibold"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
               data-testid="admin-link"
             >
