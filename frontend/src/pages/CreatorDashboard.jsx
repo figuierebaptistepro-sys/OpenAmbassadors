@@ -653,7 +653,14 @@ const CreatorDashboard = ({ user }) => {
       </Sheet>
 
       {/* Add Video Dialog */}
-      <Dialog open={videoDialogOpen} onOpenChange={(open) => { setVideoDialogOpen(open); if (!open) { setNewVideoUrl(""); } }}>
+      <Dialog open={videoDialogOpen} onOpenChange={(open) => { 
+        setVideoDialogOpen(open); 
+        if (open) { 
+          setUploadMode("file"); // Toujours ouvrir en mode upload
+        } else { 
+          setNewVideoUrl(""); 
+        } 
+      }}>
         <DialogContent className="bg-white border-0 shadow-xl mx-4 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Ajouter une vidéo</DialogTitle>
@@ -667,6 +674,7 @@ const CreatorDashboard = ({ user }) => {
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
                   uploadMode === "file" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
                 }`}
+                data-testid="upload-mode-file"
               >
                 <Upload className="w-4 h-4" />
                 <span>Uploader</span>
@@ -677,6 +685,7 @@ const CreatorDashboard = ({ user }) => {
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
                   uploadMode === "url" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
                 }`}
+                data-testid="upload-mode-url"
               >
                 <LinkIcon className="w-4 h-4" />
                 <span>Lien</span>
@@ -684,14 +693,14 @@ const CreatorDashboard = ({ user }) => {
             </div>
 
             {uploadMode === "file" ? (
-              <div className="space-y-3">
+              <div className="space-y-3" data-testid="upload-file-section">
                 <input
                   ref={videoInputRef}
                   type="file"
                   accept="video/*"
-                  capture="environment"
                   onChange={handleVideoFileUpload}
                   className="hidden"
+                  data-testid="video-file-input"
                 />
                 
                 {uploading ? (
@@ -707,31 +716,33 @@ const CreatorDashboard = ({ user }) => {
                   </div>
                 ) : (
                   <>
-                    {/* Zone de drop/click pour desktop */}
-                    <div 
+                    {/* Zone cliquable pour sélectionner un fichier */}
+                    <button 
+                      type="button"
                       onClick={() => videoInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all active:bg-primary/10"
+                      className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all active:bg-primary/10"
+                      data-testid="upload-zone"
                     >
                       <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
                         <Upload className="w-7 h-7 text-primary" />
                       </div>
                       <p className="text-gray-900 font-medium text-sm mb-1">
-                        Choisir une vidéo
+                        📤 Choisir depuis ma galerie
                       </p>
                       <p className="text-gray-400 text-xs">MP4, MOV, WebM • Max 100MB</p>
-                    </div>
+                    </button>
                     
                     {/* Info box */}
-                    <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                      <p className="text-blue-700 text-xs">
-                        📱 Sur mobile : choisissez depuis votre galerie ou filmez directement
+                    <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
+                      <p className="text-green-700 text-xs text-center">
+                        ✅ Stockage Cloudflare R2 inclus
                       </p>
                     </div>
                   </>
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3" data-testid="upload-url-section">
                 <div>
                   <Label className="text-sm">URL de la vidéo</Label>
                   <Input 
