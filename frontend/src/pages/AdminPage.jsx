@@ -188,6 +188,46 @@ const AdminPage = ({ user }) => {
     }
   };
 
+  const handleBanUser = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/ban`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ is_banned: !selectedUser.is_banned, reason: banReason })
+      });
+      if (response.ok) {
+        toast.success(selectedUser.is_banned ? "Utilisateur débanni !" : "Utilisateur banni !");
+        fetchUsers();
+        setBanDialogOpen(false);
+        setUserDialogOpen(false);
+        setBanReason("");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (response.ok) {
+        toast.success("Utilisateur supprimé définitivement");
+        fetchUsers();
+        fetchStats();
+        setDeleteDialogOpen(false);
+        setUserDialogOpen(false);
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
   const handleProcessWithdrawal = async (transactionId, action) => {
     try {
       const response = await fetch(`${API_URL}/api/admin/wallet/process-withdrawal`, {
