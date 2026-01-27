@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 class IncubateurAPITester:
-    def __init__(self, base_url="https://ugc-machine.preview.emergentagent.com"):
+    def __init__(self, base_url="https://talentforge-42.preview.emergentagent.com"):
         self.base_url = base_url
         self.session = requests.Session()
         self.tests_run = 0
