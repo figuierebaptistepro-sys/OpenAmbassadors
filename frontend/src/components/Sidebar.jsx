@@ -1,8 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Sparkles, LayoutDashboard, Briefcase, BookOpen, Users,
+  LayoutDashboard, Briefcase, BookOpen, Users,
   Settings, HelpCircle, Crown, LogOut
 } from "lucide-react";
+
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_7ee6e6e1-0cf6-4931-9f0c-4da21229b3f4/artifacts/qas3m7dl_Sketch-annotation-element-brush-pen-illustrations-sun-weather.png";
 
 const Sidebar = ({ userType, isPremium, onLogout }) => {
   const location = useLocation();
@@ -35,8 +37,8 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
       {/* Logo */}
       <div className="p-6 border-b border-gray-100">
         <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center shadow-md shadow-primary/20 overflow-hidden p-1.5">
+            <img src={LOGO_URL} alt="Incubateur" className="w-full h-full object-contain" />
           </div>
           <span className="font-heading font-bold text-xl text-gray-900">Incubateur</span>
         </Link>

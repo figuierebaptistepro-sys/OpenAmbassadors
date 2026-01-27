@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight, Sparkles, Lock, CheckCircle } from "lucide-react";
+import { Mail, ArrowRight, Lock, CheckCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_7ee6e6e1-0cf6-4931-9f0c-4da21229b3f4/artifacts/qas3m7dl_Sketch-annotation-element-brush-pen-illustrations-sun-weather.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
