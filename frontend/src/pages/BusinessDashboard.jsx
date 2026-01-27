@@ -166,7 +166,7 @@ const BusinessDashboard = ({ user }) => {
             <span className="hidden xs:inline">Trouver </span>créateur
           </Button>
           <Button 
-            onClick={() => setProjectDialogOpen(true)}
+            onClick={() => navigate("/projects/new")}
             size="sm"
             className="bg-primary hover:bg-primary-hover shadow-sm text-xs sm:text-sm"
             data-testid="new-project-btn"
