@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
@@ -14,9 +14,26 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const userType = user?.user_type;
   const isPremium = user?.is_premium;
+
+  // Check admin access
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/check`, { credentials: "include" });
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.is_admin);
+        }
+      } catch (error) {
+        setIsAdmin(false);
+      }
+    };
+    if (user) checkAdmin();
+  }, [user]);
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
