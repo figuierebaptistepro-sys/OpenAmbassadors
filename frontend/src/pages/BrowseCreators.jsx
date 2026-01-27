@@ -295,6 +295,12 @@ const BrowseCreators = ({ user }) => {
                                 <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                                 {creator.rating?.toFixed(1) || "5.0"}
                               </span>
+                              {creator.visibility && (
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {creator.visibility}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               {creator.available && <Badge className="bg-green-100 text-green-700 text-xs">Dispo</Badge>}
