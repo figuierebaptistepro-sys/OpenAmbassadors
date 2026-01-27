@@ -141,7 +141,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                 {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-incubator.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-hub-449.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Accéder à mon compte
                 </a>
             </div>
@@ -174,7 +174,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-incubator.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-hub-449.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -229,7 +229,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-incubator.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-hub-449.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -278,7 +278,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-incubator.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-hub-449.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
