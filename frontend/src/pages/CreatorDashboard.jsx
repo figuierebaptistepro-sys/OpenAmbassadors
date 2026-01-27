@@ -659,29 +659,28 @@ const CreatorDashboard = ({ user }) => {
         </SheetContent>
       </Sheet>
 
-      {/* Add Video Dialog */}
-      <Dialog open={videoDialogOpen} onOpenChange={(open) => { 
+      {/* Add Video Sheet (better for mobile) */}
+      <Sheet open={videoDialogOpen} onOpenChange={(open) => { 
         setVideoDialogOpen(open); 
         if (open) { 
-          setUploadMode("file"); // Toujours ouvrir en mode upload
+          setUploadMode("file");
         } else { 
           setNewVideoUrl(""); 
         } 
       }}>
-        <DialogContent className="bg-white border-0 shadow-xl mx-4 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900">Ajouter une vidéo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl h-auto max-h-[85vh]">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-gray-900 text-center">Ajouter une vidéo</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 pb-6">
             {/* Mode Toggle */}
             <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
               <button
                 type="button"
                 onClick={() => setUploadMode("file")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
-                  uploadMode === "file" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all ${
+                  uploadMode === "file" ? "bg-white text-primary shadow-sm" : "text-gray-600"
                 }`}
-                data-testid="upload-mode-file"
               >
                 <Upload className="w-4 h-4" />
                 <span>Uploader</span>
@@ -689,10 +688,9 @@ const CreatorDashboard = ({ user }) => {
               <button
                 type="button"
                 onClick={() => setUploadMode("url")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
-                  uploadMode === "url" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all ${
+                  uploadMode === "url" ? "bg-white text-primary shadow-sm" : "text-gray-600"
                 }`}
-                data-testid="upload-mode-url"
               >
                 <LinkIcon className="w-4 h-4" />
                 <span>Lien</span>
@@ -700,14 +698,13 @@ const CreatorDashboard = ({ user }) => {
             </div>
 
             {uploadMode === "file" ? (
-              <div className="space-y-3" data-testid="upload-file-section">
+              <div className="space-y-3">
                 <input
                   ref={videoInputRef}
                   type="file"
                   accept="video/*"
                   onChange={handleVideoFileUpload}
                   className="hidden"
-                  data-testid="video-file-input"
                 />
                 
                 {uploading ? (
@@ -723,23 +720,20 @@ const CreatorDashboard = ({ user }) => {
                   </div>
                 ) : (
                   <>
-                    {/* Zone cliquable pour sélectionner un fichier */}
                     <button 
                       type="button"
                       onClick={() => videoInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all active:bg-primary/10"
-                      data-testid="upload-zone"
+                      className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center active:bg-primary/10 transition-all"
                     >
-                      <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <Upload className="w-7 h-7 text-primary" />
+                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-8 h-8 text-primary" />
                       </div>
-                      <p className="text-gray-900 font-medium text-sm mb-1">
-                        📤 Choisir depuis ma galerie
+                      <p className="text-gray-900 font-semibold text-base mb-2">
+                        Choisir depuis ma galerie
                       </p>
-                      <p className="text-gray-400 text-xs">MP4, MOV, WebM • Max 100MB</p>
+                      <p className="text-gray-400 text-sm">MP4, MOV, WebM • Max 100MB</p>
                     </button>
                     
-                    {/* Info box */}
                     <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
                       <p className="text-green-700 text-xs text-center">
                         ✅ Stockage Cloudflare R2 inclus
@@ -749,29 +743,29 @@ const CreatorDashboard = ({ user }) => {
                 )}
               </div>
             ) : (
-              <div className="space-y-3" data-testid="upload-url-section">
+              <div className="space-y-3">
                 <div>
                   <Label className="text-sm">URL de la vidéo</Label>
                   <Input 
                     value={newVideoUrl} 
                     onChange={(e) => setNewVideoUrl(e.target.value)}
-                    className="bg-gray-50 border-gray-200 mt-1" 
+                    className="bg-gray-50 border-gray-200 mt-1 h-12" 
                     placeholder="https://tiktok.com/..." 
                   />
-                  <p className="text-gray-400 text-xs mt-1">TikTok, Instagram, YouTube, Vimeo...</p>
+                  <p className="text-gray-400 text-xs mt-1">TikTok, Instagram, YouTube...</p>
                 </div>
                 <Button 
                   onClick={handleAddVideo} 
                   disabled={!newVideoUrl}
-                  className="w-full bg-primary hover:bg-primary-hover"
+                  className="w-full bg-primary hover:bg-primary-hover h-12"
                 >
                   Ajouter le lien
                 </Button>
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Premium Dialog */}
       <Dialog open={premiumDialogOpen} onOpenChange={setPremiumDialogOpen}>
