@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  User, Building2, Search, Users, Package, TrendingUp, ChevronRight,
-  Star, MapPin, Edit, CheckCircle, Briefcase, Plus, Bell, Filter
+  User, Building2, Search, Users, TrendingUp, ChevronRight,
+  Star, MapPin, Edit, CheckCircle, Briefcase, Plus, Bell, Filter,
+  ArrowRight, Sparkles, Target, Rocket, Image, Globe, FileText,
+  Clock, Zap, Crown
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
+import UserMenu from "../components/UserMenu";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -23,7 +26,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "../components/ui/sheet";
 import { toast } from "sonner";
 
@@ -40,9 +42,9 @@ const BusinessDashboard = ({ user }) => {
   const [stats, setStats] = useState(null);
   const [creators, setCreators] = useState([]);
   const [packs, setPacks] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [packDialogOpen, setPackDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -62,11 +64,12 @@ const BusinessDashboard = ({ user }) => {
 
   const fetchData = async () => {
     try {
-      const [profileRes, statsRes, creatorsRes, packsRes] = await Promise.all([
+      const [profileRes, statsRes, creatorsRes, packsRes, projectsRes] = await Promise.all([
         fetch(`${API_URL}/api/business/me/profile`, { credentials: "include" }),
         fetch(`${API_URL}/api/stats/business`, { credentials: "include" }),
-        fetch(`${API_URL}/api/creators?limit=6`, { credentials: "include" }),
-        fetch(`${API_URL}/api/packs`)
+        fetch(`${API_URL}/api/creators?limit=4`, { credentials: "include" }),
+        fetch(`${API_URL}/api/packs`),
+        fetch(`${API_URL}/api/projects/business`, { credentials: "include" })
       ]);
 
       if (profileRes.ok) {
@@ -84,6 +87,7 @@ const BusinessDashboard = ({ user }) => {
       if (statsRes.ok) setStats(await statsRes.json());
       if (creatorsRes.ok) setCreators(await creatorsRes.json());
       if (packsRes.ok) setPacks(await packsRes.json());
+      if (projectsRes.ok) setProjects(await projectsRes.json());
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -100,33 +104,19 @@ const BusinessDashboard = ({ user }) => {
     }
   };
 
-  const handleUpdateProfile = async () => {
+  const handleSaveProfile = async () => {
     try {
-      await fetch(`${API_URL}/api/business/me/profile`, {
+      const response = await fetch(`${API_URL}/api/business/me/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(editForm),
       });
-      toast.success("Profil mis à jour !");
-      setEditSheetOpen(false);
-      fetchData();
-    } catch (error) {
-      toast.error("Erreur");
-    }
-  };
-
-  const handleSelectPack = async (packId) => {
-    try {
-      await fetch(`${API_URL}/api/business/select-pack`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ pack_id: packId }),
-      });
-      toast.success("Pack sélectionné !");
-      setPackDialogOpen(false);
-      fetchData();
+      if (response.ok) {
+        toast.success("Profil mis à jour !");
+        setEditSheetOpen(false);
+        fetchData();
+      }
     } catch (error) {
       toast.error("Erreur");
     }
@@ -134,13 +124,8 @@ const BusinessDashboard = ({ user }) => {
 
   const handleCreateProject = async () => {
     if (!stats?.selected_pack) {
-      toast.error("Sélectionnez un pack d'abord");
-      setPackDialogOpen(true);
-      return;
-    }
-
-    if (!projectForm.title || !projectForm.description) {
-      toast.error("Titre et description requis");
+      toast.error("Vous devez d'abord choisir un pack");
+      navigate("/billing");
       return;
     }
 
@@ -155,7 +140,6 @@ const BusinessDashboard = ({ user }) => {
           budget: parseInt(projectForm.budget) || 0,
         }),
       });
-
       if (response.ok) {
         toast.success("Projet créé !");
         setProjectDialogOpen(false);
@@ -164,14 +148,29 @@ const BusinessDashboard = ({ user }) => {
           budget: "", target_creators: 1, incubator_only: false,
         });
         fetchData();
-      } else {
-        const err = await response.json();
-        toast.error(err.detail || "Erreur");
       }
     } catch (error) {
       toast.error("Erreur");
     }
   };
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}${url}`;
+  };
+
+  const currentPack = packs.find(p => p.pack_id === stats?.selected_pack);
+  const hasProjects = projects.length > 0;
+  const hasProfile = profile?.company_name && profile?.description;
+  const completionSteps = [
+    { done: !!profile?.company_name, label: "Ajouter le nom de l'entreprise", icon: Building2 },
+    { done: !!profile?.description, label: "Ajouter une description", icon: FileText },
+    { done: !!user?.picture, label: "Ajouter un logo", icon: Image },
+    { done: !!profile?.website, label: "Ajouter le site web", icon: Globe },
+  ];
+  const completedSteps = completionSteps.filter(s => s.done).length;
+  const completionPercent = Math.round((completedSteps / completionSteps.length) * 100);
 
   if (loading) {
     return (
@@ -181,330 +180,359 @@ const BusinessDashboard = ({ user }) => {
     );
   }
 
-  const completionScore = profile?.completion_score || 0;
-
   return (
     <div className="min-h-screen bg-[#F6F7FB]">
-      <Sidebar userType="business" onLogout={handleLogout} />
+      <Sidebar userType={user?.user_type} isPremium={user?.is_premium} onLogout={handleLogout} />
 
-      {/* Main Content */}
       <div className="ml-64">
         {/* Header */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Rechercher des créateurs..."
-                className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/creators?q=${searchQuery}`)}
-              />
+            <div>
+              <h1 className="font-heading text-xl font-bold text-gray-900">
+                Bienvenue{profile?.company_name ? `, ${profile.company_name}` : ""} 👋
+              </h1>
+              <p className="text-gray-500 text-sm">Trouvez des créateurs et lancez vos campagnes</p>
             </div>
             <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-500" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-gray-500" />
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{profile?.company_name || user?.name}</p>
-                  <p className="text-xs text-gray-500">Entreprise</p>
-                </div>
+              {/* Search */}
+              <div className="relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-64 bg-gray-50 border-gray-200"
+                />
               </div>
+              <UserMenu user={user} currentPlan={currentPack?.name} />
             </div>
           </div>
         </header>
 
         <main className="p-8">
-          {/* Welcome */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="font-heading text-2xl font-bold text-gray-900">
-                Bienvenue {profile?.company_name || user?.name?.split(" ")[0]} 👋
-              </h1>
-              <p className="text-gray-500">Trouvez les meilleurs créateurs pour vos projets</p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => navigate("/creators")}
-                className="border-gray-200"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Find Creator
-              </Button>
-              <Button
-                onClick={() => stats?.selected_pack ? setProjectDialogOpen(true) : setPackDialogOpen(true)}
-                className="bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
-                data-testid="create-project-btn"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {stats?.selected_pack ? "Nouveau projet" : "Choisir un pack"}
-              </Button>
-            </div>
-          </div>
-
-          {/* Profile Completion */}
-          <Card className="border-0 shadow-md mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary-soft rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-gray-900 font-medium">Profil complété à {completionScore}%</p>
-                    <p className="text-gray-500 text-sm">Complétez pour de meilleures recommandations</p>
-                  </div>
-                </div>
-                <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="border-gray-200">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Modifier
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="bg-white border-l-0 shadow-2xl w-full sm:max-w-lg overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle className="text-gray-900">Modifier mon profil</SheetTitle>
-                    </SheetHeader>
-                    <div className="space-y-4 py-6">
-                      <div className="space-y-2">
-                        <Label>Nom de l'entreprise</Label>
-                        <Input
-                          value={editForm.company_name}
-                          onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
-                          placeholder="Ma Société"
-                          className="bg-gray-50 border-gray-200"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Description</Label>
-                        <textarea
-                          value={editForm.description}
-                          onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                          placeholder="Décrivez votre activité..."
-                          className="w-full h-24 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 resize-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Type d'activité</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { id: "physical", label: "Local" },
-                            { id: "online", label: "En ligne" },
-                            { id: "both", label: "Les deux" }
-                          ].map((type) => (
-                            <button
-                              key={type.id}
-                              onClick={() => setEditForm({ ...editForm, business_type: type.id })}
-                              className={`p-3 rounded-lg border text-center transition-all ${
-                                editForm.business_type === type.id
-                                  ? "border-primary bg-primary-soft text-primary"
-                                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-                              }`}
-                            >
-                              {type.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Ville</Label>
-                        <Input
-                          value={editForm.city}
-                          onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                          placeholder="Paris"
-                          className="bg-gray-50 border-gray-200"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Secteur</Label>
-                        <select
-                          value={editForm.industry}
-                          onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })}
-                          className="w-full h-10 px-3 rounded-lg bg-gray-50 border border-gray-200"
-                        >
-                          <option value="">Sélectionnez</option>
-                          {INDUSTRIES.map((ind) => (
-                            <option key={ind} value={ind}>{ind}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Site web</Label>
-                        <Input
-                          value={editForm.website}
-                          onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                          placeholder="https://..."
-                          className="bg-gray-50 border-gray-200"
-                        />
-                      </div>
-                      <Button onClick={handleUpdateProfile} className="w-full bg-primary hover:bg-primary-hover">
-                        Enregistrer
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 gradient-progress rounded-full transition-all duration-500"
-                  style={{ width: `${completionScore}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <Card className="border-0 shadow-md">
-              <CardContent className="p-4">
-                <p className="text-3xl font-heading font-bold text-gray-900">{stats?.total_projects || 0}</p>
-                <p className="text-gray-500 text-sm">Projets totaux</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md">
-              <CardContent className="p-4">
-                <p className="text-3xl font-heading font-bold text-gray-900">{stats?.active_projects || 0}</p>
-                <p className="text-gray-500 text-sm">En cours</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md">
-              <CardContent className="p-4">
-                <p className="text-3xl font-heading font-bold text-gray-900">{stats?.completed_projects || 0}</p>
-                <p className="text-gray-500 text-sm">Terminés</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  {stats?.selected_pack ? (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                  ) : (
-                    <Package className="w-6 h-6 text-gray-400" />
-                  )}
-                  <p className="text-gray-900 font-medium">
-                    {stats?.selected_pack ? "Pack actif" : "Aucun pack"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setPackDialogOpen(true)}
-                  className="text-primary text-sm hover:underline mt-1"
-                >
-                  {stats?.selected_pack ? "Changer" : "Sélectionner"}
-                </button>
-              </CardContent>
-            </Card>
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            <Button 
+              onClick={() => navigate("/creators")}
+              variant="outline" 
+              className="border-gray-200 bg-white hover:bg-gray-50"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Trouver un créateur
+            </Button>
+            <Button 
+              onClick={() => setProjectDialogOpen(true)}
+              className="bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
+              data-testid="new-project-btn"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau projet
+            </Button>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Creators */}
+              {/* Smart Action Block */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="border-0 shadow-md overflow-hidden">
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        {!hasProjects ? (
+                          <Rocket className="w-6 h-6 text-primary" />
+                        ) : completionPercent < 100 ? (
+                          <Target className="w-6 h-6 text-primary" />
+                        ) : (
+                          <Sparkles className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-heading font-bold text-gray-900 mb-1">
+                          {!hasProjects 
+                            ? "Publiez votre premier projet"
+                            : completionPercent < 100 
+                              ? "Complétez votre profil entreprise"
+                              : "Votre profil est complet !"
+                          }
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-4">
+                          {!hasProjects 
+                            ? "Créez un projet pour recevoir des candidatures de créateurs qualifiés."
+                            : completionPercent < 100 
+                              ? "Un profil complet améliore vos recommandations et inspire confiance aux créateurs."
+                              : "Vous êtes prêt à collaborer avec les meilleurs créateurs."
+                          }
+                        </p>
+                        
+                        {completionPercent < 100 && (
+                          <div className="space-y-3">
+                            {completionSteps.filter(s => !s.done).slice(0, 2).map((step, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setEditSheetOpen(true)}
+                                className="flex items-center gap-3 w-full p-3 bg-white rounded-lg hover:bg-gray-50 transition-colors text-left"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                  <step.icon className="w-4 h-4 text-gray-500" />
+                                </div>
+                                <span className="text-gray-700 text-sm flex-1">{step.label}</span>
+                                <ArrowRight className="w-4 h-4 text-gray-400" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {!hasProjects && (
+                          <Button 
+                            onClick={() => setProjectDialogOpen(true)}
+                            className="bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 mt-2"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Créer mon premier projet
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  {completionPercent < 100 && (
+                    <div className="px-6 py-4 bg-white border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Profil entreprise</span>
+                        <span className="text-sm font-medium text-primary">{completionPercent}%</span>
+                      </div>
+                      <Progress value={completionPercent} className="h-2" />
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+
+              {/* Activity Section */}
               <Card className="border-0 shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-gray-900">Créateurs recommandés</CardTitle>
-                  <Link to="/creators" className="text-sm text-primary hover:underline flex items-center gap-1">
-                    Voir tout <ChevronRight className="w-4 h-4" />
-                  </Link>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-gray-900">Activité récente</CardTitle>
+                    {hasProjects && (
+                      <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
+                        Voir tout
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {creators.slice(0, 4).map((creator) => (
-                      <div
-                        key={creator.profile_id}
-                        onClick={() => navigate(`/creators/${creator.user_id}`)}
-                        className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-primary/30 cursor-pointer transition-all"
+                  {hasProjects ? (
+                    <div className="space-y-4">
+                      {projects.slice(0, 3).map((project, i) => (
+                        <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                            <Briefcase className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{project.title}</p>
+                            <p className="text-gray-500 text-sm">{project.applications?.length || 0} candidatures</p>
+                          </div>
+                          <Badge className={
+                            project.status === "open" ? "bg-green-100 text-green-700" :
+                            project.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                            "bg-gray-100 text-gray-700"
+                          }>
+                            {project.status === "open" ? "Ouvert" : 
+                             project.status === "in_progress" ? "En cours" : "Terminé"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Briefcase className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-900 font-medium mb-1">Aucun projet pour le moment</p>
+                      <p className="text-gray-500 text-sm mb-4">Créez votre premier projet pour commencer</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setProjectDialogOpen(true)}
+                        className="border-gray-200"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nouveau projet
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Recommended Creators */}
+              <Card className="border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-gray-900">Créateurs recommandés</CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-primary hover:text-primary-hover"
+                      onClick={() => navigate("/creators")}
+                    >
+                      Voir tous
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {creators.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {creators.map((creator) => (
+                        <Link
+                          key={creator.user_id}
+                          to={`/creators/${creator.user_id}`}
+                          className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-sm">
                             {creator.picture ? (
-                              <img src={creator.picture} alt="" className="w-full h-full object-cover" />
+                              <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <User className="w-5 h-5 text-gray-400" />
+                              <span className="text-lg font-bold text-primary">
+                                {(creator.name || "C")[0].toUpperCase()}
+                              </span>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-gray-900 font-medium truncate">{creator.name || "Créateur"}</p>
+                              <p className="font-medium text-gray-900 truncate">{creator.name || "Créateur"}</p>
                               {creator.is_premium && (
-                                <Badge className="bg-primary text-white text-xs">Premium</Badge>
+                                <Crown className="w-4 h-4 text-primary" />
                               )}
                             </div>
-                            {creator.city && (
-                              <p className="text-gray-500 text-sm flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {creator.city}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1">
-                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                              <span className="text-gray-600 text-sm">{creator.rating?.toFixed(1) || "0.0"}</span>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              {creator.city && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {creator.city}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                {creator.rating?.toFixed(1) || "5.0"}
+                              </span>
                             </div>
                           </div>
-                        </div>
-                        {creator.content_types?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {creator.content_types.slice(0, 2).map((type) => (
-                              <Badge key={type} variant="outline" className="text-xs border-gray-200">
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          {creator.available && (
+                            <Badge className="bg-green-100 text-green-700 text-xs">Dispo</Badge>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">Aucun créateur disponible</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Sidebar */}
+            {/* Right Sidebar */}
             <div className="space-y-6">
-              {/* Packs */}
+              {/* Quick Stats */}
               <Card className="border-0 shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-gray-900 flex items-center gap-2">
-                    <Package className="w-5 h-5" />
-                    Packs disponibles
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {packs.slice(0, 3).map((pack) => (
-                    <div
-                      key={pack.pack_id}
-                      onClick={() => handleSelectPack(pack.pack_id)}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                        stats?.selected_pack === pack.pack_id
-                          ? "border-primary bg-primary-soft"
-                          : "border-gray-200 hover:border-gray-300 bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{pack.icon}</span>
-                          <span className="text-gray-900 font-medium">{pack.name}</span>
+                <CardContent className="p-6">
+                  <h3 className="font-heading font-semibold text-gray-900 mb-4">Vue d'ensemble</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-primary" />
                         </div>
-                        <span className="text-primary font-semibold">{pack.price}€</span>
+                        <span className="text-gray-600">Projets</span>
                       </div>
-                      {stats?.selected_pack === pack.pack_id && (
-                        <div className="flex items-center gap-1 mt-2 text-primary text-sm">
-                          <CheckCircle className="w-4 h-4" />
-                          Sélectionné
-                        </div>
-                      )}
+                      <span className="font-heading font-bold text-gray-900">
+                        {stats?.total_projects || "—"}
+                      </span>
                     </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    onClick={() => setPackDialogOpen(true)}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <span className="text-gray-600">En cours</span>
+                      </div>
+                      <span className="font-heading font-bold text-gray-900">
+                        {stats?.active_projects || "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <span className="text-gray-600">Terminés</span>
+                      </div>
+                      <span className="font-heading font-bold text-gray-900">
+                        {stats?.completed_projects || "—"}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Current Plan */}
+              <Card className="border-0 shadow-md overflow-hidden">
+                <div className="bg-gradient-to-r from-primary to-primary-hover p-4 text-white">
+                  <div className="flex items-center gap-3">
+                    <Crown className="w-6 h-6" />
+                    <div>
+                      <p className="text-white/80 text-xs">Plan actif</p>
+                      <p className="font-heading font-bold">{currentPack?.name || "Aucun plan"}</p>
+                    </div>
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  {currentPack ? (
+                    <>
+                      <div className="flex items-center justify-between text-sm mb-3">
+                        <span className="text-gray-500">Créateurs inclus</span>
+                        <span className="font-medium text-gray-900">{currentPack.creators_count}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm mb-4">
+                        <span className="text-gray-500">Vidéos incluses</span>
+                        <span className="font-medium text-gray-900">{currentPack.videos_count}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-gray-500 text-sm mb-4">Choisissez un plan pour commencer</p>
+                  )}
+                  <Button 
+                    variant="outline" 
                     className="w-full border-gray-200"
+                    onClick={() => navigate("/billing")}
                   >
-                    Voir tous les packs
+                    {currentPack ? "Gérer le plan" : "Choisir un plan"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Help Card */}
+              <Card className="border-0 shadow-md bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+                <CardContent className="p-6">
+                  <Zap className="w-8 h-8 text-yellow-400 mb-3" />
+                  <h4 className="font-heading font-bold mb-2">Besoin d'aide ?</h4>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Notre équipe est là pour vous accompagner dans vos campagnes.
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full bg-white text-gray-900 hover:bg-gray-100"
+                    onClick={() => navigate("/support")}
+                  >
+                    Contacter le support
                   </Button>
                 </CardContent>
               </Card>
@@ -513,50 +541,73 @@ const BusinessDashboard = ({ user }) => {
         </main>
       </div>
 
-      {/* Pack Selection Dialog */}
-      <Dialog open={packDialogOpen} onOpenChange={setPackDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-2xl max-w-2xl" data-testid="pack-selection-dialog">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900">Choisir un pack</DialogTitle>
-          </DialogHeader>
-          <div className="grid md:grid-cols-2 gap-4 py-4">
-            {packs.map((pack) => (
-              <button
-                key={pack.pack_id}
-                type="button"
-                onClick={() => handleSelectPack(pack.pack_id)}
-                data-testid={`pack-card-${pack.pack_id}`}
-                className={`p-4 border rounded-xl text-left transition-all w-full ${
-                  stats?.selected_pack === pack.pack_id
-                    ? "border-primary bg-primary-soft ring-2 ring-primary/20"
-                    : "border-gray-200 hover:border-primary/50 hover:bg-gray-50"
-                }`}
+      {/* Edit Profile Sheet */}
+      <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
+        <SheetContent className="bg-white overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-gray-900">Modifier le profil</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 mt-6">
+            <div className="space-y-2">
+              <Label>Nom de l'entreprise</Label>
+              <Input
+                value={editForm.company_name}
+                onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                className="bg-gray-50 border-gray-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                className="w-full h-24 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 resize-none"
+                placeholder="Décrivez votre entreprise..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Secteur d'activité</Label>
+              <select
+                value={editForm.industry}
+                onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })}
+                className="w-full h-10 px-3 rounded-lg bg-gray-50 border border-gray-200"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{pack.icon}</span>
-                  <span className="text-gray-900 font-semibold">{pack.name}</span>
-                  {pack.popular && <Badge className="bg-primary text-xs">Populaire</Badge>}
-                </div>
-                <p className="text-gray-500 text-sm mb-3">{pack.description}</p>
-                <p className="text-2xl font-heading font-bold text-primary">{pack.price}€</p>
-                <p className="text-gray-400 text-xs mt-2">
-                  {pack.creators_count} créateurs • {pack.videos_count} vidéos • {pack.delivery_days}j
-                </p>
-                {stats?.selected_pack === pack.pack_id && (
-                  <div className="flex items-center gap-1 mt-3 text-primary text-sm font-medium">
-                    <CheckCircle className="w-4 h-4" />
-                    Sélectionné
-                  </div>
-                )}
-              </button>
-            ))}
+                <option value="">Sélectionner</option>
+                {INDUSTRIES.map((ind) => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Ville</Label>
+              <Input
+                value={editForm.city}
+                onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                className="bg-gray-50 border-gray-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Site web</Label>
+              <Input
+                value={editForm.website}
+                onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                className="bg-gray-50 border-gray-200"
+                placeholder="https://"
+              />
+            </div>
+            <Button 
+              onClick={handleSaveProfile}
+              className="w-full bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
+            >
+              Enregistrer
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Create Project Dialog */}
       <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-2xl">
+        <DialogContent className="bg-white border-0 shadow-2xl max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Nouveau projet</DialogTitle>
           </DialogHeader>
@@ -566,8 +617,8 @@ const BusinessDashboard = ({ user }) => {
               <Input
                 value={projectForm.title}
                 onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                placeholder="Campagne UGC Été 2025"
                 className="bg-gray-50 border-gray-200"
+                placeholder="Ex: Vidéos TikTok produit beauté"
               />
             </div>
             <div className="space-y-2">
@@ -575,11 +626,11 @@ const BusinessDashboard = ({ user }) => {
               <textarea
                 value={projectForm.description}
                 onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                placeholder="Décrivez votre projet..."
                 className="w-full h-24 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 resize-none"
+                placeholder="Décrivez votre besoin en détail..."
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type de contenu</Label>
                 <select
@@ -587,9 +638,10 @@ const BusinessDashboard = ({ user }) => {
                   onChange={(e) => setProjectForm({ ...projectForm, content_type: e.target.value })}
                   className="w-full h-10 px-3 rounded-lg bg-gray-50 border border-gray-200"
                 >
-                  {["UGC", "Micro-trottoir", "Face cam", "Ads", "Interview"].map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
+                  <option value="UGC">UGC</option>
+                  <option value="Face cam">Face cam</option>
+                  <option value="Ads">Ads</option>
+                  <option value="Interview">Interview</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -598,25 +650,27 @@ const BusinessDashboard = ({ user }) => {
                   type="number"
                   value={projectForm.budget}
                   onChange={(e) => setProjectForm({ ...projectForm, budget: e.target.value })}
-                  placeholder="1500"
                   className="bg-gray-50 border-gray-200"
+                  placeholder="500"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-gray-900 font-medium">Réservé aux membres Incubateur</p>
-                <p className="text-gray-500 text-sm">Accès aux créateurs Premium uniquement</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={projectForm.incubator_only}
-                onChange={(e) => setProjectForm({ ...projectForm, incubator_only: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+            <div className="space-y-2">
+              <Label>Nombre de créateurs recherchés</Label>
+              <Input
+                type="number"
+                min="1"
+                value={projectForm.target_creators}
+                onChange={(e) => setProjectForm({ ...projectForm, target_creators: parseInt(e.target.value) || 1 })}
+                className="bg-gray-50 border-gray-200"
               />
             </div>
-            <Button onClick={handleCreateProject} className="w-full bg-primary hover:bg-primary-hover shadow-md shadow-primary/20">
-              Créer le projet
+            <Button 
+              onClick={handleCreateProject}
+              className="w-full bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
+              data-testid="submit-project-btn"
+            >
+              Publier le projet
             </Button>
           </div>
         </DialogContent>
