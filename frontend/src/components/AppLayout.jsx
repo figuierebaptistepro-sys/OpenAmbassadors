@@ -304,7 +304,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 onClick={() => navigate("/dashboard", { state: { openPremium: true } })}
                 className="w-full py-2 px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm shadow-md shadow-primary/20"
               >
-                49€/mois
+                19.99€/mois
               </button>
             </div>
           </div>
