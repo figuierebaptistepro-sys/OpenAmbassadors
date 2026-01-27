@@ -1573,7 +1573,7 @@ async def get_admin_stats(user: dict = Depends(get_admin_user)):
 
 @api_router.get("/admin/users")
 async def get_admin_users(
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_admin_user),
     user_type: Optional[str] = None,
     status: Optional[str] = None,
     skip: int = 0,
