@@ -1264,6 +1264,10 @@ async def get_wallet(user: dict = Depends(get_current_user)):
         if isinstance(tx.get("processed_at"), datetime):
             tx["processed_at"] = tx["processed_at"].isoformat()
     
+    # Determine fee rate based on premium status
+    is_premium = user.get("is_premium", False)
+    fee_percent = 0 if is_premium else PLATFORM_FEE_PERCENT
+    
     return {
         "balance": wallet.get("balance", 0),
         "total_earned": wallet.get("total_earned", 0),
@@ -1271,7 +1275,8 @@ async def get_wallet(user: dict = Depends(get_current_user)):
         "pending_amount": wallet.get("pending_amount", 0),
         "payment_methods": wallet.get("payment_methods", {}),
         "transactions": transactions,
-        "platform_fee_percent": PLATFORM_FEE_PERCENT
+        "platform_fee_percent": fee_percent,
+        "is_premium": is_premium
     }
 
 @api_router.put("/wallet/payment-methods")
