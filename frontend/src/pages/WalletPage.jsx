@@ -211,7 +211,9 @@ const WalletPage = ({ user }) => {
                   <ArrowDownCircle className="w-5 h-5 text-green-500" />
                 </div>
                 <p className="font-heading text-2xl font-bold text-gray-900">{(wallet?.total_earned || 0).toFixed(2)}€</p>
-                <p className="text-gray-400 text-xs mt-1">Net après frais (15%)</p>
+                <p className="text-gray-400 text-xs mt-1">
+                  {wallet?.is_premium ? "Sans frais (Premium)" : "Net après frais (15%)"}
+                </p>
               </CardContent>
             </Card>
           </motion.div>
