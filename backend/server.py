@@ -768,6 +768,8 @@ async def get_project_banner(filename: str):
 
 # ==================== CREATOR ROUTES ====================
 
+VISIBILITY_ORDER = {"1K": 1, "5K": 2, "10K": 3, "35K": 4, "50K": 5, "100K": 6, "250K": 7, "1M": 8}
+
 @api_router.get("/creators")
 async def get_creators(
     city: Optional[str] = None,
@@ -776,6 +778,7 @@ async def get_creators(
     min_score: Optional[int] = None,
     incubator_only: Optional[bool] = None,
     experience_level: Optional[str] = None,
+    visibility: Optional[str] = None,  # Filter by minimum visibility
     skip: int = 0,
     limit: int = 20
 ):
@@ -790,6 +793,11 @@ async def get_creators(
         query["completion_score"] = {"$gte": min_score}
     if experience_level:
         query["experience_level"] = experience_level
+    if visibility:
+        # Filter creators with visibility >= requested visibility
+        min_order = VISIBILITY_ORDER.get(visibility, 0)
+        valid_visibilities = [k for k, v in VISIBILITY_ORDER.items() if v >= min_order]
+        query["visibility"] = {"$in": valid_visibilities}
     
     # Sort: Premium users first, then by completion score
     sort = [("is_premium", -1), ("completion_score", -1), ("rating", -1)]
