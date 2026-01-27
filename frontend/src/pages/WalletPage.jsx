@@ -234,18 +234,34 @@ const WalletPage = ({ user }) => {
 
         {/* Fee Notice */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-blue-900 text-sm">Frais de plateforme : 15%</p>
-                <p className="text-blue-700 text-xs mt-1">
-                  Les frais de 15% sont automatiquement déduits de chaque paiement reçu. 
-                  Les retraits sont validés manuellement par notre équipe sous 2-5 jours ouvrés.
-                </p>
+          {wallet?.is_premium ? (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-900 text-sm">Membre Premium : 0% de frais !</p>
+                  <p className="text-green-700 text-xs mt-1">
+                    En tant que membre Premium, vous ne payez aucun frais sur vos revenus. 
+                    Les retraits sont validés manuellement sous 2-5 jours ouvrés.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-blue-900 text-sm">Frais de plateforme : 15%</p>
+                  <p className="text-blue-700 text-xs mt-1">
+                    Les frais de 15% sont automatiquement déduits de chaque paiement reçu. 
+                    <span className="font-medium"> Les membres Premium bénéficient de 0% de frais.</span>
+                    {" "}Les retraits sont validés manuellement sous 2-5 jours ouvrés.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
