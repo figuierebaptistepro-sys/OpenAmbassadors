@@ -119,6 +119,12 @@ const CreatorProfile = ({ currentUser }) => {
     { name: "Révision supplémentaire", price: 30 },
   ];
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}${url}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#F6F7FB]">
       <Sidebar userType={currentUser?.user_type} isPremium={currentUser?.is_premium} onLogout={handleLogout} />
@@ -148,7 +154,15 @@ const CreatorProfile = ({ currentUser }) => {
             >
               {/* Cover Image */}
               <div className="h-48 md:h-64 rounded-t-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 overflow-hidden relative">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNGRjJFNjMiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+                {creator.banner ? (
+                  <img 
+                    src={getImageUrl(creator.banner)} 
+                    alt="Bannière" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNGRjJFNjMiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+                )}
               </div>
 
               {/* Profile Card overlapping cover */}
