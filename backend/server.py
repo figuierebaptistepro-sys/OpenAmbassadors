@@ -652,6 +652,127 @@ async def get_admin_user(request: Request) -> dict:
 
 # ==================== AUTH ROUTES ====================
 
+class RegisterRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+@api_router.post("/auth/register")
+async def register_user(data: RegisterRequest, response: Response):
+    """Register a new user with email and password"""
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Un compte existe déjà avec cet email")
+    
+    # Hash password
+    hashed_password = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Create user
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    user_doc = {
+        "user_id": user_id,
+        "email": data.email,
+        "name": data.name,
+        "password": hashed_password,
+        "picture": None,
+        "user_type": None,
+        "is_premium": False,
+        "is_verified": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(user_doc)
+    
+    # Create session
+    session_token = f"sess_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.user_sessions.update_one(
+        {"user_id": user_id},
+        {"$set": {
+            "session_token": session_token,
+            "expires_at": expires_at.isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 3600
+    )
+    
+    # Send welcome email
+    await send_welcome_email(data.email, data.name, "new")
+    
+    return {
+        "user_id": user_id,
+        "email": data.email,
+        "name": data.name,
+        "picture": None,
+        "user_type": None,
+        "is_new_user": True
+    }
+
+@api_router.post("/auth/login")
+async def login_user(data: LoginRequest, response: Response):
+    """Login user with email and password"""
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+    
+    # Check if user has a password (might be Google-only user)
+    if not user.get("password"):
+        raise HTTPException(status_code=401, detail="Ce compte utilise la connexion Google. Veuillez vous connecter avec Google.")
+    
+    # Verify password
+    if not bcrypt.checkpw(data.password.encode('utf-8'), user["password"].encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+    
+    # Create session
+    session_token = f"sess_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.user_sessions.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "session_token": session_token,
+            "expires_at": expires_at.isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 3600
+    )
+    
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "name": user.get("name"),
+        "picture": user.get("picture"),
+        "user_type": user.get("user_type"),
+        "is_premium": user.get("is_premium", False),
+        "is_new_user": False
+    }
+
 @api_router.post("/auth/otp/request")
 async def request_otp(data: OTPRequest):
     """Request OTP code for email login"""
