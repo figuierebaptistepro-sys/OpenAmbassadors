@@ -99,21 +99,52 @@ const ProjectsPage = ({ user }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-heading font-semibold text-gray-900 text-sm mb-1">{project.title}</h3>
-                        <p className="text-gray-500 text-xs line-clamp-2">{project.description}</p>
+                <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full overflow-hidden">
+                  {/* Project Banner */}
+                  <div className="relative h-32 bg-gray-100">
+                    {project.banner_url ? (
+                      <img 
+                        src={project.banner_url?.startsWith("http") ? project.banner_url : `${API_URL}${project.banner_url}`} 
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Briefcase className="w-10 h-10 text-gray-300" />
                       </div>
-                      {project.incubator_only && (
-                        <Badge className="bg-primary text-xs flex-shrink-0 ml-2">
-                          <Crown className="w-3 h-3 mr-1" />
-                          Premium
-                        </Badge>
-                      )}
+                    )}
+                    {project.incubator_only && (
+                      <Badge className="absolute top-2 right-2 bg-primary text-xs">
+                        <Crown className="w-3 h-3 mr-1" />
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
+
+                  <CardContent className="p-4">
+                    {/* Business Info */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {project.business_logo ? (
+                          <img 
+                            src={project.business_logo?.startsWith("http") ? project.business_logo : `${API_URL}${project.business_logo}`} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-gray-400">
+                            {(project.business_name || "E")[0].toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-gray-500 text-xs truncate">{project.business_name || "Entreprise"}</span>
                     </div>
 
+                    {/* Title & Description */}
+                    <h3 className="font-heading font-semibold text-gray-900 text-sm mb-1 line-clamp-1">{project.title}</h3>
+                    <p className="text-gray-500 text-xs line-clamp-2 mb-3">{project.description}</p>
+
+                    {/* Stats */}
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
@@ -124,9 +155,18 @@ const ProjectsPage = ({ user }) => {
                           <Users className="w-3 h-3" />
                           {project.target_creators || 1} créateur(s)
                         </span>
+                        {project.duration && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {project.duration}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
                         <Badge variant="outline" className="text-xs border-gray-200">{project.content_type || "UGC"}</Badge>
+                        {project.remote_ok && (
+                          <Badge variant="outline" className="text-xs border-gray-200">Remote OK</Badge>
+                        )}
                         <Badge className={`text-xs ${
                           project.status === "open" ? "bg-green-100 text-green-700" :
                           project.status === "in_progress" ? "bg-blue-100 text-blue-700" :
