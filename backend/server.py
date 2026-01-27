@@ -208,6 +208,40 @@ class ProjectCreate(BaseModel):
     banner_url: Optional[str] = None
     incubator_only: bool = False
 
+# ==================== WALLET MODELS ====================
+
+class WalletTransaction(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    transaction_id: str = Field(default_factory=lambda: f"tx_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    amount: float  # Gross amount before fees
+    net_amount: float  # Amount after 15% fee
+    fee_amount: float  # 15% fee
+    transaction_type: str  # "earning", "withdrawal"
+    status: str = "pending"  # pending, approved, rejected, completed
+    description: Optional[str] = None
+    project_id: Optional[str] = None
+    # For withdrawals
+    withdrawal_method: Optional[str] = None  # "paypal", "bank_transfer"
+    paypal_email: Optional[str] = None
+    bank_iban: Optional[str] = None
+    bank_bic: Optional[str] = None
+    admin_note: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    processed_at: Optional[datetime] = None
+
+class WithdrawalRequest(BaseModel):
+    amount: float
+    method: str  # "bank_transfer" only for now (paypal is "soon")
+    iban: Optional[str] = None
+    bic: Optional[str] = None
+
+class PaymentMethodUpdate(BaseModel):
+    paypal_email: Optional[str] = None
+    bank_iban: Optional[str] = None
+    bank_bic: Optional[str] = None
+    bank_holder_name: Optional[str] = None
+
 class Training(BaseModel):
     model_config = ConfigDict(extra="ignore")
     training_id: str = Field(default_factory=lambda: f"train_{uuid.uuid4().hex[:12]}")
