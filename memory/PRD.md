@@ -14,7 +14,7 @@ Refonte vers une plateforme privée avec:
 - **Backend**: FastAPI + MongoDB
 - **Frontend**: React + Tailwind CSS + Shadcn UI
 - **Auth**: Google OAuth + OTP Email
-- **UI**: Dark theme slate-900 avec accents secondary (lime)
+- **UI**: Light theme (#F6F7FB background, #FFFFFF cards) avec accent pink (#FF2E63)
 
 ## User Personas
 1. **Créateur**: Développer son activité, compléter son profil progressivement, accéder aux missions
