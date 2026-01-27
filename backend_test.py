@@ -96,7 +96,7 @@ class IncubateurAPITester:
         if success and response:
             try:
                 data = response.json()
-                required_fields = ['creators_count', 'businesses_count', 'videos_count']
+                required_fields = ['creators_count', 'businesses_count', 'projects_count', 'incubator_members']
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if missing_fields:
