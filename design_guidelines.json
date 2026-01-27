@@ -1,0 +1,190 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "The Anti-AI Designer",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ],
+    "anti_patterns": [
+      "Purple/Teal CTA default",
+      "Inter everywhere",
+      "Center-Everything Disease",
+      "Gradient Overload (>20%)"
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Plus Jakarta Sans, sans-serif",
+      "weights": ["600", "700", "800"],
+      "usage": "Headings, Hero Text, Section Titles",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, UI Text, Inputs",
+      "letter_spacing": "tracking-normal"
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "Code snippets, IDs, Technical data"
+    },
+    "installation": "import '@fontsource/plus-jakarta-sans'; import '@fontsource/manrope'; import '@fontsource/jetbrains-mono';"
+  },
+  "colors": {
+    "palette_name": "The Performance Pro (Creative Twist)",
+    "primary": {
+      "main": "#4338ca",
+      "hover": "#3730a3",
+      "foreground": "#ffffff",
+      "description": "Deep Indigo - Trust, B2B Authority"
+    },
+    "secondary": {
+      "main": "#bef264",
+      "hover": "#a3e635",
+      "foreground": "#1a2e05",
+      "description": "Vibrant Lime - Creator Energy, Action, ROI"
+    },
+    "background": {
+      "default": "#ffffff",
+      "paper": "#f8fafc",
+      "dark": "#0f172a"
+    },
+    "text": {
+      "primary": "#0f172a",
+      "secondary": "#475569",
+      "muted": "#94a3b8"
+    },
+    "accent": {
+      "error": "#ef4444",
+      "success": "#22c55e",
+      "warning": "#f59e0b"
+    },
+    "gradients": {
+      "hero_overlay": "linear-gradient(180deg, rgba(255,255,255,0) 0%, #ffffff 100%)",
+      "subtle_glow": "radial-gradient(circle at 50% 50%, rgba(190, 242, 100, 0.15), transparent 70%)"
+    }
+  },
+  "layout": {
+    "spacing_system": {
+      "base": "0.25rem",
+      "scale": ["p-1", "p-2", "p-4", "p-6", "p-8", "p-12", "p-16", "p-24", "p-32"],
+      "rule": "Use 2-3x more spacing than typical. Containers with borders must have p-6 or p-8."
+    },
+    "grids": {
+      "mode_a_tetris": {
+        "usage": "Marketing, Landing Page, Portfolio",
+        "classes": "grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-8",
+        "rules": "Asymmetry is key. Never fill 100% perfectly."
+      },
+      "mode_b_density": {
+        "usage": "Dashboards, Analytics, Admin",
+        "classes": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4",
+        "rules": "Every pixel utilized. Use h-full on children."
+      }
+    },
+    "container": {
+      "max_width": "max-w-7xl",
+      "padding": "px-4 md:px-8 lg:px-12",
+      "center": "mx-auto"
+    }
+  },
+  "components": {
+    "buttons": {
+      "style": "rounded-full font-semibold tracking-wide transition-all duration-300",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl hover:-translate-y-0.5",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+      "outline": "border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground"
+    },
+    "cards": {
+      "style": "rounded-xl border border-border/50 bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300",
+      "glass": "bg-white/70 backdrop-blur-xl border-white/20 shadow-sm"
+    },
+    "inputs": {
+      "style": "rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "navigation": {
+      "style": "sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "classes": "backdrop-blur-xl bg-white/70 border border-white/20 shadow-sm",
+      "usage": "Sticky headers, floating controls, toast notifications"
+    },
+    "tracing_beam": {
+      "description": "Animated gradient border for high-value cards (Pricing, Top Creators)",
+      "implementation": "Use framer-motion to animate a div tracing the SVG path of the border."
+    },
+    "noise_texture": {
+      "usage": "Subtle background overlay to kill digital flatness",
+      "css": "background-image: url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E\");"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_creator": {
+        "url": "https://images.unsplash.com/photo-1762028893558-ab5a3895c943?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Professional creator filming with studio lighting",
+        "usage": "Landing Page Hero - Main Visual"
+      },
+      "business_meeting": {
+        "url": "https://images.unsplash.com/photo-1758873268364-15bef4162221?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Creative team collaborating in modern office",
+        "usage": "Business Solutions Section"
+      },
+      "video_production": {
+        "url": "https://images.unsplash.com/photo-1695218716405-5b813000e994?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Video editing timeline close up",
+        "usage": "Features / 'Machine à production' Section"
+      },
+      "creator_lifestyle": {
+        "url": "https://images.unsplash.com/photo-1758599880949-d5adb1fcc868?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Creator filming yoga content",
+        "usage": "Creator Dashboard / Onboarding"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px or 2px. Consistent sizing (w-5 h-5 or w-6 h-6)."
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "transitions": {
+      "default": { "duration": 0.3, "ease": "easeInOut" },
+      "spring": { "type": "spring", "stiffness": 300, "damping": 30 }
+    },
+    "interactions": {
+      "hover": "scale-105",
+      "tap": "scale-95",
+      "list_stagger": 0.1
+    }
+  },
+  "universal_guidelines": [
+    "Avoid 'AI Slop': No generic centered layouts, no default Tailwind blue.",
+    "Dark colors must be solid, not gradients.",
+    "Create depth with z-index and layered shadows.",
+    "NO 'transition: all'. Animate specific properties.",
+    "NO 'text-align: center' on the main App container.",
+    "Use 'sonner' for toasts.",
+    "All interactive elements must have 'data-testid'.",
+    "Use 'lucide-react' for icons.",
+    "Mobile-first responsive design is mandatory.",
+    "Images must not exceed 80vh on mobile."
+  ],
+  "instructions_to_main_agent": {
+    "step_1": "Install dependencies: `npm install framer-motion lucide-react clsx tailwind-merge @radix-ui/react-slot class-variance-authority sonner` (or yarn equivalent).",
+    "step_2": "Update `tailwind.config.js` with the new color palette and font families.",
+    "step_3": "Create the `Layout` component with the sticky header and footer.",
+    "step_4": "Build the Landing Page using the 'Tetris Grid' and provided images.",
+    "step_5": "Implement the Auth pages (Login/Register) with a split layout (Image + Form).",
+    "step_6": "Build the Dashboards using the 'Density Grid'.",
+    "step_7": "Ensure all text has sufficient contrast (APCA/WCAG AA)."
+  }
+}
