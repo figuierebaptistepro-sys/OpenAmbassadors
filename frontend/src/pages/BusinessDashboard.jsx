@@ -349,7 +349,7 @@ const BusinessDashboard = ({ user }) => {
             {/* Stats */}
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
-                <h3 className="font-heading font-semibold text-gray-900 mb-3 text-sm">Vue d'ensemble</h3>
+                <h3 className="font-heading font-semibold text-gray-900 mb-3 text-sm">Vue d&apos;ensemble</h3>
                 <div className="grid grid-cols-3 lg:grid-cols-1 gap-2">
                   {[
                     { icon: Briefcase, label: "Projets", value: stats?.total_projects, color: "bg-primary/10 text-primary" },
