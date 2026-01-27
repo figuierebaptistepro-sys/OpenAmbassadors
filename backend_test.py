@@ -210,31 +210,53 @@ class IncubateurAPITester:
                 except Exception as e:
                     self.log_test("OTP Verify Business - Parse Response", False, "", str(e))
 
-    def test_user_login(self):
-        """Test user login"""
-        print("\n🔐 Testing User Login...")
+    def test_user_type_selection(self):
+        """Test user type selection after authentication"""
+        print("\n👥 Testing User Type Selection...")
         
-        # Test creator login
-        login_data = {
-            "email": self.test_creator["email"],
-            "password": self.test_creator["password"]
-        }
+        if not self.creator_token:
+            self.log_test("Type Selection - No Creator Token", False, "", "Creator token not available")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.creator_token}"}
         
+        # Set creator type
+        type_data = {"user_type": "creator"}
         success, response = self.test_endpoint(
-            'POST', 'auth/login', 200,
-            data=login_data,
-            description="- Creator Login"
+            'POST', 'auth/set-type', 200,
+            data=type_data,
+            headers=headers,
+            description="- Set Creator Type"
         )
         
         if success and response:
             try:
                 data = response.json()
-                if 'token' in data:
-                    self.log_test("Creator Login - Token Received", True, f"User type: {data.get('user_type')}")
+                if data.get('user_type') == 'creator':
+                    self.log_test("Set Creator Type - Success", True, "User type set to creator")
                 else:
-                    self.log_test("Creator Login - Token Missing", False, "", "No token in response")
+                    self.log_test("Set Creator Type - Invalid Response", False, "", f"Unexpected response: {data}")
             except Exception as e:
-                self.log_test("Creator Login - Parse Response", False, "", str(e))
+                self.log_test("Set Creator Type - Parse Response", False, "", str(e))
+        
+        # Set business type for business user
+        if self.business_token:
+            headers = {"Authorization": f"Bearer {self.business_token}"}
+            type_data = {"user_type": "business"}
+            success, response = self.test_endpoint(
+                'POST', 'auth/set-type', 200,
+                data=type_data,
+                headers=headers,
+                description="- Set Business Type"
+            )
+            
+            if success and response:
+                try:
+                    data = response.json()
+                    if data.get('user_type') == 'business':
+                        self.log_test("Set Business Type - Success", True, "User type set to business")
+                except Exception as e:
+                    self.log_test("Set Business Type - Parse Response", False, "", str(e))
 
     def test_authenticated_endpoints(self):
         """Test endpoints that require authentication"""
