@@ -35,6 +35,7 @@ const CreatorDashboard = ({ user }) => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
@@ -50,9 +51,10 @@ const CreatorDashboard = ({ user }) => {
 
   const fetchData = async () => {
     try {
-      const [profileRes, statsRes] = await Promise.all([
+      const [profileRes, statsRes, walletRes] = await Promise.all([
         fetch(`${API_URL}/api/creators/me/profile`, { credentials: "include" }),
         fetch(`${API_URL}/api/stats/creator`, { credentials: "include" }),
+        fetch(`${API_URL}/api/wallet`, { credentials: "include" }),
       ]);
       if (profileRes.ok) {
         const data = await profileRes.json();
@@ -66,6 +68,7 @@ const CreatorDashboard = ({ user }) => {
         });
       }
       if (statsRes.ok) setStats(await statsRes.json());
+      if (walletRes.ok) setWallet(await walletRes.json());
     } catch (error) {
       console.error("Error:", error);
     } finally {
