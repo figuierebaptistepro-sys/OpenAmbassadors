@@ -834,10 +834,105 @@ const AdminPage = ({ user }) => {
                   ))}
                 </div>
               </div>
+
+              {/* Ban/Delete Actions */}
+              <div className="pt-4 border-t border-gray-100 space-y-2">
+                <p className="text-gray-500 text-xs">Actions dangereuses</p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setBanDialogOpen(true)}
+                    className={`flex-1 ${selectedUser.is_banned ? "border-green-200 text-green-600 hover:bg-green-50" : "border-orange-200 text-orange-600 hover:bg-orange-50"}`}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    {selectedUser.is_banned ? "Débannir" : "Bannir"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer
+                  </Button>
+                </div>
+                {selectedUser.is_banned && selectedUser.ban_reason && (
+                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg">
+                    Raison du ban : {selectedUser.ban_reason}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Ban Confirmation Dialog */}
+      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Ban className="w-5 h-5 text-orange-500" />
+              {selectedUser?.is_banned ? "Débannir l'utilisateur ?" : "Bannir l'utilisateur ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedUser?.is_banned 
+                ? `${selectedUser?.name || "Cet utilisateur"} pourra à nouveau se connecter et utiliser la plateforme.`
+                : `${selectedUser?.name || "Cet utilisateur"} ne pourra plus se connecter à la plateforme.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {!selectedUser?.is_banned && (
+            <div className="py-2">
+              <label className="text-sm text-gray-500">Raison du ban (optionnel)</label>
+              <Input
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                placeholder="Ex: Comportement inapproprié..."
+                className="bg-gray-50 mt-1"
+              />
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBanUser}
+              className={selectedUser?.is_banned ? "bg-green-500 hover:bg-green-600" : "bg-orange-500 hover:bg-orange-600"}
+            >
+              {selectedUser?.is_banned ? "Débannir" : "Bannir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Supprimer définitivement ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est <span className="font-semibold text-red-600">irréversible</span>. 
+              Toutes les données de <span className="font-semibold">{selectedUser?.name || "cet utilisateur"}</span> seront 
+              supprimées : profil, projets, transactions, avis...
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Earning Dialog */}
       <Dialog open={earningDialogOpen} onOpenChange={setEarningDialogOpen}>
