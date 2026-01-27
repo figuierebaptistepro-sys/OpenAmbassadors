@@ -125,6 +125,7 @@ class CreatorProfile(BaseModel):
 class CreatorProfileUpdate(BaseModel):
     bio: Optional[str] = None
     city: Optional[str] = None
+    phone: Optional[str] = None
     can_travel: Optional[bool] = None
     works_remote: Optional[bool] = None
     content_types: Optional[List[str]] = None
@@ -137,6 +138,14 @@ class CreatorProfileUpdate(BaseModel):
     min_rate: Optional[int] = None
     max_rate: Optional[int] = None
     available: Optional[bool] = None
+    # Social media
+    social_instagram: Optional[str] = None
+    social_tiktok: Optional[str] = None
+    social_youtube: Optional[str] = None
+    social_twitter: Optional[str] = None
+    social_linkedin: Optional[str] = None
+    # Visibility/Followers
+    visibility: Optional[str] = None  # "1K", "5K", "10K", "35K", "50K", "100K", "250K", "1M"
 
 class BusinessProfile(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -146,6 +155,7 @@ class BusinessProfile(BaseModel):
     description: Optional[str] = None
     business_type: Optional[str] = None  # physical, online, both
     city: Optional[str] = None
+    phone: Optional[str] = None
     industry: Optional[str] = None
     website: Optional[str] = None
     monthly_budget: Optional[str] = None
@@ -163,6 +173,7 @@ class BusinessProfile(BaseModel):
 class BusinessProfileUpdate(BaseModel):
     company_name: Optional[str] = None
     description: Optional[str] = None
+    phone: Optional[str] = None
     business_type: Optional[str] = None
     city: Optional[str] = None
     industry: Optional[str] = None
