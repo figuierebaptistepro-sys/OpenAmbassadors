@@ -19,7 +19,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [step, setStep] = useState("email"); // email, otp
+  const [step, setStep] = useState("email");
   const [loading, setLoading] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [accessForm, setAccessForm] = useState({ name: "", email: "", reason: "" });
@@ -41,7 +41,6 @@ const LoginPage = () => {
       if (response.ok) {
         const data = await response.json();
         toast.success("Code envoyé à votre email");
-        // For MVP: show debug code
         if (data.debug_code) {
           toast.info(`Code de test: ${data.debug_code}`, { duration: 10000 });
         }
@@ -79,7 +78,6 @@ const LoginPage = () => {
 
       toast.success("Connexion réussie !");
       
-      // Navigate based on user type
       if (!data.user_type) {
         navigate("/select-type", { state: { user: data } });
       } else if (data.user_type === "creator") {
@@ -94,7 +92,6 @@ const LoginPage = () => {
     }
   };
 
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   const handleGoogleLogin = () => {
     const redirectUrl = window.location.origin + "/dashboard";
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
@@ -124,11 +121,11 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-      {/* Background effects */}
+    <div className="min-h-screen bg-[#F6F7FB] flex items-center justify-center p-6">
+      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-primary-soft to-transparent rounded-full opacity-60 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-primary-soft to-transparent rounded-full opacity-40 blur-3xl" />
       </div>
 
       <motion.div
@@ -138,25 +135,25 @@ const LoginPage = () => {
       >
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Sparkles className="w-8 h-8 text-secondary-foreground" />
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="font-heading text-3xl font-bold text-white mb-2">
-            Incubateur des Créateurs
+          <h1 className="font-heading text-3xl font-bold text-gray-900 mb-2">
+            Incubateur
           </h1>
-          <p className="text-slate-400">
+          <p className="text-gray-500">
             Réseau privé de créateurs et d'entreprises
           </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-800/50 backdrop-blur">
+        <Card className="border-0 shadow-xl shadow-gray-200/50 bg-white">
           <CardContent className="p-8">
             {step === "email" ? (
               <div className="space-y-6">
                 {/* Google Login */}
                 <Button
                   type="button"
-                  className="w-full h-12 bg-white hover:bg-slate-100 text-slate-900 font-medium"
+                  className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm"
                   onClick={handleGoogleLogin}
                   data-testid="google-login-btn"
                 >
@@ -171,23 +168,23 @@ const LoginPage = () => {
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-700"></div>
+                    <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-slate-800/50 text-slate-500">ou</span>
+                    <span className="px-4 bg-white text-gray-400">ou</span>
                   </div>
                 </div>
 
                 {/* Email OTP Login */}
                 <div className="space-y-4">
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input
                       type="email"
                       placeholder="votre@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+                      className="pl-10 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary"
                       onKeyDown={(e) => e.key === "Enter" && handleRequestOTP()}
                       data-testid="email-input"
                     />
@@ -195,7 +192,7 @@ const LoginPage = () => {
                   <Button
                     onClick={handleRequestOTP}
                     disabled={loading}
-                    className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-medium"
+                    className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-medium shadow-lg shadow-primary/20"
                     data-testid="request-otp-btn"
                   >
                     {loading ? (
@@ -212,11 +209,11 @@ const LoginPage = () => {
             ) : (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center mx-auto mb-4">
                     <Lock className="w-6 h-6 text-primary" />
                   </div>
-                  <p className="text-white font-medium">Code envoyé à</p>
-                  <p className="text-slate-400 text-sm">{email}</p>
+                  <p className="text-gray-900 font-medium">Code envoyé à</p>
+                  <p className="text-gray-500 text-sm">{email}</p>
                 </div>
 
                 <div className="space-y-4">
@@ -225,7 +222,7 @@ const LoginPage = () => {
                     placeholder="000000"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="h-14 text-center text-2xl tracking-widest bg-slate-900 border-slate-700 text-white font-mono"
+                    className="h-14 text-center text-2xl tracking-widest bg-gray-50 border-gray-200 font-mono focus:border-primary"
                     maxLength={6}
                     onKeyDown={(e) => e.key === "Enter" && handleVerifyOTP()}
                     data-testid="otp-input"
@@ -233,11 +230,11 @@ const LoginPage = () => {
                   <Button
                     onClick={handleVerifyOTP}
                     disabled={loading || otpCode.length !== 6}
-                    className="w-full h-12 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-medium"
+                    className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-medium shadow-lg shadow-primary/20"
                     data-testid="verify-otp-btn"
                   >
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
                         Vérifier
@@ -249,7 +246,7 @@ const LoginPage = () => {
 
                 <button
                   onClick={() => { setStep("email"); setOtpCode(""); }}
-                  className="w-full text-center text-sm text-slate-500 hover:text-slate-300"
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
                 >
                   ← Changer d'email
                 </button>
@@ -257,12 +254,12 @@ const LoginPage = () => {
             )}
 
             {/* Request Access */}
-            <div className="mt-8 pt-6 border-t border-slate-700 text-center">
-              <p className="text-slate-500 text-sm mb-3">Pas encore membre ?</p>
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+              <p className="text-gray-500 text-sm mb-3">Pas encore membre ?</p>
               <Button
                 variant="outline"
                 onClick={() => setAccessDialogOpen(true)}
-                className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                className="border-gray-200 text-gray-700 hover:bg-gray-50"
                 data-testid="request-access-btn"
               >
                 Demander un accès
@@ -274,33 +271,33 @@ const LoginPage = () => {
 
       {/* Access Request Dialog */}
       <Dialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen}>
-        <DialogContent className="bg-slate-800 border-slate-700">
+        <DialogContent className="bg-white border-0 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Demander un accès</DialogTitle>
+            <DialogTitle className="text-gray-900">Demander un accès</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Input
               placeholder="Votre nom"
               value={accessForm.name}
               onChange={(e) => setAccessForm({ ...accessForm, name: e.target.value })}
-              className="bg-slate-900 border-slate-700 text-white"
+              className="bg-gray-50 border-gray-200"
             />
             <Input
               type="email"
               placeholder="Votre email"
               value={accessForm.email}
               onChange={(e) => setAccessForm({ ...accessForm, email: e.target.value })}
-              className="bg-slate-900 border-slate-700 text-white"
+              className="bg-gray-50 border-gray-200"
             />
             <textarea
               placeholder="Pourquoi souhaitez-vous rejoindre ?"
               value={accessForm.reason}
               onChange={(e) => setAccessForm({ ...accessForm, reason: e.target.value })}
-              className="w-full h-24 px-3 py-2 rounded-md bg-slate-900 border border-slate-700 text-white placeholder:text-slate-500 resize-none"
+              className="w-full h-24 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 resize-none focus:border-primary focus:outline-none"
             />
             <Button
               onClick={handleRequestAccess}
-              className="w-full bg-primary hover:bg-primary-hover"
+              className="w-full bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20"
             >
               Envoyer la demande
             </Button>
