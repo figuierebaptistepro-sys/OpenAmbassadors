@@ -23,6 +23,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import AccountSettings from "./pages/AccountSettings";
 import SupportPage from "./pages/SupportPage";
 import BillingPage from "./pages/BillingPage";
+import NewProjectPage from "./pages/NewProjectPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -189,6 +190,14 @@ function AppRouter() {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <ProjectsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/projects/new"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <NewProjectPage user={user} />}
           </ProtectedRoute>
         }
       />
