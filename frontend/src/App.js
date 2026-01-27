@@ -256,7 +256,7 @@ function AppRouter() {
         path="/settings"
         element={
           <ProtectedRoute requireType>
-            {({ user }) => <AccountSettings user={user} />}
+            {({ user, onUserUpdate }) => <AccountSettings user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />
