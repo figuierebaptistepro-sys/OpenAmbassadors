@@ -1,0 +1,207 @@
+{
+  "summary": {
+    "total_tests": 28,
+    "passed_tests": 26,
+    "failed_tests": 2,
+    "success_rate": 92.85714285714286,
+    "timestamp": "2026-01-27T10:11:13.644404"
+  },
+  "detailed_results": [
+    {
+      "test": "GET stats/platform - Platform Stats",
+      "success": true,
+      "details": "Status: 200, Response keys: ['creators_count', 'businesses_count', 'videos_count', 'campaigns_count']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:05.610279"
+    },
+    {
+      "test": "Platform Stats - Required Fields",
+      "success": true,
+      "details": "All required fields present: ['creators_count', 'businesses_count', 'videos_count']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:05.610319"
+    },
+    {
+      "test": "GET packs - Get All Packs",
+      "success": true,
+      "details": "Status: 200, Response items: 3",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:06.037421"
+    },
+    {
+      "test": "Packs - Structure Validation",
+      "success": true,
+      "details": "Pack structure valid, found 3 packs",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:06.037470"
+    },
+    {
+      "test": "GET packs/pack_local_impact - Get Pack pack_local_impact",
+      "success": true,
+      "details": "Status: 200, Response keys: ['pack_id', 'name', 'slug', 'description', 'target', 'creators_count', 'videos_count', 'includes', 'delivery_days', 'price_min', 'price_max', 'icon', 'popular']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:06.361892"
+    },
+    {
+      "test": "GET creators - Get All Creators",
+      "success": true,
+      "details": "Status: 200, Response items: 1",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:06.683774"
+    },
+    {
+      "test": "Creators - List Format",
+      "success": true,
+      "details": "Found 1 creators",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:06.683820"
+    },
+    {
+      "test": "GET creators?city=Paris - Filter by City",
+      "success": true,
+      "details": "Status: 200, Response items: 0",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:07.336854"
+    },
+    {
+      "test": "GET creators?available=true - Filter by Availability",
+      "success": true,
+      "details": "Status: 200, Response items: 1",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:07.660914"
+    },
+    {
+      "test": "GET creators?limit=5 - Limit Results",
+      "success": true,
+      "details": "Status: 200, Response items: 1",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:07.988529"
+    },
+    {
+      "test": "POST auth/register - Creator Registration",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'token']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:08.655571"
+    },
+    {
+      "test": "Creator Registration - Token Received",
+      "success": true,
+      "details": "User ID: user_6440ba772d34",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:08.655614"
+    },
+    {
+      "test": "POST auth/register - Business Registration",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'token']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:09.214045"
+    },
+    {
+      "test": "Business Registration - Token Received",
+      "success": true,
+      "details": "User ID: user_dff9b28acc82",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:09.214099"
+    },
+    {
+      "test": "POST auth/login - Creator Login",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'picture', 'token']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:09.758045"
+    },
+    {
+      "test": "Creator Login - Token Received",
+      "success": true,
+      "details": "User type: creator",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:09.758083"
+    },
+    {
+      "test": "GET auth/me - Get Current User",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'picture']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:10.083227"
+    },
+    {
+      "test": "GET creators/me/profile - Get Creator Profile",
+      "success": true,
+      "details": "Status: 200, Response keys: ['profile_id', 'user_id', 'bio', 'city', 'can_travel', 'works_remote', 'content_types', 'sectors', 'min_rate', 'max_rate', 'portfolio_videos', 'badges', 'rating', 'reviews_count', 'completed_projects', 'is_verified', 'available', 'created_at', 'updated_at', 'name', 'email', 'picture']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:10.408986"
+    },
+    {
+      "test": "GET stats/creator - Get Creator Stats",
+      "success": true,
+      "details": "Status: 200, Response keys: ['rating', 'reviews_count', 'completed_projects', 'active_campaigns', 'unread_messages']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:10.734449"
+    },
+    {
+      "test": "PUT creators/me/profile - Update Creator Profile",
+      "success": true,
+      "details": "Status: 200, Response keys: ['message']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:11.061532"
+    },
+    {
+      "test": "GET business/me/profile - Get Business Profile",
+      "success": false,
+      "details": "Status: 404",
+      "error": "Profile not found",
+      "timestamp": "2026-01-27T10:11:11.382251"
+    },
+    {
+      "test": "GET stats/business - Get Business Stats",
+      "success": true,
+      "details": "Status: 200, Response keys: ['total_campaigns', 'active_campaigns', 'completed_campaigns', 'total_spent', 'unread_messages']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:11.705415"
+    },
+    {
+      "test": "GET campaigns - Get Campaigns",
+      "success": true,
+      "details": "Status: 200, Response items: 0",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:12.028373"
+    },
+    {
+      "test": "POST quote-request - Submit Quote Request",
+      "success": true,
+      "details": "Status: 200, Response keys: ['quote_id', 'message']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:12.357289"
+    },
+    {
+      "test": "GET invalid-endpoint - Invalid Endpoint",
+      "success": true,
+      "details": "Status: 404, Response keys: ['detail']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:12.677984"
+    },
+    {
+      "test": "POST auth/login - Invalid Login",
+      "success": true,
+      "details": "Status: 401, Response keys: ['detail']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:12.999953"
+    },
+    {
+      "test": "POST auth/register - Duplicate Registration",
+      "success": true,
+      "details": "Status: 400, Response keys: ['detail']",
+      "error": "",
+      "timestamp": "2026-01-27T10:11:13.323486"
+    },
+    {
+      "test": "GET auth/me - Unauthorized Access",
+      "success": false,
+      "details": "Status: 200",
+      "error": "HTTP 200",
+      "timestamp": "2026-01-27T10:11:13.644220"
+    }
+  ]
+}
