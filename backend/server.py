@@ -1716,7 +1716,7 @@ async def get_admin_withdrawals(
 
 @api_router.get("/admin/projects")
 async def get_admin_projects(
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_admin_user),
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 50
