@@ -274,7 +274,7 @@ const BusinessDashboard = ({ user }) => {
                     </div>
                     <p className="text-gray-900 font-medium text-sm mb-1">Aucun projet</p>
                     <p className="text-gray-500 text-xs mb-3">Créez votre premier projet</p>
-                    <Button variant="outline" size="sm" onClick={() => navigate("/projects/new")} className="border-gray-200 text-xs">
+                    <Button variant="outline" size="sm" onClick={() => navigate("/business/projects/new")} className="border-gray-200 text-xs">
                       <Plus className="w-4 h-4 mr-1.5" />
                       Nouveau projet
                     </Button>
