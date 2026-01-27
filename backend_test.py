@@ -437,7 +437,7 @@ class IncubateurAPITester:
         return self.tests_passed == self.tests_run
 
 def main():
-    tester = UGCMachineAPITester()
+    tester = IncubateurAPITester()
     success = tester.run_all_tests()
     
     # Save detailed results
