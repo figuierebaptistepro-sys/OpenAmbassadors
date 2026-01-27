@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Search, User, MapPin, Star, CheckCircle, Filter, Globe, Navigation, Crown, Video
+  Search, User, MapPin, Star, CheckCircle, Filter, Globe, Navigation, Crown, Video, Users
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -16,6 +16,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../c
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CONTENT_TYPES = ["UGC", "Micro-trottoir", "Face cam", "Ads", "Interview", "Montage"];
+const VISIBILITY_OPTIONS = [
+  { value: "", label: "Toutes" },
+  { value: "1K", label: "1K+" },
+  { value: "5K", label: "5K+" },
+  { value: "10K", label: "10K+" },
+  { value: "35K", label: "35K+" },
+  { value: "50K", label: "50K+" },
+  { value: "100K", label: "100K+" },
+  { value: "250K", label: "250K+" },
+  { value: "1M", label: "1M+" },
+];
 
 const BrowseCreators = ({ user }) => {
   const navigate = useNavigate();
@@ -32,6 +43,7 @@ const BrowseCreators = ({ user }) => {
     available: false,
     incubator_only: false,
     min_score: 0,
+    visibility: "",
   });
 
   useEffect(() => { fetchCreators(); }, []);
@@ -45,6 +57,7 @@ const BrowseCreators = ({ user }) => {
       if (filters.incubator_only) params.append("incubator_only", "true");
       if (filters.content_type) params.append("content_type", filters.content_type);
       if (filters.min_score > 0) params.append("min_score", filters.min_score.toString());
+      if (filters.visibility) params.append("visibility", filters.visibility);
 
       const response = await fetch(`${API_URL}/api/creators?${params.toString()}`, { credentials: "include" });
       if (response.ok) setCreators(await response.json());
