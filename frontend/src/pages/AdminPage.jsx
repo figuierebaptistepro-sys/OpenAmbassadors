@@ -568,7 +568,7 @@ const AdminPage = ({ user }) => {
                 {users.length > 0 ? (
                   <div className="divide-y divide-gray-100">
                     {users.map((u) => (
-                      <div key={u.user_id} className="p-4 flex items-center gap-4 hover:bg-gray-50">
+                      <div key={u.user_id} className={`p-4 flex items-center gap-4 hover:bg-gray-50 ${u.is_banned ? "bg-red-50" : ""}`}>
                         <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                           {u.picture ? (
                             <img src={getImageUrl(u.picture)} alt="" className="w-full h-full object-cover" />
@@ -577,8 +577,13 @@ const AdminPage = ({ user }) => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900 text-sm">{u.name || "Sans nom"}</p>
+                            {u.is_banned && (
+                              <Badge className="bg-red-500 text-white text-xs">
+                                <Ban className="w-3 h-3 mr-1" />Banni
+                              </Badge>
+                            )}
                             {u.is_premium && (
                               <Badge className="bg-gradient-to-r from-primary to-pink-500 text-white text-xs">
                                 <Crown className="w-3 h-3 mr-1" />Premium
