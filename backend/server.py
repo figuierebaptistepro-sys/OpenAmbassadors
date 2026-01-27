@@ -1395,9 +1395,17 @@ async def admin_add_earning(request: Request, user: dict = Depends(get_current_u
     if not creator_id or not gross_amount:
         raise HTTPException(status_code=400, detail="creator_id et amount requis")
     
-    # Calculate fee
-    fee_amount = round(gross_amount * PLATFORM_FEE_PERCENT / 100, 2)
-    net_amount = gross_amount - fee_amount
+    # Check if creator is premium (no fees for premium)
+    creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
+    is_premium = creator.get("is_premium", False) if creator else False
+    
+    # Calculate fee (0% for premium, 15% for standard)
+    if is_premium:
+        fee_amount = 0
+        net_amount = gross_amount
+    else:
+        fee_amount = round(gross_amount * PLATFORM_FEE_PERCENT / 100, 2)
+        net_amount = gross_amount - fee_amount
     
     # Create transaction
     transaction = WalletTransaction(
