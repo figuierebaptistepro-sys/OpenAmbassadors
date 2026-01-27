@@ -1319,8 +1319,8 @@ async def request_withdrawal(data: WithdrawalRequest, user: dict = Depends(get_c
     if data.amount > available:
         raise HTTPException(status_code=400, detail=f"Solde insuffisant. Disponible: {available}€")
     
-    if data.amount < 10:
-        raise HTTPException(status_code=400, detail="Montant minimum: 10€")
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Montant invalide")
     
     # For bank transfer, require IBAN
     if data.method == "bank_transfer":
