@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut
+  Settings, HelpCircle, Crown, LogOut, Menu, X
 } from "lucide-react";
 
 const LOGO_URL = "/logo-sun.png";
@@ -9,6 +10,7 @@ const LOGO_URL = "/logo-sun.png";
 const Sidebar = ({ userType, isPremium, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -32,64 +34,76 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
 
   const isActive = (path) => location.pathname === path;
 
-  return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-40">
+  const handleNavClick = (path) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const SidebarContent = ({ isMobile = false }) => (
+    <>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100">
-        <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-3">
-          <img src={LOGO_URL} alt="Incubateur" className="w-11 h-11 rounded-xl object-cover" />
-          <span className="font-heading font-bold text-xl text-gray-900">Incubateur</span>
+      <div className="p-4 lg:p-6 border-b border-gray-100">
+        <Link 
+          to={userType === "creator" ? "/dashboard" : "/business"} 
+          className="flex items-center gap-3"
+          onClick={() => isMobile && setMobileMenuOpen(false)}
+        >
+          <img src={LOGO_URL} alt="Incubateur" className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl object-cover" />
+          <span className="font-heading font-bold text-lg lg:text-xl text-gray-900">Incubateur</span>
         </Link>
       </div>
 
       {/* Main Menu */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => (
-          <Link
+          <button
             key={item.path}
-            to={item.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            onClick={() => handleNavClick(item.path)}
+            className={`flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl transition-all w-full text-left ${
               isActive(item.path)
                 ? "bg-primary-soft text-primary font-semibold"
                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </Link>
+            <item.icon className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm lg:text-base">{item.label}</span>
+          </button>
         ))}
 
-        <div className="pt-6 mt-6 border-t border-gray-100">
+        <div className="pt-4 lg:pt-6 mt-4 lg:mt-6 border-t border-gray-100">
           {secondaryItems.map((item) => (
-            <Link
+            <button
               key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              onClick={() => handleNavClick(item.path)}
+              className={`flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl transition-all w-full text-left ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </Link>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm lg:text-base">{item.label}</span>
+            </button>
           ))}
         </div>
       </nav>
 
       {/* Premium CTA - Only for creators who aren't premium */}
       {userType === "creator" && !isPremium && (
-        <div className="p-4">
-          <div className="premium-card rounded-xl p-4">
+        <div className="p-3 lg:p-4">
+          <div className="premium-card rounded-xl p-3 lg:p-4">
             <div className="flex items-center gap-2 mb-2">
               <Crown className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-gray-900">Upgrade Incubateur</span>
+              <span className="font-semibold text-gray-900 text-sm lg:text-base">Upgrade Incubateur</span>
             </div>
-            <p className="text-gray-600 text-sm mb-3">
+            <p className="text-gray-600 text-xs lg:text-sm mb-3">
               Boost ta visibilité et accède aux missions premium
             </p>
             <button
-              onClick={() => navigate("/dashboard", { state: { openPremium: true } })}
+              onClick={() => {
+                navigate("/dashboard", { state: { openPremium: true } });
+                setMobileMenuOpen(false);
+              }}
               className="block w-full py-2 px-4 bg-primary hover:bg-primary-hover text-white text-center rounded-lg font-medium text-sm transition-colors shadow-md shadow-primary/20"
             >
               49€/mois
@@ -99,17 +113,65 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
       )}
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-3 lg:p-4 border-t border-gray-100">
         <button
-          onClick={onLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all w-full"
+          onClick={() => {
+            onLogout();
+            setMobileMenuOpen(false);
+          }}
+          className="flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all w-full"
           data-testid="logout-btn"
         >
           <LogOut className="w-5 h-5" />
-          <span>Déconnexion</span>
+          <span className="text-sm lg:text-base">Déconnexion</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Header with Hamburger */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-50">
+        <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-2">
+          <img src={LOGO_URL} alt="Incubateur" className="w-9 h-9 rounded-xl object-cover" />
+          <span className="font-heading font-bold text-lg text-gray-900">Incubateur</span>
+        </Link>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          data-testid="mobile-menu-btn"
+        >
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6 text-gray-700" />
+          ) : (
+            <Menu className="w-6 h-6 text-gray-700" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside 
+        className={`lg:hidden fixed top-16 left-0 bottom-0 w-72 bg-white border-r border-gray-200 flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <SidebarContent isMobile={true} />
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex-col z-40">
+        <SidebarContent />
+      </aside>
+    </>
   );
 };
 
