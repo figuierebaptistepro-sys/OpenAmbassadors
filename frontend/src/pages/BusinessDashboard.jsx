@@ -464,61 +464,6 @@ const BusinessDashboard = ({ user }) => {
         </SheetContent>
       </Sheet>
 
-      {/* Project Dialog */}
-      <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-xl max-w-md mx-4">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900">Nouveau projet</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-sm">Titre</Label>
-              <Input
-                value={projectForm.title}
-                onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                className="bg-gray-50 border-gray-200"
-                placeholder="Ex: Vidéos TikTok beauté"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm">Description</Label>
-              <textarea
-                value={projectForm.description}
-                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                className="w-full h-20 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 resize-none text-sm"
-                placeholder="Décrivez votre besoin..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-sm">Type</Label>
-                <select
-                  value={projectForm.content_type}
-                  onChange={(e) => setProjectForm({ ...projectForm, content_type: e.target.value })}
-                  className="w-full h-10 px-3 rounded-lg bg-gray-50 border border-gray-200 text-sm"
-                >
-                  <option value="UGC">UGC</option>
-                  <option value="Face cam">Face cam</option>
-                  <option value="Ads">Ads</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm">Budget (€)</Label>
-                <Input
-                  type="number"
-                  value={projectForm.budget}
-                  onChange={(e) => setProjectForm({ ...projectForm, budget: e.target.value })}
-                  className="bg-gray-50 border-gray-200"
-                  placeholder="500"
-                />
-              </div>
-            </div>
-            <Button onClick={handleCreateProject} className="w-full bg-primary hover:bg-primary-hover" data-testid="submit-project-btn">
-              Publier
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 };
