@@ -173,7 +173,7 @@ const CreatorProfile = ({ currentUser }) => {
                     <div className="flex-shrink-0 -mt-20 md:-mt-16">
                       <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-white shadow-lg border-4 border-white overflow-hidden">
                         {creator.picture ? (
-                          <img src={creator.picture} alt={creator.name} className="w-full h-full object-cover" />
+                          <img src={getImageUrl(creator.picture)} alt={creator.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                             <span className="text-5xl font-heading font-bold text-primary">
