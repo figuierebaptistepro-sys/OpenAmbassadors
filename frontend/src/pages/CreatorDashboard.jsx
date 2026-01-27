@@ -66,6 +66,13 @@ const CreatorDashboard = ({ user }) => {
   });
   const [newVideoUrl, setNewVideoUrl] = useState("");
 
+  // Force le mode upload à chaque ouverture du dialogue
+  useEffect(() => {
+    if (videoDialogOpen) {
+      setUploadMode("file");
+    }
+  }, [videoDialogOpen]);
+
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
