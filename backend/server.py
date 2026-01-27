@@ -702,33 +702,36 @@ async def request_access(request: Request):
 # ==================== FILE UPLOAD ROUTES ====================
 
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"]
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB for images
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB for videos
 
 @api_router.post("/upload/profile-picture")
 async def upload_profile_picture(
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
-    """Upload profile picture for current user"""
+    """Upload profile picture to Cloudflare R2"""
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
     
-    # Check file size
     contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 10MB.")
     
-    # Generate unique filename
     ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
     filename = f"{user['user_id']}_profile_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = PROFILES_DIR / filename
     
-    # Save file
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    # Upload to R2
+    if s3_client:
+        picture_url = await upload_to_r2(contents, filename, file.content_type, "profiles")
+    else:
+        # Fallback to local storage
+        filepath = PROFILES_DIR / filename
+        with open(filepath, "wb") as f:
+            f.write(contents)
+        picture_url = f"/api/uploads/profiles/{filename}"
     
-    # Update user profile with picture URL
-    picture_url = f"/api/uploads/profiles/{filename}"
     await db.users.update_one(
         {"user_id": user["user_id"]},
         {"$set": {"picture": picture_url}}
@@ -741,26 +744,26 @@ async def upload_banner(
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
-    """Upload banner/cover image for current user"""
+    """Upload banner/cover image to Cloudflare R2"""
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
     
-    # Check file size
     contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 10MB.")
     
-    # Generate unique filename
     ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
     filename = f"{user['user_id']}_banner_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = BANNERS_DIR / filename
     
-    # Save file
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    # Upload to R2
+    if s3_client:
+        banner_url = await upload_to_r2(contents, filename, file.content_type, "banners")
+    else:
+        filepath = BANNERS_DIR / filename
+        with open(filepath, "wb") as f:
+            f.write(contents)
+        banner_url = f"/api/uploads/banners/{filename}"
     
-    # Update user with banner URL
-    banner_url = f"/api/uploads/banners/{filename}"
     await db.users.update_one(
         {"user_id": user["user_id"]},
         {"$set": {"banner": banner_url}}
@@ -770,7 +773,7 @@ async def upload_banner(
 
 @api_router.get("/uploads/profiles/{filename}")
 async def get_profile_picture(filename: str):
-    """Serve profile pictures publicly"""
+    """Serve profile pictures (fallback for local storage)"""
     filepath = PROFILES_DIR / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Image non trouvée")
@@ -778,7 +781,7 @@ async def get_profile_picture(filename: str):
 
 @api_router.get("/uploads/banners/{filename}")
 async def get_banner(filename: str):
-    """Serve banner images publicly"""
+    """Serve banner images (fallback for local storage)"""
     filepath = BANNERS_DIR / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Image non trouvée")
@@ -789,30 +792,85 @@ async def upload_project_banner(
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
-    """Upload project banner image"""
+    """Upload project banner image to Cloudflare R2"""
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
     
     contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 10MB.")
     
     ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
     filename = f"project_{uuid.uuid4().hex[:12]}.{ext}"
-    filepath = PROJECTS_DIR / filename
     
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    # Upload to R2
+    if s3_client:
+        banner_url = await upload_to_r2(contents, filename, file.content_type, "projects")
+    else:
+        filepath = PROJECTS_DIR / filename
+        with open(filepath, "wb") as f:
+            f.write(contents)
+        banner_url = f"/api/uploads/projects/{filename}"
     
-    banner_url = f"/api/uploads/projects/{filename}"
     return {"message": "Image uploadée", "banner_url": banner_url}
 
 @api_router.get("/uploads/projects/{filename}")
 async def get_project_banner(filename: str):
-    """Serve project banner images publicly"""
+    """Serve project banner images (fallback for local storage)"""
     filepath = PROJECTS_DIR / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Image non trouvée")
+    return FileResponse(filepath)
+
+@api_router.post("/upload/portfolio")
+async def upload_portfolio_media(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload portfolio video or image to Cloudflare R2"""
+    is_video = file.content_type in ALLOWED_VIDEO_TYPES
+    is_image = file.content_type in ALLOWED_IMAGE_TYPES
+    
+    if not is_video and not is_image:
+        raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP, GIF, MP4, WEBM ou MOV.")
+    
+    contents = await file.read()
+    max_size = MAX_VIDEO_SIZE if is_video else MAX_IMAGE_SIZE
+    
+    if len(contents) > max_size:
+        size_mb = max_size // (1024 * 1024)
+        raise HTTPException(status_code=400, detail=f"Fichier trop volumineux. Maximum {size_mb}MB.")
+    
+    ext = file.filename.split(".")[-1] if "." in file.filename else ("mp4" if is_video else "jpg")
+    media_type = "video" if is_video else "image"
+    filename = f"{user['user_id']}_{media_type}_{uuid.uuid4().hex[:8]}.{ext}"
+    
+    # Upload to R2
+    if s3_client:
+        media_url = await upload_to_r2(contents, filename, file.content_type, "portfolio")
+    else:
+        # Fallback to local storage
+        portfolio_dir = UPLOADS_DIR / "portfolio"
+        portfolio_dir.mkdir(parents=True, exist_ok=True)
+        filepath = portfolio_dir / filename
+        with open(filepath, "wb") as f:
+            f.write(contents)
+        media_url = f"/api/uploads/portfolio/{filename}"
+    
+    return {
+        "message": "Fichier uploadé",
+        "url": media_url,
+        "type": media_type,
+        "filename": filename
+    }
+
+@api_router.get("/uploads/portfolio/{filename}")
+async def get_portfolio_media(filename: str):
+    """Serve portfolio media (fallback for local storage)"""
+    portfolio_dir = UPLOADS_DIR / "portfolio"
+    filepath = portfolio_dir / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Fichier non trouvé")
     return FileResponse(filepath)
 
 # ==================== CREATOR ROUTES ====================
