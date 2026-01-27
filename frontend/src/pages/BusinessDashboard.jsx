@@ -261,7 +261,7 @@ const BusinessDashboard = ({ user }) => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate text-sm">{project.title}</p>
                           <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>{project.budget ? `${project.budget}€` : "Budget à définir"}</span>
+                            <span>{project.budget ? `${project.budget}` : "Budget à définir"}</span>
                             <span>•</span>
                             <span>{project.applications?.length || 0} candidatures</span>
                           </div>
