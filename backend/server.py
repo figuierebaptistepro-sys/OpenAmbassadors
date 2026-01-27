@@ -2000,6 +2000,16 @@ async def admin_process_withdrawal(request: Request, user: dict = Depends(get_ad
             {"$inc": {"pending_amount": -tx["amount"]}}
         )
     
+    # Send email notification to creator
+    creator = await db.users.find_one({"user_id": tx["user_id"]}, {"_id": 0})
+    if creator:
+        await send_withdrawal_status_email(
+            creator_email=creator["email"],
+            creator_name=creator.get("name"),
+            amount=tx["amount"],
+            status="approved" if action == "approve" else "rejected"
+        )
+    
     return {"message": f"Retrait {new_status}", "status": new_status}
 
 # ==================== ADMIN DASHBOARD ROUTES ====================
