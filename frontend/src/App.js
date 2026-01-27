@@ -176,6 +176,14 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/wallet"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <WalletPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
       
       {/* Business Routes */}
       <Route
