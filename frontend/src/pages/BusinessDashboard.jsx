@@ -406,7 +406,7 @@ const BusinessDashboard = ({ user }) => {
             <Card className="border-0 shadow-sm bg-gray-900 text-white hidden sm:block">
               <CardContent className="p-4">
                 <Zap className="w-6 h-6 text-yellow-400 mb-2" />
-                <h4 className="font-heading font-bold text-sm mb-1">Besoin d'aide ?</h4>
+                <h4 className="font-heading font-bold text-sm mb-1">Besoin d&apos;aide ?</h4>
                 <p className="text-gray-400 text-xs mb-3">Notre équipe vous accompagne.</p>
                 <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100 text-xs" onClick={() => navigate("/support")}>
                   Support
