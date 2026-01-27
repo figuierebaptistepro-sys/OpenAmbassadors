@@ -447,11 +447,12 @@ const WalletPage = ({ user }) => {
               <Label className="text-sm">Montant à retirer (€)</Label>
               <Input
                 type="number"
-                min={10}
+                min={0.01}
                 max={availableBalance}
+                step="0.01"
                 value={withdrawForm.amount}
                 onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
-                placeholder="Minimum 10€"
+                placeholder="Montant en euros"
                 className="bg-gray-50 border-gray-200"
                 data-testid="withdraw-amount"
               />
