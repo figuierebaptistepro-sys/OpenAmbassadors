@@ -1761,7 +1761,7 @@ async def admin_update_project_status(project_id: str, request: Request, user: d
 
 @api_router.get("/admin/access-requests")
 async def get_admin_access_requests(
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_admin_user),
     status: Optional[str] = "pending",
     skip: int = 0,
     limit: int = 50
