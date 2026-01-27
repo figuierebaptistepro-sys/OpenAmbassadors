@@ -570,21 +570,40 @@ async def process_session(request: Request, response: Response):
         user_id = existing_user["user_id"]
         user_type = existing_user.get("user_type")
         is_new = False
-        # Update user info
+        
+        # Only update name, DON'T overwrite custom picture if user has one
+        update_data = {"name": oauth_data["name"]}
+        
+        # Only set Google picture if user doesn't have a custom one
+        current_picture = existing_user.get("picture")
+        is_custom_picture = current_picture and (
+            "r2.dev" in current_picture or  # R2 storage
+            "/api/uploads/" in current_picture or  # Local storage
+            "cloudflare" in current_picture.lower()
+        )
+        
+        if not is_custom_picture:
+            # No custom picture, use Google's
+            update_data["picture"] = oauth_data.get("picture")
+        
         await db.users.update_one(
             {"user_id": user_id},
-            {"$set": {"name": oauth_data["name"], "picture": oauth_data.get("picture")}}
+            {"$set": update_data}
         )
+        
+        # Get updated user picture for response
+        user_picture = current_picture if is_custom_picture else oauth_data.get("picture")
     else:
         # New user - don't set type yet
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_type = None
         is_new = True
+        user_picture = oauth_data.get("picture")
         user_doc = {
             "user_id": user_id,
             "email": oauth_data["email"],
             "name": oauth_data["name"],
-            "picture": oauth_data.get("picture"),
+            "picture": user_picture,
             "user_type": None,
             "is_premium": False,
             "created_at": datetime.now(timezone.utc).isoformat()
@@ -619,7 +638,7 @@ async def process_session(request: Request, response: Response):
         "user_id": user_id,
         "email": oauth_data["email"],
         "name": oauth_data["name"],
-        "picture": oauth_data.get("picture"),
+        "picture": user_picture,
         "user_type": user_type,
         "is_new_user": is_new
     }
