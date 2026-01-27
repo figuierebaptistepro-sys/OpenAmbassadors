@@ -419,8 +419,7 @@ const WalletPage = ({ user }) => {
                 <h4 className="font-heading font-bold text-sm mb-1">Comment ça marche ?</h4>
                 <ul className="text-gray-400 text-xs space-y-1.5 mb-3">
                   <li>• Les paiements sont validés manuellement</li>
-                  <li>• 15% de frais sur chaque mission</li>
-                  <li>• Retrait minimum : 10€</li>
+                  <li>• 15% de frais (0% pour Premium)</li>
                   <li>• Délai : 2-5 jours ouvrés</li>
                 </ul>
                 <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100 text-xs" onClick={() => navigate("/support")}>
