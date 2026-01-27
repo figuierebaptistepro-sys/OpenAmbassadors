@@ -400,11 +400,72 @@ const CreatorDashboard = ({ user }) => {
               <textarea value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                 className="w-full h-20 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 resize-none text-sm mt-1" placeholder="Présentez-vous..." />
             </div>
-            <div>
-              <Label className="text-sm">Ville</Label>
-              <Input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                className="bg-gray-50 border-gray-200 mt-1" placeholder="Paris" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Ville</Label>
+                <Input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                  className="bg-gray-50 border-gray-200 mt-1" placeholder="Paris" />
+              </div>
+              <div>
+                <Label className="text-sm">Téléphone</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="bg-gray-50 border-gray-200 mt-1" placeholder="06 12 34 56 78" />
+              </div>
             </div>
+            
+            {/* Visibility */}
+            <div>
+              <Label className="text-sm">Audience globale (abonnés)</Label>
+              <div className="grid grid-cols-4 gap-2 mt-1">
+                {VISIBILITY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm({ ...editForm, visibility: opt.value })}
+                    className={`p-2 rounded-lg text-xs font-medium transition-all ${
+                      editForm.visibility === opt.value
+                        ? "bg-primary text-white"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Media */}
+            <div className="space-y-2">
+              <Label className="text-sm">Réseaux sociaux</Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-20">Instagram</span>
+                  <Input value={editForm.social_instagram} onChange={(e) => setEditForm({ ...editForm, social_instagram: e.target.value })}
+                    className="bg-gray-50 border-gray-200 flex-1" placeholder="@votre_compte" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-20">TikTok</span>
+                  <Input value={editForm.social_tiktok} onChange={(e) => setEditForm({ ...editForm, social_tiktok: e.target.value })}
+                    className="bg-gray-50 border-gray-200 flex-1" placeholder="@votre_compte" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-20">YouTube</span>
+                  <Input value={editForm.social_youtube} onChange={(e) => setEditForm({ ...editForm, social_youtube: e.target.value })}
+                    className="bg-gray-50 border-gray-200 flex-1" placeholder="URL de la chaîne" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-20">Twitter/X</span>
+                  <Input value={editForm.social_twitter} onChange={(e) => setEditForm({ ...editForm, social_twitter: e.target.value })}
+                    className="bg-gray-50 border-gray-200 flex-1" placeholder="@votre_compte" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-20">LinkedIn</span>
+                  <Input value={editForm.social_linkedin} onChange={(e) => setEditForm({ ...editForm, social_linkedin: e.target.value })}
+                    className="bg-gray-50 border-gray-200 flex-1" placeholder="URL du profil" />
+                </div>
+              </div>
+            </div>
+
             <div>
               <Label className="text-sm">Spécialités</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
