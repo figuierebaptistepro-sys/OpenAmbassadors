@@ -22,6 +22,7 @@ import LearnPage from "./pages/LearnPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import AccountSettings from "./pages/AccountSettings";
 import SupportPage from "./pages/SupportPage";
+import BillingPage from "./pages/BillingPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
