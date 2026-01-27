@@ -337,8 +337,20 @@ class IncubateurAPITester:
         # Test business stats
         self.test_endpoint('GET', 'stats/business', 200, headers=headers, description="- Get Business Stats")
         
-        # Test campaigns
-        self.test_endpoint('GET', 'campaigns', 200, headers=headers, description="- Get Campaigns")
+        # Test pack selection
+        pack_data = {"pack_id": "pack_starter"}
+        self.test_endpoint('POST', 'business/select-pack', 200, data=pack_data, headers=headers, description="- Select Pack")
+        
+        # Test project creation (should work after pack selection)
+        project_data = {
+            "pack_id": "pack_starter",
+            "title": "Test Project",
+            "description": "Test project for automated testing",
+            "budget": 500,
+            "content_type": "UGC",
+            "target_creators": 1
+        }
+        self.test_endpoint('POST', 'projects', 200, data=project_data, headers=headers, description="- Create Project")
 
     def test_quote_request(self):
         """Test quote request functionality"""
