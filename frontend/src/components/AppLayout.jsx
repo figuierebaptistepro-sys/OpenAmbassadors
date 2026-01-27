@@ -37,6 +37,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const secondaryItems = [
     { icon: HelpCircle, label: "Support & Guides", path: "/support" },
     { icon: Settings, label: "Paramètres", path: "/settings" },
+    { icon: Shield, label: "Administration", path: "/admin", adminOnly: true },
   ];
 
   const isActive = (path) => location.pathname === path;
