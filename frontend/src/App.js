@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import "@fontsource/plus-jakarta-sans/400.css";
 import "@fontsource/plus-jakarta-sans/500.css";
@@ -12,16 +12,14 @@ import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 
 // Pages
-import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import SelectTypePage from "./pages/SelectTypePage";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import CreatorProfile from "./pages/CreatorProfile";
 import BrowseCreators from "./pages/BrowseCreators";
-import PacksPage from "./pages/PacksPage";
-import MessagesPage from "./pages/MessagesPage";
-import OnboardingPage from "./pages/OnboardingPage";
+import TrainingsPage from "./pages/TrainingsPage";
+import ProjectsPage from "./pages/ProjectsPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -50,12 +48,15 @@ const AuthCallback = () => {
 
           if (response.ok) {
             const userData = await response.json();
-            // Clear hash and navigate based on user type
             window.history.replaceState(null, "", window.location.pathname);
-            if (userData.user_type === "creator") {
-              navigate("/creator/dashboard", { state: { user: userData } });
+            
+            // Check if user type is set
+            if (!userData.user_type) {
+              navigate("/select-type", { state: { user: userData } });
+            } else if (userData.user_type === "creator") {
+              navigate("/dashboard", { state: { user: userData } });
             } else {
-              navigate("/business/dashboard", { state: { user: userData } });
+              navigate("/business", { state: { user: userData } });
             }
           } else {
             navigate("/login");
@@ -71,26 +72,25 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-slate-600 font-medium">Connexion en cours...</p>
+        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-white/80 font-medium">Connexion en cours...</p>
       </div>
     </div>
   );
 };
 
 // Protected Route Component
-const ProtectedRoute = ({ children, allowedTypes }) => {
+const ProtectedRoute = ({ children, requireType = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(location.state?.user ? true : null);
-  const [user, setUser] = useState(location.state?.user || null);
+  const [authState, setAuthState] = useState({ checked: false, user: null });
 
   useEffect(() => {
+    // If user passed from previous navigation, use it
     if (location.state?.user) {
-      setUser(location.state.user);
-      setIsAuthenticated(true);
+      setAuthState({ checked: true, user: location.state.user });
       return;
     }
 
@@ -103,39 +103,36 @@ const ProtectedRoute = ({ children, allowedTypes }) => {
         if (!response.ok) throw new Error("Not authenticated");
 
         const userData = await response.json();
-        setUser(userData);
-        setIsAuthenticated(true);
-
-        // Check if user type is allowed
-        if (allowedTypes && !allowedTypes.includes(userData.user_type)) {
-          if (userData.user_type === "creator") {
-            navigate("/creator/dashboard");
-          } else {
-            navigate("/business/dashboard");
-          }
+        
+        // Check if type selection is required
+        if (requireType && !userData.user_type) {
+          navigate("/select-type", { state: { user: userData } });
+          return;
         }
+        
+        setAuthState({ checked: true, user: userData });
       } catch (error) {
-        setIsAuthenticated(false);
+        setAuthState({ checked: true, user: null });
         navigate("/login");
       }
     };
 
     checkAuth();
-  }, [navigate, location.state, allowedTypes]);
+  }, [navigate, location.state, requireType]);
 
-  if (isAuthenticated === null) {
+  if (!authState.checked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
+  if (!authState.user) {
     return null;
   }
 
-  return typeof children === "function" ? children({ user }) : children;
+  return typeof children === "function" ? children({ user: authState.user }) : children;
 };
 
 // App Router
@@ -149,45 +146,74 @@ function AppRouter() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/register/creator" element={<RegisterPage userType="creator" />} />
-      <Route path="/register/business" element={<RegisterPage userType="business" />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/packs" element={<PacksPage />} />
-      <Route path="/creators" element={<BrowseCreators />} />
-      <Route path="/creators/:userId" element={<CreatorProfile />} />
+      
+      {/* Type selection - required after first login */}
+      <Route
+        path="/select-type"
+        element={
+          <ProtectedRoute>
+            {({ user }) => <SelectTypePage user={user} />}
+          </ProtectedRoute>
+        }
+      />
       
       {/* Creator Routes */}
       <Route
-        path="/creator/dashboard"
+        path="/dashboard"
         element={
-          <ProtectedRoute allowedTypes={["creator"]}>
+          <ProtectedRoute requireType>
             {({ user }) => <CreatorDashboard user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trainings"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <TrainingsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ProjectsPage user={user} />}
           </ProtectedRoute>
         }
       />
       
       {/* Business Routes */}
       <Route
-        path="/business/dashboard"
+        path="/business"
         element={
-          <ProtectedRoute allowedTypes={["business"]}>
+          <ProtectedRoute requireType>
             {({ user }) => <BusinessDashboard user={user} />}
           </ProtectedRoute>
         }
       />
-      
-      {/* Messages - both can access */}
       <Route
-        path="/messages"
+        path="/creators"
         element={
-          <ProtectedRoute>
-            {({ user }) => <MessagesPage user={user} />}
+          <ProtectedRoute requireType>
+            {({ user }) => <BrowseCreators user={user} />}
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/creators/:userId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <CreatorProfile currentUser={user} />}
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Redirect root to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
