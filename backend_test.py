@@ -389,7 +389,7 @@ class IncubateurAPITester:
 
     def run_all_tests(self):
         """Run all tests"""
-        print("🚀 Starting UGC Machine API Tests...")
+        print("🚀 Starting Incubateur des Créateurs API Tests...")
         print(f"Testing against: {self.base_url}")
         print("=" * 60)
         
@@ -399,16 +399,16 @@ class IncubateurAPITester:
             self.test_packs_endpoint()
             self.test_creators_endpoint()
             
-            # Authentication
-            self.test_user_registration()
-            self.test_user_login()
+            # Authentication flow
+            self.test_otp_authentication()
+            self.test_user_type_selection()
             
             # Authenticated endpoints
             self.test_authenticated_endpoints()
             self.test_business_endpoints()
             
             # Other functionality
-            self.test_quote_request()
+            self.test_access_request()
             
             # Error handling
             self.test_error_handling()
