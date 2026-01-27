@@ -261,6 +261,14 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <AdminPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
       
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
