@@ -24,6 +24,7 @@ import AccountSettings from "./pages/AccountSettings";
 import SupportPage from "./pages/SupportPage";
 import BillingPage from "./pages/BillingPage";
 import NewProjectPage from "./pages/NewProjectPage";
+import WalletPage from "./pages/WalletPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
