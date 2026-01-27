@@ -1221,6 +1221,273 @@ async def create_review(request: Request, user: dict = Depends(get_current_user)
     
     return {"review_id": review.review_id}
 
+# ==================== WALLET ROUTES ====================
+
+PLATFORM_FEE_PERCENT = 15  # 15% platform fee
+
+@api_router.get("/wallet")
+async def get_wallet(user: dict = Depends(get_current_user)):
+    """Get creator wallet info and transactions"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Réservé aux créateurs")
+    
+    # Get wallet info
+    wallet = await db.wallets.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    if not wallet:
+        # Create wallet if doesn't exist
+        wallet = {
+            "user_id": user["user_id"],
+            "balance": 0.0,
+            "total_earned": 0.0,
+            "total_withdrawn": 0.0,
+            "pending_amount": 0.0,
+            "payment_methods": {
+                "paypal_email": None,
+                "bank_iban": None,
+                "bank_bic": None,
+                "bank_holder_name": None
+            },
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.wallets.insert_one(wallet)
+    
+    # Get recent transactions
+    transactions = await db.wallet_transactions.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    # Convert datetime to string for JSON serialization
+    for tx in transactions:
+        if isinstance(tx.get("created_at"), datetime):
+            tx["created_at"] = tx["created_at"].isoformat()
+        if isinstance(tx.get("processed_at"), datetime):
+            tx["processed_at"] = tx["processed_at"].isoformat()
+    
+    return {
+        "balance": wallet.get("balance", 0),
+        "total_earned": wallet.get("total_earned", 0),
+        "total_withdrawn": wallet.get("total_withdrawn", 0),
+        "pending_amount": wallet.get("pending_amount", 0),
+        "payment_methods": wallet.get("payment_methods", {}),
+        "transactions": transactions,
+        "platform_fee_percent": PLATFORM_FEE_PERCENT
+    }
+
+@api_router.put("/wallet/payment-methods")
+async def update_payment_methods(data: PaymentMethodUpdate, user: dict = Depends(get_current_user)):
+    """Update payment methods (PayPal or Bank)"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Réservé aux créateurs")
+    
+    update_data = {}
+    if data.paypal_email is not None:
+        update_data["payment_methods.paypal_email"] = data.paypal_email
+    if data.bank_iban is not None:
+        update_data["payment_methods.bank_iban"] = data.bank_iban
+    if data.bank_bic is not None:
+        update_data["payment_methods.bank_bic"] = data.bank_bic
+    if data.bank_holder_name is not None:
+        update_data["payment_methods.bank_holder_name"] = data.bank_holder_name
+    
+    if update_data:
+        await db.wallets.update_one(
+            {"user_id": user["user_id"]},
+            {"$set": update_data},
+            upsert=True
+        )
+    
+    return {"message": "Méthodes de paiement mises à jour"}
+
+@api_router.post("/wallet/withdraw")
+async def request_withdrawal(data: WithdrawalRequest, user: dict = Depends(get_current_user)):
+    """Request a withdrawal from wallet"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Réservé aux créateurs")
+    
+    # PayPal not available yet
+    if data.method == "paypal":
+        raise HTTPException(status_code=400, detail="PayPal bientôt disponible")
+    
+    # Get wallet
+    wallet = await db.wallets.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    if not wallet:
+        raise HTTPException(status_code=400, detail="Wallet non trouvé")
+    
+    # Check balance
+    available = wallet.get("balance", 0) - wallet.get("pending_amount", 0)
+    if data.amount > available:
+        raise HTTPException(status_code=400, detail=f"Solde insuffisant. Disponible: {available}€")
+    
+    if data.amount < 10:
+        raise HTTPException(status_code=400, detail="Montant minimum: 10€")
+    
+    # For bank transfer, require IBAN
+    if data.method == "bank_transfer":
+        iban = data.iban or wallet.get("payment_methods", {}).get("bank_iban")
+        bic = data.bic or wallet.get("payment_methods", {}).get("bank_bic")
+        if not iban:
+            raise HTTPException(status_code=400, detail="IBAN requis pour le virement")
+    
+    # Create withdrawal transaction
+    transaction = WalletTransaction(
+        user_id=user["user_id"],
+        amount=data.amount,
+        net_amount=data.amount,  # No additional fee on withdrawal
+        fee_amount=0,
+        transaction_type="withdrawal",
+        status="pending",
+        description="Demande de retrait",
+        withdrawal_method=data.method,
+        bank_iban=iban if data.method == "bank_transfer" else None,
+        bank_bic=bic if data.method == "bank_transfer" else None
+    )
+    
+    await db.wallet_transactions.insert_one(transaction.model_dump())
+    
+    # Update pending amount in wallet
+    await db.wallets.update_one(
+        {"user_id": user["user_id"]},
+        {"$inc": {"pending_amount": data.amount}}
+    )
+    
+    return {
+        "message": "Demande de retrait envoyée",
+        "transaction_id": transaction.transaction_id,
+        "amount": data.amount,
+        "status": "pending"
+    }
+
+@api_router.get("/wallet/transactions")
+async def get_wallet_transactions(
+    user: dict = Depends(get_current_user),
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get all wallet transactions"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Réservé aux créateurs")
+    
+    transactions = await db.wallet_transactions.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    for tx in transactions:
+        if isinstance(tx.get("created_at"), datetime):
+            tx["created_at"] = tx["created_at"].isoformat()
+        if isinstance(tx.get("processed_at"), datetime):
+            tx["processed_at"] = tx["processed_at"].isoformat()
+    
+    return transactions
+
+# Admin route to add earnings to creator wallet (called when project payment validated)
+@api_router.post("/admin/wallet/add-earning")
+async def admin_add_earning(request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Add earning to creator wallet (manual validation)"""
+    # In production, check if user is admin
+    body = await request.json()
+    creator_id = body.get("creator_id")
+    gross_amount = body.get("amount")
+    project_id = body.get("project_id")
+    description = body.get("description", "Paiement mission")
+    
+    if not creator_id or not gross_amount:
+        raise HTTPException(status_code=400, detail="creator_id et amount requis")
+    
+    # Calculate fee
+    fee_amount = round(gross_amount * PLATFORM_FEE_PERCENT / 100, 2)
+    net_amount = gross_amount - fee_amount
+    
+    # Create transaction
+    transaction = WalletTransaction(
+        user_id=creator_id,
+        amount=gross_amount,
+        net_amount=net_amount,
+        fee_amount=fee_amount,
+        transaction_type="earning",
+        status="completed",
+        description=description,
+        project_id=project_id,
+        processed_at=datetime.now(timezone.utc)
+    )
+    
+    await db.wallet_transactions.insert_one(transaction.model_dump())
+    
+    # Update wallet balance
+    await db.wallets.update_one(
+        {"user_id": creator_id},
+        {
+            "$inc": {
+                "balance": net_amount,
+                "total_earned": net_amount
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "message": "Paiement ajouté",
+        "transaction_id": transaction.transaction_id,
+        "gross_amount": gross_amount,
+        "fee_amount": fee_amount,
+        "net_amount": net_amount
+    }
+
+# Admin route to process withdrawal
+@api_router.post("/admin/wallet/process-withdrawal")
+async def admin_process_withdrawal(request: Request, user: dict = Depends(get_current_user)):
+    """Admin: Approve or reject withdrawal request"""
+    body = await request.json()
+    transaction_id = body.get("transaction_id")
+    action = body.get("action")  # "approve" or "reject"
+    admin_note = body.get("admin_note")
+    
+    if action not in ["approve", "reject"]:
+        raise HTTPException(status_code=400, detail="Action invalide")
+    
+    tx = await db.wallet_transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction non trouvée")
+    
+    if tx["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Transaction déjà traitée")
+    
+    new_status = "completed" if action == "approve" else "rejected"
+    
+    # Update transaction
+    await db.wallet_transactions.update_one(
+        {"transaction_id": transaction_id},
+        {
+            "$set": {
+                "status": new_status,
+                "admin_note": admin_note,
+                "processed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Update wallet
+    if action == "approve":
+        await db.wallets.update_one(
+            {"user_id": tx["user_id"]},
+            {
+                "$inc": {
+                    "balance": -tx["amount"],
+                    "pending_amount": -tx["amount"],
+                    "total_withdrawn": tx["amount"]
+                }
+            }
+        )
+    else:
+        # Rejected - just remove from pending
+        await db.wallets.update_one(
+            {"user_id": tx["user_id"]},
+            {"$inc": {"pending_amount": -tx["amount"]}}
+        )
+    
+    return {"message": f"Retrait {new_status}", "status": new_status}
+
 # Include router
 app.include_router(api_router)
 
