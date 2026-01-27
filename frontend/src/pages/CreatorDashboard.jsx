@@ -21,6 +21,16 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const CONTENT_TYPES = ["UGC", "Micro-trottoir", "Face cam", "Ads", "Interview", "Montage"];
 const EQUIPMENT_OPTIONS = ["Smartphone", "Caméra", "Micro", "Éclairage", "Trépied", "Stabilisateur"];
+const VISIBILITY_OPTIONS = [
+  { value: "1K", label: "1K+" },
+  { value: "5K", label: "5K+" },
+  { value: "10K", label: "10K+" },
+  { value: "35K", label: "35K+" },
+  { value: "50K", label: "50K+" },
+  { value: "100K", label: "100K+" },
+  { value: "250K", label: "250K+" },
+  { value: "1M", label: "1M+" },
+];
 
 const getChecklistItems = (profile) => [
   { id: "bio", label: "Ajouter une bio", points: 5, done: !!profile?.bio },
@@ -29,6 +39,8 @@ const getChecklistItems = (profile) => [
   { id: "equipment", label: "Lister votre matériel", points: 10, done: profile?.equipment?.length > 0 },
   { id: "portfolio", label: "Ajouter 3 vidéos", points: 20, done: profile?.portfolio_videos?.length >= 3 },
   { id: "rates", label: "Définir vos tarifs", points: 10, done: !!profile?.min_rate },
+  { id: "social", label: "Lier vos réseaux sociaux", points: 15, done: !!(profile?.social_instagram || profile?.social_tiktok || profile?.social_youtube) },
+  { id: "visibility", label: "Indiquer votre audience", points: 10, done: !!profile?.visibility },
 ];
 
 const CreatorDashboard = ({ user }) => {
@@ -42,8 +54,10 @@ const CreatorDashboard = ({ user }) => {
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
 
   const [editForm, setEditForm] = useState({
-    bio: "", city: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
+    bio: "", city: "", phone: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
     works_remote: false, can_travel: false, available: true,
+    social_instagram: "", social_tiktok: "", social_youtube: "", social_twitter: "", social_linkedin: "",
+    visibility: "",
   });
   const [newVideoUrl, setNewVideoUrl] = useState("");
 
