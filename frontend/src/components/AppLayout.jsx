@@ -276,7 +276,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               <p className="font-medium text-gray-900 text-sm truncate">{user?.name || "Utilisateur"}</p>
               <div className="flex items-center gap-1.5">
                 {isPremium ? (
-                  <Badge className="bg-primary/10 text-primary text-xs px-1.5 py-0">
+                  <Badge className="bg-gradient-to-r from-primary to-pink-500 text-white text-xs px-1.5 py-0 shadow-sm">
                     <Crown className="w-3 h-3 mr-0.5" />
                     Premium
                   </Badge>
