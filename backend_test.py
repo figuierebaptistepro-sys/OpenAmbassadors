@@ -5,7 +5,7 @@ import sys
 import json
 from datetime import datetime
 
-class UGCMachineAPITester:
+class IncubateurAPITester:
     def __init__(self, base_url="https://ugc-machine.preview.emergentagent.com"):
         self.base_url = base_url
         self.session = requests.Session()
@@ -13,23 +13,14 @@ class UGCMachineAPITester:
         self.tests_passed = 0
         self.test_results = []
         
-        # Test user data
-        self.test_creator = {
-            "email": f"creator_test_{datetime.now().strftime('%H%M%S')}@test.com",
-            "password": "TestPass123!",
-            "name": "Test Creator",
-            "user_type": "creator"
-        }
-        
-        self.test_business = {
-            "email": f"business_test_{datetime.now().strftime('%H%M%S')}@test.com", 
-            "password": "TestPass123!",
-            "name": "Test Business",
-            "user_type": "business"
-        }
+        # Test user data for OTP-based auth
+        self.test_creator_email = f"creator_test_{datetime.now().strftime('%H%M%S')}@test.com"
+        self.test_business_email = f"business_test_{datetime.now().strftime('%H%M%S')}@test.com"
         
         self.creator_token = None
         self.business_token = None
+        self.creator_user_id = None
+        self.business_user_id = None
 
     def log_test(self, name, success, details="", error=""):
         """Log test result"""
