@@ -1366,6 +1366,78 @@ async def update_my_creator_profile(update_data: CreatorProfileUpdate, user: dic
     
     return {"message": "Profile updated", "completion_score": update_dict.get("completion_score", 0)}
 
+# ==================== PORTFOLIO ROUTES ====================
+
+@api_router.post("/creators/me/portfolio")
+async def add_portfolio_video(request: Request, user: dict = Depends(get_current_user)):
+    """Add a video to creator's portfolio"""
+    body = await request.json()
+    url = body.get("url")
+    title = body.get("title", "")
+    video_type = body.get("type", "link")  # "link" or "uploaded"
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    video_entry = {
+        "url": url,
+        "title": title,
+        "type": video_type,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$push": {"portfolio_videos": video_entry}}
+    )
+    
+    if result.modified_count == 0:
+        # Profile might not exist, create it
+        profile = CreatorProfile(user_id=user["user_id"], portfolio_videos=[video_entry])
+        await db.creator_profiles.insert_one(profile.model_dump())
+    
+    # Update completion score
+    profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    new_score = calculate_creator_completion(profile)
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"completion_score": new_score}}
+    )
+    
+    return {"message": "Video added", "video": video_entry}
+
+@api_router.delete("/creators/me/portfolio/{video_index}")
+async def delete_portfolio_video(video_index: int, user: dict = Depends(get_current_user)):
+    """Delete a video from creator's portfolio by index"""
+    profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    videos = profile.get("portfolio_videos", [])
+    
+    if video_index < 0 or video_index >= len(videos):
+        raise HTTPException(status_code=400, detail="Invalid video index")
+    
+    # Remove video at index
+    deleted_video = videos.pop(video_index)
+    
+    # Update database
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"portfolio_videos": videos}}
+    )
+    
+    # Update completion score
+    profile["portfolio_videos"] = videos
+    new_score = calculate_creator_completion(profile)
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"completion_score": new_score}}
+    )
+    
+    return {"message": "Video deleted", "deleted": deleted_video}
+
 # ==================== BUSINESS ROUTES ====================
 
 @api_router.get("/business/me/profile")
