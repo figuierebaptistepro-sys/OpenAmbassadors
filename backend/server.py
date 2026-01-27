@@ -1403,7 +1403,7 @@ async def get_wallet_transactions(
 
 # Admin route to add earnings to creator wallet (called when project payment validated)
 @api_router.post("/admin/wallet/add-earning")
-async def admin_add_earning(request: Request, user: dict = Depends(get_current_user)):
+async def admin_add_earning(request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Add earning to creator wallet (manual validation)"""
     # In production, check if user is admin
     body = await request.json()
@@ -1464,7 +1464,7 @@ async def admin_add_earning(request: Request, user: dict = Depends(get_current_u
 
 # Admin route to process withdrawal
 @api_router.post("/admin/wallet/process-withdrawal")
-async def admin_process_withdrawal(request: Request, user: dict = Depends(get_current_user)):
+async def admin_process_withdrawal(request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Approve or reject withdrawal request"""
     body = await request.json()
     transaction_id = body.get("transaction_id")
@@ -1608,7 +1608,7 @@ async def get_admin_users(
     return {"users": enriched, "total": total}
 
 @api_router.put("/admin/users/{user_id}/verify")
-async def admin_verify_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def admin_verify_user(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Update user verification status"""
     body = await request.json()
     new_status = body.get("status")  # "verified", "portfolio_validated", "incubator_certified", "suspended"
@@ -1625,7 +1625,7 @@ async def admin_verify_user(user_id: str, request: Request, user: dict = Depends
     return {"message": "Statut mis à jour", "status": new_status}
 
 @api_router.put("/admin/users/{user_id}/premium")
-async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Toggle user premium status"""
     body = await request.json()
     is_premium = body.get("is_premium", False)
@@ -1638,7 +1638,7 @@ async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depe
     return {"message": "Premium mis à jour", "is_premium": is_premium}
 
 @api_router.put("/admin/users/{user_id}/ban")
-async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Ban or unban a user"""
     body = await request.json()
     is_banned = body.get("is_banned", True)
@@ -1658,7 +1658,7 @@ async def admin_ban_user(user_id: str, request: Request, user: dict = Depends(ge
     return {"message": "Utilisateur banni" if is_banned else "Utilisateur débanni", "is_banned": is_banned}
 
 @api_router.delete("/admin/users/{user_id}")
-async def admin_delete_user(user_id: str, user: dict = Depends(get_current_user)):
+async def admin_delete_user(user_id: str, user: dict = Depends(get_admin_user)):
     """Admin: Permanently delete a user and all their data"""
     # Get user info first
     target_user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
@@ -1743,7 +1743,7 @@ async def get_admin_projects(
     return {"projects": enriched, "total": total}
 
 @api_router.put("/admin/projects/{project_id}/status")
-async def admin_update_project_status(project_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def admin_update_project_status(project_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Update project status"""
     body = await request.json()
     new_status = body.get("status")
@@ -1781,7 +1781,7 @@ async def get_admin_access_requests(
     return {"requests": requests, "total": total}
 
 @api_router.put("/admin/access-requests/{request_id}")
-async def admin_process_access_request(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def admin_process_access_request(request_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Approve or reject access request"""
     body = await request.json()
     action = body.get("action")  # "approve" or "reject"
