@@ -1407,61 +1407,35 @@ async def update_my_business_profile(update_data: BusinessProfileUpdate, user: d
 # ==================== PACKS ROUTES ====================
 
 @api_router.get("/packs")
-async def get_packs():
-    packs = [
-        {
-            "pack_id": "pack_starter",
-            "name": "Starter",
-            "slug": "starter",
-            "description": "Idéal pour tester la plateforme",
-            "creators_count": 1,
-            "videos_count": 3,
-            "includes": ["1 créateur", "3 vidéos UGC", "Délai 7 jours", "1 révision"],
-            "delivery_days": 7,
-            "price": 500,
-            "icon": "⚡",
-            "popular": False
-        },
-        {
-            "pack_id": "pack_local_impact",
-            "name": "Local Impact",
-            "slug": "local-impact",
-            "description": "Pour commerces physiques",
-            "creators_count": 5,
-            "videos_count": 10,
-            "includes": ["5 créateurs locaux", "10 vidéos UGC", "1 micro-trottoir", "Publication incluse"],
-            "delivery_days": 14,
-            "price": 1500,
-            "icon": "🔥",
-            "popular": True
-        },
-        {
-            "pack_id": "pack_digital",
-            "name": "Visibilité Digitale",
-            "slug": "digital",
-            "description": "Pour e-commerce",
-            "creators_count": 10,
-            "videos_count": 30,
-            "includes": ["10 créateurs", "30 vidéos UGC", "Droits ads", "Hook testing"],
-            "delivery_days": 21,
-            "price": 3000,
-            "icon": "🚀",
-            "popular": False
-        },
-        {
-            "pack_id": "pack_massive",
-            "name": "Massive Content",
-            "slug": "massive",
-            "description": "Volume massif",
-            "creators_count": 50,
-            "videos_count": 200,
-            "includes": ["50 créateurs", "200+ vidéos", "Multi comptes", "Account manager"],
-            "delivery_days": 45,
-            "price": 10000,
-            "icon": "💣",
-            "popular": False
-        }
-    ]
+async def get_packs(pack_type: str = None):
+    """Récupère les packs depuis MongoDB. Filtrer par type: 'business' ou 'creator'"""
+    query = {"is_active": True}
+    if pack_type:
+        query["type"] = pack_type
+    
+    packs = await db.packs.find(query, {"_id": 0}).to_list(100)
+    
+    # Si aucun pack trouvé, retourner les packs par défaut (fallback)
+    if not packs:
+        packs = [
+            {
+                "pack_id": "business_starter",
+                "name": "Starter",
+                "type": "business",
+                "price": 0,
+                "features": ["1 projet actif", "Accès aux créateurs publics", "Support par email"],
+                "is_popular": False
+            },
+            {
+                "pack_id": "business_pro",
+                "name": "Pro",
+                "type": "business",
+                "price": 49,
+                "features": ["5 projets actifs", "Accès créateurs vérifiés", "Support prioritaire"],
+                "is_popular": True
+            }
+        ]
+    
     return packs
 
 @api_router.post("/business/select-pack")
