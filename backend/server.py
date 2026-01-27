@@ -17,6 +17,8 @@ import jwt
 import httpx
 import random
 import string
+import boto3
+from botocore.config import Config
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -24,7 +26,7 @@ load_dotenv(ROOT_DIR / '.env')
 # Admin emails (only these can access admin panel)
 ADMIN_EMAILS = ["figuierebaptistepro@gmail.com"]
 
-# Create uploads directories
+# Create uploads directories (fallback for local storage)
 UPLOADS_DIR = ROOT_DIR / "uploads"
 PROFILES_DIR = UPLOADS_DIR / "profiles"
 BANNERS_DIR = UPLOADS_DIR / "banners"
@@ -32,6 +34,53 @@ PROJECTS_DIR = UPLOADS_DIR / "projects"
 PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 BANNERS_DIR.mkdir(parents=True, exist_ok=True)
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Cloudflare R2 Configuration
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID')
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
+R2_ENDPOINT = os.environ.get('R2_ENDPOINT')
+
+# Initialize R2 client
+s3_client = None
+if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=R2_ENDPOINT,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        config=Config(signature_version='s3v4'),
+        region_name='auto'
+    )
+    logging.info("Cloudflare R2 client initialized")
+
+# R2 Public URL base (for accessing files)
+R2_PUBLIC_URL = f"https://pub-{R2_ACCOUNT_ID}.r2.dev" if R2_ACCOUNT_ID else None
+
+async def upload_to_r2(file_content: bytes, filename: str, content_type: str, folder: str = "") -> str:
+    """Upload file to Cloudflare R2 and return the public URL"""
+    if not s3_client:
+        raise HTTPException(status_code=500, detail="R2 storage not configured")
+    
+    key = f"{folder}/{filename}" if folder else filename
+    
+    try:
+        s3_client.put_object(
+            Bucket=R2_BUCKET_NAME,
+            Key=key,
+            Body=file_content,
+            ContentType=content_type
+        )
+        # Return the R2 URL
+        return f"{R2_ENDPOINT}/{R2_BUCKET_NAME}/{key}"
+    except Exception as e:
+        logging.error(f"R2 upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+def get_r2_public_url(key: str) -> str:
+    """Generate a public URL for R2 object"""
+    return f"{R2_ENDPOINT}/{R2_BUCKET_NAME}/{key}"
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
