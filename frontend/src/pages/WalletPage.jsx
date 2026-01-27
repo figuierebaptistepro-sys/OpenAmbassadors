@@ -91,8 +91,8 @@ const WalletPage = ({ user }) => {
 
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawForm.amount);
-    if (!amount || amount < 10) {
-      toast.error("Montant minimum: 10€");
+    if (!amount || amount <= 0) {
+      toast.error("Montant invalide");
       return;
     }
 
