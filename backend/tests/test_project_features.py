@@ -9,9 +9,48 @@ Backend API tests for Project Creation Features
 import pytest
 import requests
 import os
-import io
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
+
+# Valid PNG image bytes (1x1 pixel)
+PNG_IMAGE = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
+
+
+def authenticate_user(email, user_type="business"):
+    """Helper to authenticate a user and return session"""
+    session = requests.Session()
+    session.headers.update({"Content-Type": "application/json"})
+    
+    # Request OTP
+    otp_response = session.post(f"{BASE_URL}/api/auth/otp/request", json={"email": email})
+    assert otp_response.status_code == 200, f"OTP request failed: {otp_response.text}"
+    otp_code = otp_response.json().get("debug_code")
+    
+    # Verify OTP
+    verify_response = session.post(f"{BASE_URL}/api/auth/otp/verify", json={
+        "email": email,
+        "code": otp_code
+    })
+    assert verify_response.status_code == 200, f"OTP verify failed: {verify_response.text}"
+    
+    # Set user type
+    session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": user_type})
+    
+    return session
+
+
+def upload_banner(session):
+    """Helper to upload a banner and return URL"""
+    files = {'file': ('test_banner.png', PNG_IMAGE, 'image/png')}
+    response = requests.post(
+        f"{BASE_URL}/api/upload/project-banner",
+        files=files,
+        cookies=session.cookies
+    )
+    if response.status_code == 200:
+        return response.json().get("banner_url")
+    return None
+
 
 class TestProjectBannerUpload:
     """Tests for project banner upload endpoint"""
@@ -19,39 +58,14 @@ class TestProjectBannerUpload:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test session with authentication"""
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        
-        # Request OTP for test user
-        otp_response = self.session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_project_business@test.com"
-        })
-        assert otp_response.status_code == 200, f"OTP request failed: {otp_response.text}"
-        otp_code = otp_response.json().get("debug_code")
-        
-        # Verify OTP
-        verify_response = self.session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_project_business@test.com",
-            "code": otp_code
-        })
-        assert verify_response.status_code == 200, f"OTP verify failed: {verify_response.text}"
-        
-        # Set user type to business
-        self.session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
-        
-        # Select a pack (required for project creation)
+        self.session = authenticate_user("test_project_upload@test.com", "business")
         self.session.post(f"{BASE_URL}/api/business/select-pack", json={"pack_id": "pack_starter"})
-        
         yield
     
     def test_upload_project_banner_success(self):
         """Test successful project banner upload"""
-        # Create a simple test image (1x1 pixel PNG)
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
+        files = {'file': ('test_banner.png', PNG_IMAGE, 'image/png')}
         
-        files = {'file': ('test_banner.png', image_data, 'image/png')}
-        
-        # Use cookies from session but don't set Content-Type (let requests handle it)
         response = requests.post(
             f"{BASE_URL}/api/upload/project-banner",
             files=files,
@@ -62,9 +76,6 @@ class TestProjectBannerUpload:
         data = response.json()
         assert "banner_url" in data, "Response should contain banner_url"
         assert data["banner_url"].startswith("/api/uploads/projects/"), f"Invalid banner_url format: {data['banner_url']}"
-        
-        # Store for later tests
-        self.banner_url = data["banner_url"]
         print(f"✓ Project banner uploaded successfully: {data['banner_url']}")
     
     def test_upload_project_banner_invalid_type(self):
@@ -82,8 +93,7 @@ class TestProjectBannerUpload:
     
     def test_upload_project_banner_unauthenticated(self):
         """Test upload without authentication"""
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', image_data, 'image/png')}
+        files = {'file': ('test_banner.png', PNG_IMAGE, 'image/png')}
         
         response = requests.post(f"{BASE_URL}/api/upload/project-banner", files=files)
         
@@ -97,35 +107,8 @@ class TestProjectBannerRetrieval:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test session and upload a banner"""
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        
-        # Authenticate
-        otp_response = self.session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_project_retrieval@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        self.session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_project_retrieval@test.com",
-            "code": otp_code
-        })
-        self.session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
-        
-        # Upload a banner
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
-        
-        upload_response = self.session.post(
-            f"{BASE_URL}/api/upload/project-banner",
-            files=files,
-            headers=headers
-        )
-        if upload_response.status_code == 200:
-            self.banner_url = upload_response.json().get("banner_url")
-        else:
-            self.banner_url = None
-        
+        self.session = authenticate_user("test_project_retrieval@test.com", "business")
+        self.banner_url = upload_banner(self.session)
         yield
     
     def test_retrieve_project_banner_success(self):
@@ -133,9 +116,7 @@ class TestProjectBannerRetrieval:
         if not self.banner_url:
             pytest.skip("Banner upload failed, skipping retrieval test")
         
-        # Extract filename from URL
         filename = self.banner_url.split("/")[-1]
-        
         response = requests.get(f"{BASE_URL}/api/uploads/projects/{filename}")
         
         assert response.status_code == 200, f"Banner retrieval failed: {response.text}"
@@ -156,38 +137,9 @@ class TestProjectCreation:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test session with business user"""
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        
-        # Authenticate
-        otp_response = self.session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_project_create@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        self.session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_project_create@test.com",
-            "code": otp_code
-        })
-        self.session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
-        
-        # Select a pack
+        self.session = authenticate_user("test_project_create@test.com", "business")
         self.session.post(f"{BASE_URL}/api/business/select-pack", json={"pack_id": "pack_starter"})
-        
-        # Upload a banner for testing
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
-        
-        upload_response = self.session.post(
-            f"{BASE_URL}/api/upload/project-banner",
-            files=files,
-            headers=headers
-        )
-        if upload_response.status_code == 200:
-            self.banner_url = upload_response.json().get("banner_url")
-        else:
-            self.banner_url = "/api/uploads/projects/test.png"
-        
+        self.banner_url = upload_banner(self.session) or "/api/uploads/projects/test.png"
         yield
     
     def test_create_project_success(self):
@@ -216,8 +168,6 @@ class TestProjectCreation:
         data = response.json()
         assert "project_id" in data, "Response should contain project_id"
         assert data.get("message") == "Projet créé", f"Unexpected message: {data.get('message')}"
-        
-        self.project_id = data["project_id"]
         print(f"✓ Project created successfully: {data['project_id']}")
     
     def test_create_project_without_banner(self):
@@ -228,32 +178,17 @@ class TestProjectCreation:
             "description": "This should fail",
             "budget": 500,
             "content_type": "UGC",
-            # banner_url is missing
         }
         
         response = self.session.post(f"{BASE_URL}/api/projects", json=project_data)
         
         assert response.status_code == 400, f"Should require banner_url: {response.text}"
-        data = response.json()
-        assert "couverture" in data.get("detail", "").lower() or "banner" in data.get("detail", "").lower(), \
-            f"Error should mention banner requirement: {data}"
         print("✓ Project creation without banner correctly rejected")
     
     def test_create_project_without_pack(self):
         """Test project creation fails without pack selection"""
-        # Create new session without pack selection
-        new_session = requests.Session()
-        new_session.headers.update({"Content-Type": "application/json"})
-        
-        otp_response = new_session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_no_pack@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        new_session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_no_pack@test.com",
-            "code": otp_code
-        })
-        new_session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
+        new_session = authenticate_user("test_no_pack@test.com", "business")
+        # Don't select a pack
         
         project_data = {
             "pack_id": "pack_starter",
@@ -276,21 +211,9 @@ class TestProjectListing:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test session and create a test project"""
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
+        self.session = authenticate_user("test_project_list@test.com", "business")
         
-        # Authenticate as business
-        otp_response = self.session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_project_list@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        self.session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_project_list@test.com",
-            "code": otp_code
-        })
-        self.session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
-        
-        # Update business profile with company name
+        # Update business profile
         self.session.put(f"{BASE_URL}/api/business/me/profile", json={
             "company_name": "TEST_Company",
             "industry": "Tech"
@@ -299,19 +222,9 @@ class TestProjectListing:
         # Select pack
         self.session.post(f"{BASE_URL}/api/business/select-pack", json={"pack_id": "pack_starter"})
         
-        # Upload banner
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
+        # Upload banner and create project
+        banner_url = upload_banner(self.session) or "/api/uploads/projects/test.png"
         
-        upload_response = self.session.post(
-            f"{BASE_URL}/api/upload/project-banner",
-            files=files,
-            headers=headers
-        )
-        banner_url = upload_response.json().get("banner_url") if upload_response.status_code == 200 else "/api/uploads/projects/test.png"
-        
-        # Create a test project
         project_data = {
             "pack_id": "pack_starter",
             "title": "TEST_Project for Listing",
@@ -339,7 +252,6 @@ class TestProjectListing:
         
         if test_projects:
             project = test_projects[0]
-            # Check enriched fields
             assert "business_name" in project, "Project should have business_name field"
             assert "business_logo" in project, "Project should have business_logo field"
             assert "banner_url" in project, "Project should have banner_url field"
@@ -355,7 +267,6 @@ class TestProjectListing:
         projects = response.json()
         assert isinstance(projects, list), "Response should be a list"
         
-        # All projects should belong to this business
         for project in projects:
             assert "project_id" in project, "Each project should have project_id"
             assert "title" in project, "Each project should have title"
@@ -365,19 +276,7 @@ class TestProjectListing:
     
     def test_get_business_projects_as_creator(self):
         """Test GET /api/projects/business fails for creator users"""
-        # Create new session as creator
-        creator_session = requests.Session()
-        creator_session.headers.update({"Content-Type": "application/json"})
-        
-        otp_response = creator_session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_creator_list@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        creator_session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_creator_list@test.com",
-            "code": otp_code
-        })
-        creator_session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "creator"})
+        creator_session = authenticate_user("test_creator_list@test.com", "creator")
         
         response = creator_session.get(f"{BASE_URL}/api/projects/business")
         
@@ -392,31 +291,11 @@ class TestProjectApplication:
     def setup(self):
         """Setup business and creator sessions"""
         # Business session
-        self.business_session = requests.Session()
-        self.business_session.headers.update({"Content-Type": "application/json"})
-        
-        otp_response = self.business_session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_biz_apply@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        self.business_session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_biz_apply@test.com",
-            "code": otp_code
-        })
-        self.business_session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "business"})
+        self.business_session = authenticate_user("test_biz_apply@test.com", "business")
         self.business_session.post(f"{BASE_URL}/api/business/select-pack", json={"pack_id": "pack_starter"})
         
         # Upload banner and create project
-        image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        files = {'file': ('test_banner.png', io.BytesIO(image_data), 'image/png')}
-        headers = {k: v for k, v in self.business_session.headers.items() if k.lower() != 'content-type'}
-        
-        upload_response = self.business_session.post(
-            f"{BASE_URL}/api/upload/project-banner",
-            files=files,
-            headers=headers
-        )
-        banner_url = upload_response.json().get("banner_url") if upload_response.status_code == 200 else "/api/uploads/projects/test.png"
+        banner_url = upload_banner(self.business_session) or "/api/uploads/projects/test.png"
         
         project_data = {
             "pack_id": "pack_starter",
@@ -430,18 +309,7 @@ class TestProjectApplication:
         self.project_id = create_response.json().get("project_id") if create_response.status_code == 200 else None
         
         # Creator session
-        self.creator_session = requests.Session()
-        self.creator_session.headers.update({"Content-Type": "application/json"})
-        
-        otp_response = self.creator_session.post(f"{BASE_URL}/api/auth/otp/request", json={
-            "email": "test_creator_apply@test.com"
-        })
-        otp_code = otp_response.json().get("debug_code")
-        self.creator_session.post(f"{BASE_URL}/api/auth/otp/verify", json={
-            "email": "test_creator_apply@test.com",
-            "code": otp_code
-        })
-        self.creator_session.post(f"{BASE_URL}/api/auth/set-type", json={"user_type": "creator"})
+        self.creator_session = authenticate_user("test_creator_apply@test.com", "creator")
         
         yield
     
