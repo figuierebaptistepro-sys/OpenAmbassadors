@@ -41,6 +41,7 @@ R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
 R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
 R2_ENDPOINT = os.environ.get('R2_ENDPOINT')
+R2_PUBLIC_URL = os.environ.get('R2_PUBLIC_URL', f"https://pub-{R2_ACCOUNT_ID}.r2.dev" if R2_ACCOUNT_ID else None)
 
 # Initialize R2 client
 s3_client = None
@@ -53,10 +54,7 @@ if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
         config=Config(signature_version='s3v4'),
         region_name='auto'
     )
-    logging.info("Cloudflare R2 client initialized")
-
-# R2 Public URL base (for accessing files)
-R2_PUBLIC_URL = f"https://pub-{R2_ACCOUNT_ID}.r2.dev" if R2_ACCOUNT_ID else None
+    logging.info(f"Cloudflare R2 client initialized - Public URL: {R2_PUBLIC_URL}")
 
 async def upload_to_r2(file_content: bytes, filename: str, content_type: str, folder: str = "") -> str:
     """Upload file to Cloudflare R2 and return the public URL"""
@@ -72,15 +70,11 @@ async def upload_to_r2(file_content: bytes, filename: str, content_type: str, fo
             Body=file_content,
             ContentType=content_type
         )
-        # Return the R2 URL
-        return f"{R2_ENDPOINT}/{R2_BUCKET_NAME}/{key}"
+        # Return the public R2 URL
+        return f"{R2_PUBLIC_URL}/{key}"
     except Exception as e:
         logging.error(f"R2 upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-def get_r2_public_url(key: str) -> str:
-    """Generate a public URL for R2 object"""
-    return f"{R2_ENDPOINT}/{R2_BUCKET_NAME}/{key}"
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
