@@ -1489,6 +1489,16 @@ async def apply_to_project(project_id: str, user: dict = Depends(get_current_use
         {"$push": {"applications": application}}
     )
     
+    # Send email notification to business
+    business = await db.users.find_one({"user_id": project["business_id"]}, {"_id": 0})
+    if business:
+        await send_new_application_email(
+            business_email=business["email"],
+            business_name=business.get("name") or business.get("company_name"),
+            project_title=project["title"],
+            creator_name=user.get("name") or "Un créateur"
+        )
+    
     return {"message": "Candidature envoyée"}
 
 @api_router.put("/projects/{project_id}")
