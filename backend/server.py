@@ -473,7 +473,7 @@ async def request_otp(data: OTPRequest):
     otp_code = generate_otp()
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     
-    # Store OTP (in production, send via email)
+    # Store OTP
     await db.otp_codes.update_one(
         {"email": data.email},
         {"$set": {
@@ -484,12 +484,51 @@ async def request_otp(data: OTPRequest):
         upsert=True
     )
     
-    # In production: send email with OTP
-    # For MVP: return code in response (remove in production)
-    return {
-        "message": "Code envoyé",
-        "debug_code": otp_code  # Remove in production
-    }
+    # Send email with OTP via Resend
+    if RESEND_API_KEY:
+        try:
+            resend.emails.send({
+                "from": EMAIL_FROM,
+                "to": [data.email],
+                "subject": f"🔐 Votre code de connexion : {otp_code}",
+                "html": f"""
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #E91E63; margin: 0; font-size: 28px;">Creator Incubator</h1>
+                        <p style="color: #666; margin-top: 5px;">Plateforme de créateurs UGC</p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); border-radius: 16px; padding: 30px; text-align: center; margin-bottom: 25px;">
+                        <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 14px;">Votre code de connexion</p>
+                        <div style="background: white; border-radius: 12px; padding: 20px; display: inline-block;">
+                            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #333;">{otp_code}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                        <p style="color: #666; margin: 0; font-size: 14px; line-height: 1.6;">
+                            ⏱️ Ce code expire dans <strong>10 minutes</strong><br>
+                            🔒 Ne partagez jamais ce code avec personne
+                        </p>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        Si vous n'avez pas demandé ce code, ignorez cet email.
+                    </p>
+                </div>
+                """
+            })
+            logging.info(f"OTP email sent to {data.email}")
+        except Exception as e:
+            logging.error(f"Failed to send OTP email: {e}")
+            # Continue anyway - we'll return the code for debugging
+    
+    # Return response (remove debug_code in production)
+    response_data = {"message": "Code envoyé par email"}
+    if not RESEND_API_KEY:
+        response_data["debug_code"] = otp_code  # Only if email not configured
+    
+    return response_data
 
 @api_router.post("/auth/otp/verify")
 async def verify_otp(data: OTPVerify, response: Response):
