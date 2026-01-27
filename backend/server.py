@@ -80,8 +80,19 @@ class CreatorProfile(BaseModel):
     # Identity
     bio: Optional[str] = None
     city: Optional[str] = None
+    phone: Optional[str] = None
     can_travel: Optional[bool] = None
     works_remote: Optional[bool] = None
+    
+    # Social Media
+    social_instagram: Optional[str] = None
+    social_tiktok: Optional[str] = None
+    social_youtube: Optional[str] = None
+    social_twitter: Optional[str] = None
+    social_linkedin: Optional[str] = None
+    
+    # Visibility/Followers (global audience)
+    visibility: Optional[str] = None  # "1K", "5K", "10K", "35K", "50K", "100K", "250K", "1M"
     
     # Specialties
     content_types: List[str] = []  # UGC, Micro-trottoir, Face cam, Ads, Interview, Montage
