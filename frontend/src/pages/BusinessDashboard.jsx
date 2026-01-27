@@ -160,7 +160,7 @@ const BusinessDashboard = ({ user }) => {
             <span className="hidden xs:inline">Trouver </span>créateur
           </Button>
           <Button 
-            onClick={() => navigate("/projects/new")}
+            onClick={() => navigate("/business/projects/new")}
             size="sm"
             className="bg-primary hover:bg-primary-hover shadow-sm text-xs sm:text-sm"
             data-testid="new-project-btn"
@@ -212,7 +212,7 @@ const BusinessDashboard = ({ user }) => {
                       )}
                       
                       {!hasProjects && (
-                        <Button onClick={() => navigate("/projects/new")} size="sm" className="bg-primary hover:bg-primary-hover mt-2 text-xs">
+                        <Button onClick={() => navigate("/business/projects/new")} size="sm" className="bg-primary hover:bg-primary-hover mt-2 text-xs">
                           <Plus className="w-4 h-4 mr-1.5" />
                           Créer mon premier projet
                         </Button>
