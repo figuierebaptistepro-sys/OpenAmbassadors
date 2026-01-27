@@ -565,6 +565,91 @@ async def request_access(request: Request):
     
     return {"message": "Demande envoyée", "request_id": request_id}
 
+# ==================== FILE UPLOAD ROUTES ====================
+
+ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+@api_router.post("/upload/profile-picture")
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload profile picture for current user"""
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
+    
+    # Check file size
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{user['user_id']}_profile_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = PROFILES_DIR / filename
+    
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Update user profile with picture URL
+    picture_url = f"/api/uploads/profiles/{filename}"
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"picture": picture_url}}
+    )
+    
+    return {"message": "Photo de profil mise à jour", "picture_url": picture_url}
+
+@api_router.post("/upload/banner")
+async def upload_banner(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload banner/cover image for current user"""
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
+    
+    # Check file size
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{user['user_id']}_banner_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = BANNERS_DIR / filename
+    
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Update user with banner URL
+    banner_url = f"/api/uploads/banners/{filename}"
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"banner": banner_url}}
+    )
+    
+    return {"message": "Bannière mise à jour", "banner_url": banner_url}
+
+@api_router.get("/uploads/profiles/{filename}")
+async def get_profile_picture(filename: str):
+    """Serve profile pictures publicly"""
+    filepath = PROFILES_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Image non trouvée")
+    return FileResponse(filepath)
+
+@api_router.get("/uploads/banners/{filename}")
+async def get_banner(filename: str):
+    """Serve banner images publicly"""
+    filepath = BANNERS_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Image non trouvée")
+    return FileResponse(filepath)
+
 # ==================== CREATOR ROUTES ====================
 
 @api_router.get("/creators")
