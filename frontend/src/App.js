@@ -18,13 +18,14 @@ import CreatorDashboard from "./pages/CreatorDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import CreatorProfile from "./pages/CreatorProfile";
 import BrowseCreators from "./pages/BrowseCreators";
-import TrainingsPage from "./pages/TrainingsPage";
+import LearnPage from "./pages/LearnPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import AccountSettings from "./pages/AccountSettings";
+import SupportPage from "./pages/SupportPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Auth Callback Component
-// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
 const AuthCallback = () => {
   const navigate = useNavigate();
   const hasProcessed = useRef(false);
@@ -50,7 +51,6 @@ const AuthCallback = () => {
             const userData = await response.json();
             window.history.replaceState(null, "", window.location.pathname);
             
-            // Check if user type is set
             if (!userData.user_type) {
               navigate("/select-type", { state: { user: userData } });
             } else if (userData.user_type === "creator") {
@@ -72,10 +72,10 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+    <div className="min-h-screen flex items-center justify-center bg-[#F6F7FB]">
       <div className="text-center">
-        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-white/80 font-medium">Connexion en cours...</p>
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600 font-medium">Connexion en cours...</p>
       </div>
     </div>
   );
@@ -88,7 +88,6 @@ const ProtectedRoute = ({ children, requireType = false }) => {
   const [authState, setAuthState] = useState({ checked: false, user: null });
 
   useEffect(() => {
-    // If user passed from previous navigation, use it
     if (location.state?.user) {
       setAuthState({ checked: true, user: location.state.user });
       return;
@@ -104,7 +103,6 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 
         const userData = await response.json();
         
-        // Check if type selection is required
         if (requireType && !userData.user_type) {
           navigate("/select-type", { state: { user: userData } });
           return;
@@ -122,8 +120,8 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 
   if (!authState.checked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F7FB]">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -139,7 +137,6 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 function AppRouter() {
   const location = useLocation();
 
-  // Check for session_id in hash - process BEFORE normal routing
   if (location.hash?.includes("session_id=")) {
     return <AuthCallback />;
   }
@@ -149,7 +146,7 @@ function AppRouter() {
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       
-      {/* Type selection - required after first login */}
+      {/* Type selection */}
       <Route
         path="/select-type"
         element={
@@ -165,14 +162,6 @@ function AppRouter() {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <CreatorDashboard user={user} />}
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/trainings"
-        element={
-          <ProtectedRoute requireType>
-            {({ user }) => <TrainingsPage user={user} />}
           </ProtectedRoute>
         }
       />
@@ -195,6 +184,14 @@ function AppRouter() {
         }
       />
       <Route
+        path="/business/projects"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ProjectsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/creators"
         element={
           <ProtectedRoute requireType>
@@ -207,6 +204,32 @@ function AppRouter() {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <CreatorProfile currentUser={user} />}
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Shared Routes */}
+      <Route
+        path="/learn"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <LearnPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <AccountSettings user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <SupportPage user={user} />}
           </ProtectedRoute>
         }
       />

@@ -1,22 +1,24 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Sparkles, LayoutDashboard, Briefcase, BookOpen, Users,
   Settings, HelpCircle, Crown, LogOut
 } from "lucide-react";
 
-const Sidebar = ({ userType, onLogout }) => {
+const Sidebar = ({ userType, isPremium, onLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
-    { icon: BookOpen, label: "Learn", path: "/trainings" },
+    { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
+    { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
   const menuItems = userType === "creator" ? creatorMenuItems : businessMenuItems;
@@ -62,7 +64,11 @@ const Sidebar = ({ userType, onLogout }) => {
             <Link
               key={item.path}
               to={item.path}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                isActive(item.path)
+                  ? "bg-primary-soft text-primary font-semibold"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+              }`}
             >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
@@ -71,8 +77,8 @@ const Sidebar = ({ userType, onLogout }) => {
         </div>
       </nav>
 
-      {/* Premium CTA */}
-      {userType === "creator" && (
+      {/* Premium CTA - Only for creators who aren't premium */}
+      {userType === "creator" && !isPremium && (
         <div className="p-4">
           <div className="premium-card rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -82,12 +88,12 @@ const Sidebar = ({ userType, onLogout }) => {
             <p className="text-gray-600 text-sm mb-3">
               Boost ta visibilité et accède aux missions premium
             </p>
-            <Link
-              to="/dashboard"
+            <button
+              onClick={() => navigate("/dashboard", { state: { openPremium: true } })}
               className="block w-full py-2 px-4 bg-primary hover:bg-primary-hover text-white text-center rounded-lg font-medium text-sm transition-colors shadow-md shadow-primary/20"
             >
               49€/mois
-            </Link>
+            </button>
           </div>
         </div>
       )}
