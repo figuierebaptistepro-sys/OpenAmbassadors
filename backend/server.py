@@ -239,25 +239,41 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
 async def send_withdrawal_status_email(creator_email: str, creator_name: str, amount: float, status: str):
     """Notify creator of withdrawal status"""
     is_approved = status == "approved"
+    
+    if is_approved:
+        subject = f"💰 Retrait approuvé - {amount:.2f}€"
+        title = "Retrait approuvé ! 💸"
+        title_color = "#4CAF50"
+        bg_color = "#e8f5e9"
+        amount_color = "#2e7d32"
+        info_text = "Le virement sera effectué sous 2-3 jours ouvrés."
+    else:
+        subject = f"⚠️ Retrait refusé - {amount:.2f}€"
+        title = "Retrait refusé"
+        title_color = "#F44336"
+        bg_color = "#ffebee"
+        amount_color = "#c62828"
+        info_text = "Veuillez contacter le support pour plus d'informations."
+    
+    name_display = creator_name or ''
+    
     await send_email(
         to=creator_email,
-        subject=f"{'💰 Retrait approuvé' if is_approved else '⚠️ Retrait refusé'} - {amount:.2f}€",
+        subject=subject,
         html=f"""
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: {'#4CAF50' if is_approved else '#F44336'}; margin: 0;">
-                    {'Retrait approuvé ! 💸' if is_approved else 'Retrait refusé'}
-                </h1>
+                <h1 style="color: {title_color}; margin: 0;">{title}</h1>
             </div>
             <p style="color: #333; line-height: 1.6;">
-                Bonjour {creator_name or ''},
+                Bonjour {name_display},
             </p>
-            <div style="background: {'#e8f5e9' if is_approved else '#ffebee'}; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
-                <p style="font-size: 32px; font-weight: bold; color: {'#2e7d32' if is_approved else '#c62828'}; margin: 0;">
+            <div style="background: {bg_color}; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="font-size: 32px; font-weight: bold; color: {amount_color}; margin: 0;">
                     {amount:.2f}€
                 </p>
                 <p style="color: #666; margin-top: 10px;">
-                    {'Le virement sera effectué sous 2-3 jours ouvrés.' if is_approved else 'Veuillez contacter le support pour plus d\\'informations.'}
+                    {info_text}
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
