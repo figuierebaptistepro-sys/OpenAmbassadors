@@ -149,7 +149,7 @@ const ProjectsPage = ({ user }) => {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Euro className="w-3 h-3" />
-                          {project.budget ? `${project.budget}€` : "À définir"}
+                          {project.budget ? project.budget : "À définir"}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
