@@ -40,6 +40,12 @@ Refonte vers une plateforme privée avec:
 ✅ Learn page (Free & Premium trainings with gamification)
 ✅ Find Creator as dedicated page
 ✅ Pack selection dialog bug fix (better accessibility with buttons)
+✅ User avatar + subscription type badge in sidebar
+✅ Creator Wallet (cagnotte) system with withdrawals
+✅ Enhanced project creation page with mandatory banner
+✅ Project cards display banners and business logos
+✅ Premium users: 0% platform fees
+✅ Verified/Premium badges on creator profiles
 
 ### December 2024 - Core MVP
 ✅ Login page privée (Google + OTP + Demande accès)
