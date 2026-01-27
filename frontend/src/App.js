@@ -234,6 +234,14 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BillingPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
       
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
