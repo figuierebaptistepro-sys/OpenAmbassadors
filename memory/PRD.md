@@ -90,6 +90,7 @@ Refonte vers une plateforme privée avec:
 - [ ] Envoi email OTP réel (SendGrid)
 - [ ] Système de matching créateurs/projets
 - [ ] Notifications
+- [ ] Intégration PayPal pour retraits cagnotte (marqué "Soon")
 
 ### P2 - Future
 - [ ] Chat/messagerie via projets
@@ -98,6 +99,7 @@ Refonte vers une plateforme privée avec:
 - [ ] Validation identité automatique
 - [ ] Export base de données créateurs (admin)
 - [ ] App mobile
+- [ ] Interface admin pour validation des paiements/retraits
 
 ## Current Status
 - **Frontend**: Fully functional with all pages implemented
