@@ -1,207 +1,270 @@
 {
   "summary": {
-    "total_tests": 28,
-    "passed_tests": 26,
-    "failed_tests": 2,
-    "success_rate": 92.85714285714286,
-    "timestamp": "2026-01-27T10:11:13.644404"
+    "total_tests": 37,
+    "passed_tests": 36,
+    "failed_tests": 1,
+    "success_rate": 97.2972972972973,
+    "timestamp": "2026-01-27T11:01:09.774725"
   },
   "detailed_results": [
     {
       "test": "GET stats/platform - Platform Stats",
       "success": true,
-      "details": "Status: 200, Response keys: ['creators_count', 'businesses_count', 'videos_count', 'campaigns_count']",
+      "details": "Status: 200, Response keys: ['creators_count', 'businesses_count', 'projects_count', 'incubator_members']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:05.610279"
+      "timestamp": "2026-01-27T11:01:00.668311"
     },
     {
       "test": "Platform Stats - Required Fields",
       "success": true,
-      "details": "All required fields present: ['creators_count', 'businesses_count', 'videos_count']",
+      "details": "All required fields present: ['creators_count', 'businesses_count', 'projects_count', 'incubator_members']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:05.610319"
+      "timestamp": "2026-01-27T11:01:00.668357"
     },
     {
       "test": "GET packs - Get All Packs",
       "success": true,
-      "details": "Status: 200, Response items: 3",
+      "details": "Status: 200, Response items: 4",
       "error": "",
-      "timestamp": "2026-01-27T10:11:06.037421"
+      "timestamp": "2026-01-27T11:01:01.100507"
     },
     {
       "test": "Packs - Structure Validation",
       "success": true,
-      "details": "Pack structure valid, found 3 packs",
+      "details": "Pack structure valid, found 4 packs",
       "error": "",
-      "timestamp": "2026-01-27T10:11:06.037470"
-    },
-    {
-      "test": "GET packs/pack_local_impact - Get Pack pack_local_impact",
-      "success": true,
-      "details": "Status: 200, Response keys: ['pack_id', 'name', 'slug', 'description', 'target', 'creators_count', 'videos_count', 'includes', 'delivery_days', 'price_min', 'price_max', 'icon', 'popular']",
-      "error": "",
-      "timestamp": "2026-01-27T10:11:06.361892"
+      "timestamp": "2026-01-27T11:01:01.100555"
     },
     {
       "test": "GET creators - Get All Creators",
       "success": true,
-      "details": "Status: 200, Response items: 1",
+      "details": "Status: 200, Response items: 0",
       "error": "",
-      "timestamp": "2026-01-27T10:11:06.683774"
+      "timestamp": "2026-01-27T11:01:01.530275"
     },
     {
       "test": "Creators - List Format",
       "success": true,
-      "details": "Found 1 creators",
+      "details": "Found 0 creators",
       "error": "",
-      "timestamp": "2026-01-27T10:11:06.683820"
+      "timestamp": "2026-01-27T11:01:01.530313"
     },
     {
       "test": "GET creators?city=Paris - Filter by City",
       "success": true,
       "details": "Status: 200, Response items: 0",
       "error": "",
-      "timestamp": "2026-01-27T10:11:07.336854"
+      "timestamp": "2026-01-27T11:01:01.862980"
     },
     {
       "test": "GET creators?available=true - Filter by Availability",
       "success": true,
-      "details": "Status: 200, Response items: 1",
+      "details": "Status: 200, Response items: 0",
       "error": "",
-      "timestamp": "2026-01-27T10:11:07.660914"
+      "timestamp": "2026-01-27T11:01:02.196196"
     },
     {
       "test": "GET creators?limit=5 - Limit Results",
       "success": true,
-      "details": "Status: 200, Response items: 1",
+      "details": "Status: 200, Response items: 0",
       "error": "",
-      "timestamp": "2026-01-27T10:11:07.988529"
+      "timestamp": "2026-01-27T11:01:02.521514"
     },
     {
-      "test": "POST auth/register - Creator Registration",
+      "test": "POST auth/otp/request - Request OTP for Creator",
       "success": true,
-      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'token']",
+      "details": "Status: 200, Response keys: ['message', 'debug_code']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:08.655571"
+      "timestamp": "2026-01-27T11:01:02.863603"
     },
     {
-      "test": "Creator Registration - Token Received",
+      "test": "OTP Request - Debug Code Received",
       "success": true,
-      "details": "User ID: user_6440ba772d34",
+      "details": "Code: 946078",
       "error": "",
-      "timestamp": "2026-01-27T10:11:08.655614"
+      "timestamp": "2026-01-27T11:01:02.863642"
     },
     {
-      "test": "POST auth/register - Business Registration",
+      "test": "POST auth/otp/verify - Verify OTP for Creator",
       "success": true,
-      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'token']",
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'user_type', 'is_new_user', 'token']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:09.214045"
+      "timestamp": "2026-01-27T11:01:03.202239"
     },
     {
-      "test": "Business Registration - Token Received",
+      "test": "OTP Verify - Creator Token Received",
       "success": true,
-      "details": "User ID: user_dff9b28acc82",
+      "details": "User ID: user_d211a274c799",
       "error": "",
-      "timestamp": "2026-01-27T10:11:09.214099"
+      "timestamp": "2026-01-27T11:01:03.202285"
     },
     {
-      "test": "POST auth/login - Creator Login",
+      "test": "POST auth/otp/request - Request OTP for Business",
       "success": true,
-      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'picture', 'token']",
+      "details": "Status: 200, Response keys: ['message', 'debug_code']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:09.758045"
+      "timestamp": "2026-01-27T11:01:03.531037"
     },
     {
-      "test": "Creator Login - Token Received",
+      "test": "OTP Request Business - Debug Code Received",
       "success": true,
-      "details": "User type: creator",
+      "details": "Code: 531331",
       "error": "",
-      "timestamp": "2026-01-27T10:11:09.758083"
+      "timestamp": "2026-01-27T11:01:03.531114"
+    },
+    {
+      "test": "POST auth/otp/verify - Verify OTP for Business",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'user_type', 'is_new_user', 'token']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:03.856368"
+    },
+    {
+      "test": "OTP Verify Business - Token Received",
+      "success": true,
+      "details": "User ID: user_75b698fd1a9b",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:03.856418"
+    },
+    {
+      "test": "POST auth/set-type - Set Creator Type",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_type']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:04.183287"
+    },
+    {
+      "test": "Set Creator Type - Success",
+      "success": true,
+      "details": "User type set to creator",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:04.183328"
+    },
+    {
+      "test": "POST auth/set-type - Set Business Type",
+      "success": true,
+      "details": "Status: 200, Response keys: ['user_type']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:04.509294"
+    },
+    {
+      "test": "Set Business Type - Success",
+      "success": true,
+      "details": "User type set to business",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:04.509337"
     },
     {
       "test": "GET auth/me - Get Current User",
       "success": true,
-      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'picture']",
+      "details": "Status: 200, Response keys: ['user_id', 'email', 'name', 'user_type', 'picture', 'is_premium']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:10.083227"
+      "timestamp": "2026-01-27T11:01:04.842243"
     },
     {
       "test": "GET creators/me/profile - Get Creator Profile",
       "success": true,
-      "details": "Status: 200, Response keys: ['profile_id', 'user_id', 'bio', 'city', 'can_travel', 'works_remote', 'content_types', 'sectors', 'min_rate', 'max_rate', 'portfolio_videos', 'badges', 'rating', 'reviews_count', 'completed_projects', 'is_verified', 'available', 'created_at', 'updated_at', 'name', 'email', 'picture']",
+      "details": "Status: 200, Response keys: ['profile_id', 'user_id', 'bio', 'city', 'can_travel', 'works_remote', 'content_types', 'sectors', 'equipment', 'experience_level', 'brands_worked', 'results', 'portfolio_videos', 'min_rate', 'max_rate', 'completion_score', 'reliability_score', 'performance_score', 'verification_status', 'is_visible', 'available', 'completed_projects', 'rating', 'reviews_count', 'created_at', 'updated_at', 'name', 'email', 'picture', 'is_premium', 'portfolio_status']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:10.408986"
+      "timestamp": "2026-01-27T11:01:05.166537"
     },
     {
       "test": "GET stats/creator - Get Creator Stats",
       "success": true,
-      "details": "Status: 200, Response keys: ['rating', 'reviews_count', 'completed_projects', 'active_campaigns', 'unread_messages']",
+      "details": "Status: 200, Response keys: ['completion_score', 'reliability_score', 'performance_score', 'rating', 'reviews_count', 'completed_projects', 'active_applications', 'verification_status', 'is_premium']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:10.734449"
+      "timestamp": "2026-01-27T11:01:05.490630"
     },
     {
       "test": "PUT creators/me/profile - Update Creator Profile",
       "success": true,
-      "details": "Status: 200, Response keys: ['message']",
+      "details": "Status: 200, Response keys: ['message', 'completion_score']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:11.061532"
+      "timestamp": "2026-01-27T11:01:05.812065"
+    },
+    {
+      "test": "GET trainings - Get Trainings",
+      "success": true,
+      "details": "Status: 200, Response items: 4",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:06.136608"
+    },
+    {
+      "test": "GET projects - Get Projects",
+      "success": true,
+      "details": "Status: 200, Response items: 0",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:06.468173"
+    },
+    {
+      "test": "GET incubator/info - Get Incubator Info",
+      "success": true,
+      "details": "Status: 200, Response keys: ['name', 'price', 'benefits', 'stats']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:06.796394"
     },
     {
       "test": "GET business/me/profile - Get Business Profile",
-      "success": false,
-      "details": "Status: 404",
-      "error": "Profile not found",
-      "timestamp": "2026-01-27T10:11:11.382251"
+      "success": true,
+      "details": "Status: 200, Response keys: ['profile_id', 'user_id', 'company_name', 'description', 'business_type', 'city', 'industry', 'website', 'monthly_budget', 'objectives', 'selected_pack', 'completion_score', 'created_at', 'updated_at', 'name', 'email']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:07.117229"
     },
     {
       "test": "GET stats/business - Get Business Stats",
       "success": true,
-      "details": "Status: 200, Response keys: ['total_campaigns', 'active_campaigns', 'completed_campaigns', 'total_spent', 'unread_messages']",
+      "details": "Status: 200, Response keys: ['completion_score', 'selected_pack', 'total_projects', 'active_projects', 'completed_projects']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:11.705415"
+      "timestamp": "2026-01-27T11:01:07.442385"
     },
     {
-      "test": "GET campaigns - Get Campaigns",
+      "test": "POST business/select-pack - Select Pack",
       "success": true,
-      "details": "Status: 200, Response items: 0",
+      "details": "Status: 200, Response keys: ['message', 'pack_id']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:12.028373"
+      "timestamp": "2026-01-27T11:01:07.778292"
     },
     {
-      "test": "POST quote-request - Submit Quote Request",
+      "test": "POST projects - Create Project",
       "success": true,
-      "details": "Status: 200, Response keys: ['quote_id', 'message']",
+      "details": "Status: 200, Response keys: ['project_id', 'message']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:12.357289"
+      "timestamp": "2026-01-27T11:01:08.109872"
+    },
+    {
+      "test": "POST auth/request-access - Submit Access Request",
+      "success": true,
+      "details": "Status: 200, Response keys: ['message', 'request_id']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:08.444478"
     },
     {
       "test": "GET invalid-endpoint - Invalid Endpoint",
       "success": true,
       "details": "Status: 404, Response keys: ['detail']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:12.677984"
+      "timestamp": "2026-01-27T11:01:08.765453"
     },
     {
-      "test": "POST auth/login - Invalid Login",
-      "success": true,
-      "details": "Status: 401, Response keys: ['detail']",
-      "error": "",
-      "timestamp": "2026-01-27T10:11:12.999953"
-    },
-    {
-      "test": "POST auth/register - Duplicate Registration",
+      "test": "POST auth/otp/verify - Invalid OTP",
       "success": true,
       "details": "Status: 400, Response keys: ['detail']",
       "error": "",
-      "timestamp": "2026-01-27T10:11:13.323486"
+      "timestamp": "2026-01-27T11:01:09.102391"
     },
     {
       "test": "GET auth/me - Unauthorized Access",
       "success": false,
       "details": "Status: 200",
       "error": "HTTP 200",
-      "timestamp": "2026-01-27T10:11:13.644220"
+      "timestamp": "2026-01-27T11:01:09.449520"
+    },
+    {
+      "test": "POST auth/set-type - Invalid User Type",
+      "success": true,
+      "details": "Status: 400, Response keys: ['detail']",
+      "error": "",
+      "timestamp": "2026-01-27T11:01:09.774535"
     }
   ]
 }
