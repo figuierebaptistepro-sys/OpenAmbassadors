@@ -1461,6 +1461,17 @@ async def update_application_status(project_id: str, creator_id: str, request: R
             {"$set": {"status": "in_progress"}}
         )
     
+    # Send email notification to creator
+    if new_status in ["accepted", "rejected"]:
+        creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
+        if creator:
+            await send_application_status_email(
+                creator_email=creator["email"],
+                creator_name=creator.get("name"),
+                project_title=project["title"],
+                status=new_status
+            )
+    
     return {"message": "Statut mis à jour"}
 
 @api_router.post("/projects/{project_id}/apply")
