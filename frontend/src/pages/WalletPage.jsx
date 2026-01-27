@@ -176,14 +176,37 @@ const WalletPage = ({ user }) => {
           <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
             <Wallet className="w-5 h-5 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Ma Cagnotte</h1>
             <p className="text-gray-500 text-xs sm:text-sm">Gérez vos revenus et retraits</p>
           </div>
+          {wallet?.is_premium && (
+            <Badge className="bg-gradient-to-r from-primary to-pink-500 text-white shadow-sm shadow-primary/30">
+              <Crown className="w-3 h-3 mr-1" />
+              0% de frais
+            </Badge>
+          )}
         </div>
       </div>
 
       <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+        {/* Premium Banner */}
+        {wallet?.is_premium && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+            <div className="bg-gradient-to-r from-primary/10 via-pink-50 to-primary/5 border border-primary/20 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                  <Crown className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold text-gray-900">Membre Premium</p>
+                  <p className="text-gray-600 text-sm">Vous bénéficiez de <span className="font-semibold text-primary">0% de frais</span> sur tous vos revenus !</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Balance Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
