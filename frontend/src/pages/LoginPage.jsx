@@ -1,33 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mail, ArrowRight, Lock, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, ArrowRight, ArrowLeft, KeyRound, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Card, CardContent } from "../components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-const LOGO_URL = "/logo-sun.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [step, setStep] = useState("email");
+  const [step, setStep] = useState("main"); // main, email, otp
   const [loading, setLoading] = useState(false);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
-  const [accessForm, setAccessForm] = useState({ name: "", email: "", reason: "" });
 
   const handleRequestOTP = async () => {
-    if (!email) {
-      toast.error("Entrez votre email");
+    if (!email || !email.includes("@")) {
+      toast.error("Entrez un email valide");
       return;
     }
     
@@ -41,7 +31,7 @@ const LoginPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success("Code envoyé à votre email");
+        toast.success("Code envoyé à votre email !");
         if (data.debug_code) {
           toast.info(`Code de test: ${data.debug_code}`, { duration: 10000 });
         }
@@ -98,62 +88,69 @@ const LoginPage = () => {
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
-  const handleRequestAccess = async () => {
-    if (!accessForm.email) {
-      toast.error("Email requis");
-      return;
-    }
-    
+  const handleResendCode = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/request-access`, {
+      const response = await fetch(`${API_URL}/api/auth/otp/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(accessForm),
+        body: JSON.stringify({ email }),
       });
-
       if (response.ok) {
-        toast.success("Demande envoyée ! Nous vous contacterons bientôt.");
-        setAccessDialogOpen(false);
-        setAccessForm({ name: "", email: "", reason: "" });
+        const data = await response.json();
+        toast.success("Nouveau code envoyé !");
+        if (data.debug_code) {
+          toast.info(`Code: ${data.debug_code}`, { duration: 10000 });
+        }
       }
     } catch {
-      toast.error("Erreur lors de l'envoi");
+      toast.error("Erreur");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7FB] flex items-center justify-center p-6">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-primary-soft to-transparent rounded-full opacity-60 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-primary-soft to-transparent rounded-full opacity-40 blur-3xl" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-pink-50 flex items-center justify-center p-4">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-200/40 to-orange-200/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-pink-200/30 to-purple-200/30 rounded-full blur-3xl" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative z-10 w-full max-w-sm"
       >
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <img src={LOGO_URL} alt="Incubateur" className="w-20 h-20 rounded-3xl mx-auto mb-6 shadow-lg object-cover" />
-          <h1 className="font-heading text-3xl font-bold text-gray-900 mb-2">
-            Incubateur
-          </h1>
-          <p className="text-gray-500">
-            Réseau privé de créateurs et d'entreprises
-          </p>
-        </div>
+        {/* Logo */}
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-pink-500 to-orange-500 rounded-2xl shadow-lg shadow-pink-500/30 mb-4">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Creator Incubator</h1>
+          <p className="text-gray-500 text-sm mt-1">Connectez-vous ou créez un compte</p>
+        </motion.div>
 
-        <Card className="border-0 shadow-xl shadow-gray-200/50 bg-white">
-          <CardContent className="p-8">
-            {step === "email" ? (
-              <div className="space-y-6">
-                {/* Google Login */}
+        {/* Card */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-gray-200/50 border border-white/50 overflow-hidden">
+          <AnimatePresence mode="wait">
+            {step === "main" && (
+              <motion.div
+                key="main"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="p-6 space-y-4"
+              >
+                {/* Google Button */}
                 <Button
-                  type="button"
-                  className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm"
                   onClick={handleGoogleLogin}
+                  className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-200 shadow-sm rounded-xl transition-all hover:shadow-md"
                   data-testid="google-login-btn"
                 >
                   <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -165,144 +162,157 @@ const LoginPage = () => {
                   Continuer avec Google
                 </Button>
 
-                <div className="relative">
+                {/* Divider */}
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-400">ou</span>
+                  <div className="relative flex justify-center">
+                    <span className="px-3 bg-white text-gray-400 text-sm">ou</span>
                   </div>
                 </div>
 
-                {/* Email OTP Login */}
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary"
-                      onKeyDown={(e) => e.key === "Enter" && handleRequestOTP()}
-                      data-testid="email-input"
-                    />
+                {/* Email Button */}
+                <Button
+                  onClick={() => setStep("email")}
+                  className="w-full h-12 bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-medium rounded-xl shadow-lg shadow-pink-500/25 transition-all hover:shadow-xl hover:shadow-pink-500/30"
+                  data-testid="email-login-btn"
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Continuer avec Email
+                </Button>
+
+                {/* Info */}
+                <p className="text-center text-xs text-gray-400 pt-2">
+                  Créez un compte ou connectez-vous en un clic
+                </p>
+              </motion.div>
+            )}
+
+            {step === "email" && (
+              <motion.div
+                key="email"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-6 space-y-5"
+              >
+                <button
+                  onClick={() => setStep("main")}
+                  className="flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Retour
+                </button>
+
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-pink-100 rounded-full mb-3">
+                    <Mail className="w-6 h-6 text-pink-600" />
                   </div>
+                  <h2 className="text-lg font-semibold text-gray-900">Entrez votre email</h2>
+                  <p className="text-gray-500 text-sm">Nous vous enverrons un code de connexion</p>
+                </div>
+
+                <div className="space-y-3">
+                  <Input
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 bg-gray-50/50 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-pink-500/20"
+                    onKeyDown={(e) => e.key === "Enter" && handleRequestOTP()}
+                    autoFocus
+                    data-testid="email-input"
+                  />
                   <Button
                     onClick={handleRequestOTP}
-                    disabled={loading}
-                    className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-medium shadow-lg shadow-primary/20"
+                    disabled={loading || !email}
+                    className="w-full h-12 bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-medium rounded-xl shadow-lg shadow-pink-500/25 disabled:opacity-50"
                     data-testid="request-otp-btn"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
-                        Recevoir un code
+                        Envoyer le code
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </>
                     )}
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
+              </motion.div>
+            )}
+
+            {step === "otp" && (
+              <motion.div
+                key="otp"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-6 space-y-5"
+              >
+                <button
+                  onClick={() => { setStep("email"); setOtpCode(""); }}
+                  className="flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Changer d'email
+                </button>
+
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Lock className="w-6 h-6 text-primary" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+                    <KeyRound className="w-6 h-6 text-green-600" />
                   </div>
-                  <p className="text-gray-900 font-medium">Code envoyé à</p>
-                  <p className="text-gray-500 text-sm">{email}</p>
+                  <h2 className="text-lg font-semibold text-gray-900">Vérifiez votre email</h2>
+                  <p className="text-gray-500 text-sm">
+                    Code envoyé à <span className="font-medium text-gray-700">{email}</span>
+                  </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Input
                     type="text"
+                    inputMode="numeric"
                     placeholder="000000"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="h-14 text-center text-2xl tracking-widest bg-gray-50 border-gray-200 font-mono focus:border-primary"
+                    className="h-14 text-center text-2xl tracking-[0.5em] bg-gray-50/50 border-gray-200 rounded-xl font-mono focus:border-pink-500"
                     maxLength={6}
                     onKeyDown={(e) => e.key === "Enter" && handleVerifyOTP()}
+                    autoFocus
                     data-testid="otp-input"
                   />
                   <Button
                     onClick={handleVerifyOTP}
                     disabled={loading || otpCode.length !== 6}
-                    className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-medium shadow-lg shadow-primary/20"
+                    className="w-full h-12 bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-medium rounded-xl shadow-lg shadow-pink-500/25 disabled:opacity-50"
                     data-testid="verify-otp-btn"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <>
-                        Vérifier
-                        <CheckCircle className="w-5 h-5 ml-2" />
-                      </>
+                      "Se connecter"
                     )}
                   </Button>
                 </div>
 
                 <button
-                  onClick={() => { setStep("email"); setOtpCode(""); }}
-                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
+                  onClick={handleResendCode}
+                  disabled={loading}
+                  className="w-full text-center text-sm text-gray-500 hover:text-pink-600 transition-colors"
                 >
-                  ← Changer d'email
+                  Renvoyer le code
                 </button>
-              </div>
+              </motion.div>
             )}
+          </AnimatePresence>
+        </div>
 
-            {/* Request Access */}
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-              <p className="text-gray-500 text-sm mb-3">Pas encore membre ?</p>
-              <Button
-                variant="outline"
-                onClick={() => setAccessDialogOpen(true)}
-                className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                data-testid="request-access-btn"
-              >
-                Demander un accès
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-400 mt-6">
+          En continuant, vous acceptez nos conditions d'utilisation
+        </p>
       </motion.div>
-
-      {/* Access Request Dialog */}
-      <Dialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900">Demander un accès</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input
-              placeholder="Votre nom"
-              value={accessForm.name}
-              onChange={(e) => setAccessForm({ ...accessForm, name: e.target.value })}
-              className="bg-gray-50 border-gray-200"
-            />
-            <Input
-              type="email"
-              placeholder="Votre email"
-              value={accessForm.email}
-              onChange={(e) => setAccessForm({ ...accessForm, email: e.target.value })}
-              className="bg-gray-50 border-gray-200"
-            />
-            <textarea
-              placeholder="Pourquoi souhaitez-vous rejoindre ?"
-              value={accessForm.reason}
-              onChange={(e) => setAccessForm({ ...accessForm, reason: e.target.value })}
-              className="w-full h-24 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 resize-none focus:border-primary focus:outline-none"
-            />
-            <Button
-              onClick={handleRequestAccess}
-              className="w-full bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20"
-            >
-              Envoyer la demande
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
