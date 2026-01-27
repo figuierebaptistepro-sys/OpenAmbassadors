@@ -124,6 +124,11 @@ const ProtectedRoute = ({ children, requireType = false }) => {
     checkAuth();
   }, [navigate, location.state, requireType]);
 
+  // Fonction pour mettre à jour l'utilisateur en temps réel
+  const handleUserUpdate = (updatedUser) => {
+    setAuthState(prev => ({ ...prev, user: updatedUser }));
+  };
+
   if (!authState.checked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F6F7FB]">
@@ -136,7 +141,7 @@ const ProtectedRoute = ({ children, requireType = false }) => {
     return null;
   }
 
-  return typeof children === "function" ? children({ user: authState.user }) : children;
+  return typeof children === "function" ? children({ user: authState.user, onUserUpdate: handleUserUpdate }) : children;
 };
 
 // App Router
