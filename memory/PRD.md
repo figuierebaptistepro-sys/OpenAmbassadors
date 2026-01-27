@@ -30,7 +30,18 @@ Refonte vers une plateforme privée avec:
 - Bibliothèque formations
 - Système projets/missions
 
-## What's Been Implemented (December 2024)
+## What's Been Implemented
+
+### January 2025 - Art Direction & Structure Refactor
+✅ New light/pink design system (#F6F7FB, #FFFFFF, #FF2E63)
+✅ Fixed left sidebar navigation
+✅ Account Settings page (Profile, Notifications, Security, Preferences tabs)
+✅ Support & Guides page (FAQ, Guides, Contact support)
+✅ Learn page (Free & Premium trainings with gamification)
+✅ Find Creator as dedicated page
+✅ Pack selection dialog bug fix (better accessibility with buttons)
+
+### December 2024 - Core MVP
 ✅ Login page privée (Google + OTP + Demande accès)
 ✅ Sélection type utilisateur
 ✅ Dashboard créateur avec scores et progression
