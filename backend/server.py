@@ -25,8 +25,10 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 PROFILES_DIR = UPLOADS_DIR / "profiles"
 BANNERS_DIR = UPLOADS_DIR / "banners"
+PROJECTS_DIR = UPLOADS_DIR / "projects"
 PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 BANNERS_DIR.mkdir(parents=True, exist_ok=True)
+PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -173,11 +175,17 @@ class Project(BaseModel):
     pack_id: str
     title: str
     description: str
+    brief: Optional[str] = None  # Detailed brief for creators
     budget: int
     content_type: str
     target_creators: int = 1
     requirements: List[str] = []
+    deliverables: List[str] = []  # What's expected from creators
     deadline: Optional[str] = None
+    duration: Optional[str] = None  # e.g., "2 weeks", "1 month"
+    location: Optional[str] = None  # City or "Remote"
+    remote_ok: bool = True
+    banner_url: Optional[str] = None  # Project cover image (REQUIRED)
     incubator_only: bool = False
     status: str = "open"  # open, in_progress, completed, cancelled
     applications: List[dict] = []  # [{creator_id, status, applied_at}]
@@ -187,11 +195,17 @@ class ProjectCreate(BaseModel):
     pack_id: str
     title: str
     description: str
+    brief: Optional[str] = None
     budget: int
     content_type: str
     target_creators: int = 1
     requirements: List[str] = []
+    deliverables: List[str] = []
     deadline: Optional[str] = None
+    duration: Optional[str] = None
+    location: Optional[str] = None
+    remote_ok: bool = True
+    banner_url: Optional[str] = None
     incubator_only: bool = False
 
 class Training(BaseModel):
