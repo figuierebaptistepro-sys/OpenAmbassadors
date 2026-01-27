@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  User, Bell, Search, Mail, Lock, Camera, Trash2, 
-  Shield, CreditCard, Globe, Moon, Sun
+  User, Bell, Lock, Camera, Trash2, ImagePlus,
+  Shield, Globe, Moon, Sun, Upload, X
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { Button } from "../components/ui/button";
@@ -15,10 +15,15 @@ import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const AccountSettings = ({ user }) => {
+const AccountSettings = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  
+  const pictureInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
   
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
@@ -49,7 +54,6 @@ const AccountSettings = ({ user }) => {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // Mock save - would update user profile
       await new Promise(resolve => setTimeout(resolve, 500));
       toast.success("Profil mis à jour !");
     } catch (error) {
@@ -71,6 +75,101 @@ const AccountSettings = ({ user }) => {
     }
   };
 
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 5MB");
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_URL}/api/upload/profile-picture`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Erreur lors de l'upload");
+      }
+
+      const data = await response.json();
+      toast.success("Photo de profil mise à jour !");
+      
+      // Update user state if callback provided
+      if (onUserUpdate) {
+        onUserUpdate({ ...user, picture: data.picture_url });
+      }
+    } catch (error) {
+      toast.error(error.message || "Erreur lors de l'upload");
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 5MB");
+      return;
+    }
+
+    setUploadingBanner(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_URL}/api/upload/banner`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Erreur lors de l'upload");
+      }
+
+      const data = await response.json();
+      toast.success("Bannière mise à jour !");
+      
+      if (onUserUpdate) {
+        onUserUpdate({ ...user, banner: data.banner_url });
+      }
+    } catch (error) {
+      toast.error(error.message || "Erreur lors de l'upload");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}${url}`;
+  };
+
   const tabs = [
     { id: "profile", label: "Profil", icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },
@@ -86,11 +185,11 @@ const AccountSettings = ({ user }) => {
         {/* Header */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="font-heading text-xl font-bold text-gray-900">Account Settings</h1>
+            <h1 className="font-heading text-xl font-bold text-gray-900">Paramètres du compte</h1>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
                 {user?.picture ? (
-                  <img src={user.picture} alt="" className="w-full h-full object-cover" />
+                  <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-5 h-5 text-gray-500" />
                 )}
@@ -102,7 +201,7 @@ const AccountSettings = ({ user }) => {
         <main className="p-8">
           <div className="max-w-4xl">
             {/* Tabs */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6 flex-wrap">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -121,66 +220,165 @@ const AccountSettings = ({ user }) => {
 
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <Card className="border-0 shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-gray-900">Informations du profil</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Avatar */}
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                        {user?.picture ? (
-                          <img src={user.picture} alt="" className="w-full h-full object-cover" />
+              <div className="space-y-6">
+                {/* Banner Upload Card */}
+                <Card className="border-0 shadow-md overflow-hidden">
+                  <div className="relative h-40 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
+                    {user?.banner && (
+                      <img 
+                        src={getImageUrl(user.banner)} 
+                        alt="Bannière" 
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <input
+                        type="file"
+                        ref={bannerInputRef}
+                        onChange={handleBannerUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button
+                        onClick={() => bannerInputRef.current?.click()}
+                        disabled={uploadingBanner}
+                        className="bg-white text-gray-900 hover:bg-gray-100"
+                      >
+                        {uploadingBanner ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin mr-2" />
+                            Upload...
+                          </>
                         ) : (
-                          <User className="w-10 h-10 text-gray-400" />
+                          <>
+                            <ImagePlus className="w-4 h-4 mr-2" />
+                            Changer la bannière
+                          </>
                         )}
+                      </Button>
+                    </div>
+                    {!user?.banner && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <input
+                          type="file"
+                          ref={bannerInputRef}
+                          onChange={handleBannerUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => bannerInputRef.current?.click()}
+                          disabled={uploadingBanner}
+                          className="bg-white/80 backdrop-blur border-white/50"
+                        >
+                          {uploadingBanner ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                              Upload...
+                            </>
+                          ) : (
+                            <>
+                              <ImagePlus className="w-4 h-4 mr-2" />
+                              Ajouter une bannière
+                            </>
+                          )}
+                        </Button>
                       </div>
-                      <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-md">
-                        <Camera className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div>
-                      <p className="text-gray-900 font-medium">{user?.name}</p>
-                      <p className="text-gray-500 text-sm">{user?.email}</p>
-                      <Badge className={user?.user_type === "creator" ? "bg-primary mt-2" : "bg-gray-600 mt-2"}>
-                        {user?.user_type === "creator" ? "Créateur" : "Entreprise"}
-                      </Badge>
-                    </div>
+                    )}
                   </div>
-
-                  {/* Form */}
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label>Nom complet</Label>
-                      <Input
-                        value={profileForm.name}
-                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                        className="bg-gray-50 border-gray-200"
-                      />
+                  <CardContent className="pt-0 relative">
+                    {/* Avatar overlapping banner */}
+                    <div className="flex items-end gap-6 -mt-12 mb-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 bg-white rounded-2xl shadow-lg border-4 border-white flex items-center justify-center overflow-hidden">
+                          {user?.picture ? (
+                            <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-10 h-10 text-gray-400" />
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          ref={pictureInputRef}
+                          onChange={handlePictureUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <button 
+                          onClick={() => pictureInputRef.current?.click()}
+                          disabled={uploadingPicture}
+                          className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-primary-hover transition-colors disabled:opacity-50"
+                        >
+                          {uploadingPicture ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Camera className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="pb-2">
+                        <p className="text-gray-900 font-semibold text-lg">{user?.name || "Utilisateur"}</p>
+                        <p className="text-gray-500 text-sm">{user?.email}</p>
+                        <Badge className={user?.user_type === "creator" ? "bg-primary mt-2" : "bg-gray-600 mt-2"}>
+                          {user?.user_type === "creator" ? "Créateur" : "Entreprise"}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input
-                        type="email"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                        className="bg-gray-50 border-gray-200"
-                        disabled
-                      />
-                      <p className="text-gray-400 text-xs">L'email ne peut pas être modifié</p>
-                    </div>
-                  </div>
 
-                  <Button 
-                    onClick={handleSaveProfile} 
-                    disabled={loading}
-                    className="bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
-                  >
-                    {loading ? "Enregistrement..." : "Enregistrer"}
-                  </Button>
-                </CardContent>
-              </Card>
+                    {/* Form */}
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label>Nom complet</Label>
+                        <Input
+                          value={profileForm.name}
+                          onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                          className="bg-gray-50 border-gray-200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={profileForm.email}
+                          onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                          className="bg-gray-50 border-gray-200"
+                          disabled
+                        />
+                        <p className="text-gray-400 text-xs">L'email ne peut pas être modifié</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <Button 
+                        onClick={handleSaveProfile} 
+                        disabled={loading}
+                        className="bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
+                      >
+                        {loading ? "Enregistrement..." : "Enregistrer"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Upload Guidelines */}
+                <Card className="border-0 shadow-md bg-primary/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Upload className="w-5 h-5 text-primary mt-0.5" />
+                      <div>
+                        <p className="text-gray-900 font-medium text-sm">Conseils pour vos images</p>
+                        <ul className="text-gray-600 text-sm mt-1 space-y-1">
+                          <li>• Photo de profil : format carré recommandé (min. 200x200px)</li>
+                          <li>• Bannière : format paysage recommandé (1500x500px idéal)</li>
+                          <li>• Taille maximum : 5MB par fichier</li>
+                          <li>• Formats acceptés : JPG, PNG, WEBP, GIF</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* Notifications Tab */}
