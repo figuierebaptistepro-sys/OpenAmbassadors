@@ -1090,6 +1090,49 @@ async def apply_to_project(project_id: str, user: dict = Depends(get_current_use
     
     return {"message": "Candidature envoyée"}
 
+@api_router.put("/projects/{project_id}")
+async def update_project(project_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Business updates their project - sets status back to pending if modified"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    project = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    
+    if project["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Non autorisé")
+    
+    body = await request.json()
+    
+    # Fields that can be updated
+    allowed_fields = [
+        "title", "description", "brief", "budget", "content_type",
+        "target_creators", "requirements", "deliverables", "deadline",
+        "duration", "location", "remote_ok", "banner_url", "incubator_only"
+    ]
+    
+    update_data = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if update_data:
+        # If significant changes, reset applications to pending
+        significant_fields = ["title", "description", "brief", "budget", "requirements", "deliverables"]
+        has_significant_change = any(k in update_data for k in significant_fields)
+        
+        if has_significant_change and project.get("applications"):
+            # Reset all application statuses to pending
+            await db.projects.update_one(
+                {"project_id": project_id},
+                {"$set": {"applications.$[].status": "pending"}}
+            )
+        
+        await db.projects.update_one(
+            {"project_id": project_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Projet mis à jour"}
+
 # ==================== TRAINING ROUTES ====================
 
 @api_router.get("/trainings")
