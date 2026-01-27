@@ -128,45 +128,87 @@ class IncubateurAPITester:
             except Exception as e:
                 self.log_test("Packs - JSON Parse", False, "", str(e))
 
-    def test_user_registration(self):
-        """Test user registration for both creator and business"""
-        print("\n👤 Testing User Registration...")
+    def test_otp_authentication(self):
+        """Test OTP-based authentication flow"""
+        print("\n🔐 Testing OTP Authentication...")
         
-        # Test creator registration
+        # Test OTP request for creator
+        otp_request_data = {"email": self.test_creator_email}
         success, response = self.test_endpoint(
-            'POST', 'auth/register', 200, 
-            data=self.test_creator,
-            description="- Creator Registration"
+            'POST', 'auth/otp/request', 200, 
+            data=otp_request_data,
+            description="- Request OTP for Creator"
         )
         
+        creator_otp_code = None
         if success and response:
             try:
                 data = response.json()
-                if 'token' in data and 'user_id' in data:
-                    self.creator_token = data['token']
-                    self.log_test("Creator Registration - Token Received", True, f"User ID: {data['user_id']}")
+                if 'debug_code' in data:
+                    creator_otp_code = data['debug_code']
+                    self.log_test("OTP Request - Debug Code Received", True, f"Code: {creator_otp_code}")
                 else:
-                    self.log_test("Creator Registration - Token Missing", False, "", "No token in response")
+                    self.log_test("OTP Request - No Debug Code", False, "", "Debug code not in response")
             except Exception as e:
-                self.log_test("Creator Registration - Parse Response", False, "", str(e))
+                self.log_test("OTP Request - Parse Response", False, "", str(e))
         
-        # Test business registration
+        # Test OTP verification for creator
+        if creator_otp_code:
+            otp_verify_data = {"email": self.test_creator_email, "code": creator_otp_code}
+            success, response = self.test_endpoint(
+                'POST', 'auth/otp/verify', 200,
+                data=otp_verify_data,
+                description="- Verify OTP for Creator"
+            )
+            
+            if success and response:
+                try:
+                    data = response.json()
+                    if 'token' in data and 'user_id' in data:
+                        self.creator_token = data['token']
+                        self.creator_user_id = data['user_id']
+                        self.log_test("OTP Verify - Creator Token Received", True, f"User ID: {data['user_id']}")
+                    else:
+                        self.log_test("OTP Verify - Token Missing", False, "", "No token in response")
+                except Exception as e:
+                    self.log_test("OTP Verify - Parse Response", False, "", str(e))
+        
+        # Test OTP for business user
+        otp_request_data = {"email": self.test_business_email}
         success, response = self.test_endpoint(
-            'POST', 'auth/register', 200,
-            data=self.test_business,
-            description="- Business Registration"
+            'POST', 'auth/otp/request', 200, 
+            data=otp_request_data,
+            description="- Request OTP for Business"
         )
         
+        business_otp_code = None
         if success and response:
             try:
                 data = response.json()
-                if 'token' in data and 'user_id' in data:
-                    self.business_token = data['token']
-                    self.log_test("Business Registration - Token Received", True, f"User ID: {data['user_id']}")
-                else:
-                    self.log_test("Business Registration - Token Missing", False, "", "No token in response")
+                if 'debug_code' in data:
+                    business_otp_code = data['debug_code']
+                    self.log_test("OTP Request Business - Debug Code Received", True, f"Code: {business_otp_code}")
             except Exception as e:
-                self.log_test("Business Registration - Parse Response", False, "", str(e))
+                self.log_test("OTP Request Business - Parse Response", False, "", str(e))
+        
+        # Verify business OTP
+        if business_otp_code:
+            otp_verify_data = {"email": self.test_business_email, "code": business_otp_code}
+            success, response = self.test_endpoint(
+                'POST', 'auth/otp/verify', 200,
+                data=otp_verify_data,
+                description="- Verify OTP for Business"
+            )
+            
+            if success and response:
+                try:
+                    data = response.json()
+                    if 'token' in data and 'user_id' in data:
+                        self.business_token = data['token']
+                        self.business_user_id = data['user_id']
+                        self.log_test("OTP Verify Business - Token Received", True, f"User ID: {data['user_id']}")
+                except Exception as e:
+                    self.log_test("OTP Verify Business - Parse Response", False, "", str(e))
 
     def test_user_login(self):
         """Test user login"""
