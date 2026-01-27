@@ -665,6 +665,37 @@ async def get_banner(filename: str):
         raise HTTPException(status_code=404, detail="Image non trouvée")
     return FileResponse(filepath)
 
+@api_router.post("/upload/project-banner")
+async def upload_project_banner(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload project banner image"""
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.")
+    
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux. Maximum 5MB.")
+    
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"project_{uuid.uuid4().hex[:12]}.{ext}"
+    filepath = PROJECTS_DIR / filename
+    
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    banner_url = f"/api/uploads/projects/{filename}"
+    return {"message": "Image uploadée", "banner_url": banner_url}
+
+@api_router.get("/uploads/projects/{filename}")
+async def get_project_banner(filename: str):
+    """Serve project banner images publicly"""
+    filepath = PROJECTS_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Image non trouvée")
+    return FileResponse(filepath)
+
 # ==================== CREATOR ROUTES ====================
 
 @api_router.get("/creators")
