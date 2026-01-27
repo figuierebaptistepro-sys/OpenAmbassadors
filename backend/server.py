@@ -184,37 +184,49 @@ async def send_new_application_email(business_email: str, business_name: str, pr
 async def send_application_status_email(creator_email: str, creator_name: str, project_title: str, status: str):
     """Notify creator of application status change"""
     is_accepted = status == "accepted"
-    await send_email(
-        to=creator_email,
-        subject=f"{'✅ Candidature acceptée' if is_accepted else '❌ Candidature refusée'} - {project_title}",
-        html=f"""
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: {'#4CAF50' if is_accepted else '#F44336'}; margin: 0;">
-                    {'Félicitations ! 🎉' if is_accepted else 'Mise à jour de candidature'}
-                </h1>
-            </div>
-            <p style="color: #333; line-height: 1.6;">
-                Bonjour {creator_name or ''},
-            </p>
-            <p style="color: #333; line-height: 1.6;">
-                {'Votre candidature pour le projet' if is_accepted else 'Malheureusement, votre candidature pour le projet'} 
-                <strong>"{project_title}"</strong> 
-                {'a été acceptée ! L\\'entreprise souhaite collaborer avec vous.' if is_accepted else 'n\\'a pas été retenue cette fois-ci.'}
-            </p>
-            {f'''
+    
+    if is_accepted:
+        subject = f"✅ Candidature acceptée - {project_title}"
+        title = "Félicitations ! 🎉"
+        title_color = "#4CAF50"
+        message = f'Votre candidature pour le projet <strong>"{project_title}"</strong> a été acceptée ! L\'entreprise souhaite collaborer avec vous.'
+        info_box = '''
             <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0;">
                 <p style="color: #2e7d32; margin: 0;">
                     🚀 Prochaine étape : L'entreprise vous contactera pour discuter des détails du projet.
                 </p>
             </div>
-            ''' if is_accepted else '''
+        '''
+    else:
+        subject = f"❌ Candidature refusée - {project_title}"
+        title = "Mise à jour de candidature"
+        title_color = "#F44336"
+        message = f'Malheureusement, votre candidature pour le projet <strong>"{project_title}"</strong> n\'a pas été retenue cette fois-ci.'
+        info_box = '''
             <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0;">
                 <p style="color: #666; margin: 0;">
                     💪 Ne vous découragez pas ! Continuez à postuler à d'autres projets.
                 </p>
             </div>
-            '''}
+        '''
+    
+    name_display = creator_name or ''
+    
+    await send_email(
+        to=creator_email,
+        subject=subject,
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: {title_color}; margin: 0;">{title}</h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour {name_display},
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                {message}
+            </p>
+            {info_box}
             <div style="text-align: center; margin: 30px 0;">
                 <a href="https://creator-incubator.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
