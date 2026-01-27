@@ -162,7 +162,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
           ))}
 
           <div className="pt-4 mt-4 border-t border-gray-100">
-            {secondaryItems.map((item) => (
+            {commonMenuItems.filter(item => !item.adminOnly).map((item) => (
               <button
                 key={item.path}
                 onClick={() => handleNavClick(item.path)}
@@ -176,6 +176,19 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 <span className="text-sm">{item.label}</span>
               </button>
             ))}
+            
+            {/* Admin Link - Mobile */}
+            <button
+              onClick={() => handleNavClick("/admin")}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
+                isActive("/admin")
+                  ? "bg-gray-900 text-white font-semibold"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <Shield className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">Administration</span>
+            </button>
           </div>
         </nav>
 
