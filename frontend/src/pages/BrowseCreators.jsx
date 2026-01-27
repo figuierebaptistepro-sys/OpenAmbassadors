@@ -139,6 +139,29 @@ const BrowseCreators = ({ user }) => {
         </div>
       </div>
 
+      {/* Visibility Filter */}
+      <div>
+        <Label className="text-gray-900 font-semibold mb-2 block text-sm flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          Audience minimum
+        </Label>
+        <div className="grid grid-cols-3 gap-2">
+          {VISIBILITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setFilters({ ...filters, visibility: opt.value })}
+              className={`py-2 rounded-lg border text-xs transition-all ${
+                filters.visibility === opt.value
+                  ? "border-primary bg-primary text-white"
+                  : "border-gray-200 text-gray-600"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Options */}
       <div>
         <Label className="text-gray-900 font-semibold mb-2 block text-sm">Options</Label>
