@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import {
   Users, Briefcase, CreditCard, Shield, CheckCircle, XCircle, Clock,
   Euro, TrendingUp, Crown, Building2, UserCheck, UserX, Eye, ChevronRight,
-  AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet
+  AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
+  Ban, Trash2, AlertTriangle
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -17,6 +18,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
