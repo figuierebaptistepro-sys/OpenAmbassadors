@@ -52,6 +52,7 @@ class UserBase(BaseModel):
     email: str
     name: Optional[str] = None
     picture: Optional[str] = None
+    banner: Optional[str] = None  # Banner/cover image URL
     user_type: Optional[str] = None  # "creator" or "business" - can be set later
     is_premium: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
