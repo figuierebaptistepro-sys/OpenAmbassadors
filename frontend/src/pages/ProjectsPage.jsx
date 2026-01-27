@@ -205,7 +205,7 @@ const ProjectsPage = ({ user }) => {
       <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
         <DialogContent className="bg-white border-0 shadow-xl mx-4 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-gray-900">Postuler à "{selectedProject?.title}"</DialogTitle>
+            <DialogTitle className="text-gray-900">Postuler à &quot;{selectedProject?.title}&quot;</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div>
