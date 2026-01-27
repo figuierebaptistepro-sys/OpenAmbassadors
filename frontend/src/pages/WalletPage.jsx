@@ -506,7 +506,7 @@ const WalletPage = ({ user }) => {
 
             <Button
               onClick={handleWithdraw}
-              disabled={submitting || !withdrawForm.amount || parseFloat(withdrawForm.amount) < 10}
+              disabled={submitting || !withdrawForm.amount || parseFloat(withdrawForm.amount) <= 0}
               className="w-full bg-primary hover:bg-primary-hover"
               data-testid="confirm-withdraw-btn"
             >
