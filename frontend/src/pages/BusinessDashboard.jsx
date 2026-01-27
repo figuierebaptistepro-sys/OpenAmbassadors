@@ -515,19 +515,21 @@ const BusinessDashboard = ({ user }) => {
 
       {/* Pack Selection Dialog */}
       <Dialog open={packDialogOpen} onOpenChange={setPackDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-2xl max-w-2xl">
+        <DialogContent className="bg-white border-0 shadow-2xl max-w-2xl" data-testid="pack-selection-dialog">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Choisir un pack</DialogTitle>
           </DialogHeader>
           <div className="grid md:grid-cols-2 gap-4 py-4">
             {packs.map((pack) => (
-              <div
+              <button
                 key={pack.pack_id}
+                type="button"
                 onClick={() => handleSelectPack(pack.pack_id)}
-                className={`p-4 border rounded-xl cursor-pointer transition-all ${
+                data-testid={`pack-card-${pack.pack_id}`}
+                className={`p-4 border rounded-xl text-left transition-all w-full ${
                   stats?.selected_pack === pack.pack_id
-                    ? "border-primary bg-primary-soft"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-primary bg-primary-soft ring-2 ring-primary/20"
+                    : "border-gray-200 hover:border-primary/50 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -540,7 +542,13 @@ const BusinessDashboard = ({ user }) => {
                 <p className="text-gray-400 text-xs mt-2">
                   {pack.creators_count} créateurs • {pack.videos_count} vidéos • {pack.delivery_days}j
                 </p>
-              </div>
+                {stats?.selected_pack === pack.pack_id && (
+                  <div className="flex items-center gap-1 mt-3 text-primary text-sm font-medium">
+                    <CheckCircle className="w-4 h-4" />
+                    Sélectionné
+                  </div>
+                )}
+              </button>
             ))}
           </div>
         </DialogContent>
