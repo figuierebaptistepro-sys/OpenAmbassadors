@@ -19,9 +19,18 @@ import random
 import string
 import boto3
 from botocore.config import Config
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Resend Email Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'Creator Incubator <noreply@resend.dev>')
+
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+    logging.info("Resend email client initialized")
 
 # Admin emails (only these can access admin panel)
 ADMIN_EMAILS = ["figuierebaptistepro@gmail.com"]
