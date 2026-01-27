@@ -46,6 +46,7 @@ const getChecklistItems = (profile) => [
 
 const CreatorDashboard = ({ user }) => {
   const navigate = useNavigate();
+  const videoInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -53,6 +54,9 @@ const CreatorDashboard = ({ user }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
+  const [uploadMode, setUploadMode] = useState("file"); // "file" or "url"
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [editForm, setEditForm] = useState({
     bio: "", city: "", phone: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
