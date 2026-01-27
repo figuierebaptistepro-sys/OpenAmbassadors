@@ -74,11 +74,17 @@ const CreatorDashboard = ({ user }) => {
         const data = await profileRes.json();
         setProfile(data);
         setEditForm({
-          bio: data.bio || "", city: data.city || "", 
+          bio: data.bio || "", city: data.city || "", phone: data.phone || "",
           content_types: data.content_types || [], equipment: data.equipment || [],
           min_rate: data.min_rate || "", max_rate: data.max_rate || "",
           works_remote: data.works_remote || false, can_travel: data.can_travel || false,
           available: data.available ?? true,
+          social_instagram: data.social_instagram || "",
+          social_tiktok: data.social_tiktok || "",
+          social_youtube: data.social_youtube || "",
+          social_twitter: data.social_twitter || "",
+          social_linkedin: data.social_linkedin || "",
+          visibility: data.visibility || "",
         });
       }
       if (statsRes.ok) setStats(await statsRes.json());
