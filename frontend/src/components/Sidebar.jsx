@@ -37,8 +37,8 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
       {/* Logo */}
       <div className="p-6 border-b border-gray-100">
         <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center shadow-md shadow-primary/20 overflow-hidden p-1.5">
-            <img src={LOGO_URL} alt="Incubateur" className="w-full h-full object-contain" />
+          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-gray-100 overflow-hidden">
+            <img src={LOGO_URL} alt="Incubateur" className="w-10 h-10 object-contain" />
           </div>
           <span className="font-heading font-bold text-xl text-gray-900">Incubateur</span>
         </Link>

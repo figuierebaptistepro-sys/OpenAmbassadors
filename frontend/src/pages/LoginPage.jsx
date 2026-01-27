@@ -136,8 +136,8 @@ const LoginPage = () => {
       >
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20 overflow-hidden p-2">
-            <img src={LOGO_URL} alt="Incubateur" className="w-full h-full object-contain" />
+          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-gray-100 overflow-hidden">
+            <img src={LOGO_URL} alt="Incubateur" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="font-heading text-3xl font-bold text-gray-900 mb-2">
             Incubateur
