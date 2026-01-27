@@ -265,6 +265,42 @@ const CreatorDashboard = ({ user }) => {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Wallet Widget */}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-5 h-5" />
+                    <span className="font-semibold text-sm">Ma Cagnotte</span>
+                  </div>
+                  {user?.is_premium && (
+                    <Badge className="bg-white/20 text-white text-xs">0% frais</Badge>
+                  )}
+                </div>
+              </div>
+              <CardContent className="p-3">
+                <div className="text-center mb-3">
+                  <p className="text-gray-500 text-xs">Solde disponible</p>
+                  <p className="font-heading text-2xl font-bold text-gray-900">
+                    {((wallet?.balance || 0) - (wallet?.pending_amount || 0)).toFixed(2)}€
+                  </p>
+                  {wallet?.pending_amount > 0 && (
+                    <p className="text-yellow-600 text-xs">{wallet.pending_amount.toFixed(2)}€ en attente</p>
+                  )}
+                </div>
+                <Button 
+                  onClick={() => navigate("/wallet")} 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full border-gray-200 text-xs"
+                  data-testid="wallet-link"
+                >
+                  Gérer ma cagnotte
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Stats */}
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
