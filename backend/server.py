@@ -1518,6 +1518,11 @@ async def admin_process_withdrawal(request: Request, user: dict = Depends(get_ad
 
 # ==================== ADMIN DASHBOARD ROUTES ====================
 
+@api_router.get("/admin/check")
+async def check_admin_access(user: dict = Depends(get_current_user)):
+    """Check if current user has admin access"""
+    return {"is_admin": is_admin(user)}
+
 @api_router.get("/admin/stats")
 async def get_admin_stats(user: dict = Depends(get_admin_user)):
     """Get admin dashboard statistics"""
