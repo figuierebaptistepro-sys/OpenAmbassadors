@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Video, MapPin, Edit, Plus, CheckCircle, Star, Trophy, TrendingUp, 
-  BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera
+  BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera, Wallet, ShieldCheck
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
