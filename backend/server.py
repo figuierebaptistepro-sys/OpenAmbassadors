@@ -1519,7 +1519,7 @@ async def admin_process_withdrawal(request: Request, user: dict = Depends(get_cu
 # ==================== ADMIN DASHBOARD ROUTES ====================
 
 @api_router.get("/admin/stats")
-async def get_admin_stats(user: dict = Depends(get_current_user)):
+async def get_admin_stats(user: dict = Depends(get_admin_user)):
     """Get admin dashboard statistics"""
     # Count users by type
     total_creators = await db.users.count_documents({"user_type": "creator"})
