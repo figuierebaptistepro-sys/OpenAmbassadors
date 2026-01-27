@@ -249,15 +249,24 @@ const BusinessDashboard = ({ user }) => {
                 {hasProjects ? (
                   <div className="space-y-3">
                     {projects.slice(0, 3).map((project, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-                          <Briefcase className="w-4 h-4 text-gray-400" />
+                      <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl overflow-hidden">
+                        {/* Project Banner Thumbnail */}
+                        <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+                          {project.banner_url ? (
+                            <img src={getImageUrl(project.banner_url)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Briefcase className="w-5 h-5 text-gray-400" />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate text-sm">{project.title}</p>
-                          <p className="text-gray-500 text-xs">{project.applications?.length || 0} candidatures</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{project.budget ? `${project.budget}€` : "Budget à définir"}</span>
+                            <span>•</span>
+                            <span>{project.applications?.length || 0} candidatures</span>
+                          </div>
                         </div>
-                        <Badge className={`text-xs ${
+                        <Badge className={`text-xs flex-shrink-0 ${
                           project.status === "open" ? "bg-green-100 text-green-700" :
                           project.status === "in_progress" ? "bg-blue-100 text-blue-700" :
                           "bg-gray-100 text-gray-700"
