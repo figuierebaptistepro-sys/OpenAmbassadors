@@ -72,24 +72,36 @@ Refonte vers une plateforme privée avec:
 - [x] Auth (Google + OTP)
 - [x] Dashboards créateur/entreprise
 - [x] Système progression/scores
-- [x] Incubateur Premium (mock)
+- [x] Incubateur Premium (MOCKED - subscription only)
 - [x] Formations
 - [x] Projets/Missions
+- [x] Art Direction light/pink theme
+- [x] Account Settings, Support, Learn pages
 
 ### P1 - Next Phase
-- [ ] Intégration Stripe réelle pour Incubateur
+- [ ] Intégration Stripe réelle pour Incubateur (49€/mois)
+- [ ] Intégration Stripe pour packs business
 - [ ] Envoi email OTP réel (SendGrid)
 - [ ] Système de matching créateurs/projets
 - [ ] Notifications
 
 ### P2 - Future
 - [ ] Chat/messagerie via projets
+- [ ] Système escrow pour paiements
 - [ ] Analytics avancés
 - [ ] Validation identité automatique
+- [ ] Export base de données créateurs (admin)
 - [ ] App mobile
 
+## Current Status
+- **Frontend**: Fully functional with all pages implemented
+- **Backend**: All core APIs working
+- **Payment**: MOCKED (Stripe not integrated yet)
+- **Email**: Debug mode (OTP codes shown in toast, not sent via email)
+
 ## Next Tasks
-1. Intégrer Stripe pour paiement Incubateur
-2. Configurer envoi email OTP réel
-3. Ajouter matching intelligent
-4. Système notifications
+1. Intégrer Stripe pour paiement Incubateur Premium (49€/mois)
+2. Intégrer Stripe pour packs business
+3. Configurer envoi email OTP réel (SendGrid)
+4. Ajouter matching intelligent créateurs/projets
+5. Système notifications temps réel
