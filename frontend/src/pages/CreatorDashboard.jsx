@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import {
   Video, MapPin, Edit, Plus, CheckCircle, Star, Trophy, TrendingUp, 
   BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera, Wallet, ShieldCheck,
-  Upload, Link as LinkIcon, X, Play, Trash2
+  Upload, Link as LinkIcon, X, Play, Trash2, Loader2
 } from "lucide-react";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
