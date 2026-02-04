@@ -179,6 +179,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
   return (
     <AppLayout user={user} currentPlan={currentPack?.name}>
+      {/* Input caché pour l'upload de logo */}
+      <input
+        ref={pictureInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handlePictureUpload}
+        className="hidden"
+      />
+      
       {/* Page Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
