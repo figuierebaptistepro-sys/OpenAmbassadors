@@ -1,25 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X
+  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle
 } from "lucide-react";
 
 const LOGO_URL = "/logo-sun.png";
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Sidebar = ({ userType, isPremium, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread messages count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/messaging/conversations`, { credentials: "include" });
+        if (response.ok) {
+          const convs = await response.json();
+          const total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+          setUnreadCount(total);
+        }
+      } catch (e) {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
+    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
