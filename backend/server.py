@@ -26,7 +26,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-EMAIL_FROM = os.environ.get('EMAIL_FROM', 'Creator Incubator <noreply@resend.dev>')
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'OpenAmbassadors <noreply@resend.dev>')
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -111,7 +111,7 @@ async def send_email(to: str, subject: str, html: str):
     
     try:
         params = {
-            "from": "Creator Incubator <delivered@resend.dev>",
+            "from": "OpenAmbassadors <delivered@resend.dev>",
             "to": [to],
             "subject": subject,
             "html": html
@@ -129,7 +129,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
         # Email pour nouvelle inscription (avant choix du type)
         await send_email(
             to=email,
-            subject=f"🎉 Félicitations ! Votre compte Creator Incubator est créé",
+            subject=f"🎉 Félicitations ! Votre compte OpenAmbassadors est créé",
             html=f"""
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; background: #fafafa;">
                 <div style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -137,7 +137,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                         <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
                             <span style="font-size: 28px;">🎉</span>
                         </div>
-                        <h1 style="color: #333; margin: 0; font-size: 22px;">Bienvenue {name or 'sur Creator Incubator'} !</h1>
+                        <h1 style="color: #333; margin: 0; font-size: 22px;">Bienvenue {name or 'sur OpenAmbassadors'} !</h1>
                     </div>
                     
                     <p style="color: #555; line-height: 1.7; font-size: 15px; margin-bottom: 20px;">
@@ -160,7 +160,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     
                     <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
                         Des questions ? Répondez à cet email.<br>
-                        L'équipe Creator Incubator 💜
+                        L'équipe OpenAmbassadors 💜
                     </p>
                 </div>
             </div>
@@ -170,14 +170,14 @@ async def send_welcome_email(email: str, name: str, user_type: str):
         type_label = "créateur" if user_type == "creator" else "entreprise"
         await send_email(
             to=email,
-            subject=f"🎉 Bienvenue sur Creator Incubator !",
+            subject=f"🎉 Bienvenue sur OpenAmbassadors !",
             html=f"""
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h1 style="color: #E91E63; margin: 0;">Bienvenue {name or ''} ! 🚀</h1>
                 </div>
                 <p style="color: #333; line-height: 1.6;">
-                    Votre compte <strong>{type_label}</strong> a été créé avec succès sur Creator Incubator.
+                    Votre compte <strong>{type_label}</strong> a été créé avec succès sur OpenAmbassadors.
                 </p>
                 <p style="color: #333; line-height: 1.6;">
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
@@ -188,7 +188,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </a>
                 </div>
                 <p style="color: #999; font-size: 12px; text-align: center;">
-                    L'équipe Creator Incubator
+                    L'équipe OpenAmbassadors
                 </p>
             </div>
             """
@@ -742,7 +742,7 @@ async def send_password_reset_email(email: str, name: str, reset_token: str):
             </p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-                L'équipe Creator Incubator
+                L'équipe OpenAmbassadors
             </p>
         </div>
         """
@@ -841,7 +841,7 @@ async def reset_password(data: ResetPasswordRequest):
             </p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-                L'équipe Creator Incubator
+                L'équipe OpenAmbassadors
             </p>
         </div>
         """
@@ -983,13 +983,13 @@ async def request_otp(data: OTPRequest):
     if RESEND_API_KEY:
         try:
             params = {
-                "from": "Creator Incubator <onboarding@resend.dev>",
+                "from": "OpenAmbassadors <onboarding@resend.dev>",
                 "to": [data.email],
                 "subject": f"🔐 Votre code de connexion : {otp_code}",
                 "html": f"""
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #E91E63; margin: 0; font-size: 28px;">Creator Incubator</h1>
+                        <h1 style="color: #E91E63; margin: 0; font-size: 28px;">OpenAmbassadors</h1>
                         <p style="color: #666; margin-top: 5px;">Plateforme de créateurs UGC</p>
                     </div>
                     

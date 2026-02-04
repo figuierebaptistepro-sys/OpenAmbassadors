@@ -158,10 +158,10 @@ const LoginPage = () => {
         <div className="text-center mb-6">
           <img 
             src={LOGO_URL} 
-            alt="Creator Incubator" 
+            alt="OpenAmbassadors" 
             className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg object-cover"
           />
-          <h1 className="text-2xl font-bold text-gray-900">Creator Incubator</h1>
+          <h1 className="text-2xl font-bold text-gray-900">OpenAmbassadors</h1>
           <p className="text-gray-500 text-sm mt-1">
             {mode === "login" ? "Connectez-vous à votre compte" : "Créez votre compte"}
           </p>
