@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Search, Users, ChevronRight, Star, MapPin, CheckCircle, 
   Briefcase, Plus, ArrowRight, Sparkles, Target, Rocket, 
-  Image, Globe, FileText, Clock, Zap, Crown, Building2
+  Image, Globe, FileText, Clock, Zap, Crown, Building2, Check, Upload, Camera
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -28,8 +28,19 @@ const INDUSTRIES = [
   "Finance", "Immobilier", "Santé", "E-commerce", "Autre"
 ];
 
-const BusinessDashboard = ({ user }) => {
+const getBusinessChecklistItems = (profile, user) => [
+  { id: "picture", label: "Ajouter un logo/photo", points: 15, done: !!user?.picture },
+  { id: "company_name", label: "Nom de l'entreprise", points: 10, done: !!profile?.company_name },
+  { id: "description", label: "Description de l'entreprise", points: 10, done: !!profile?.description },
+  { id: "industry", label: "Secteur d'activité", points: 10, done: !!profile?.industry },
+  { id: "city", label: "Localisation", points: 10, done: !!profile?.city },
+  { id: "website", label: "Site web", points: 10, done: !!profile?.website },
+  { id: "project", label: "Créer un projet", points: 25, done: false }, // Will be updated with projects count
+];
+
+const BusinessDashboard = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
+  const pictureInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [creators, setCreators] = useState([]);
@@ -38,6 +49,7 @@ const BusinessDashboard = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   const [editForm, setEditForm] = useState({
     company_name: "", description: "", business_type: "",
@@ -47,6 +59,36 @@ const BusinessDashboard = ({ user }) => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Upload photo de profil/logo
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+
+    setUploadingPicture(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_URL}/api/upload/profile-picture`, { 
+        method: "POST", 
+        credentials: "include", 
+        body: formData 
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Logo mis à jour !");
+        onUserUpdate?.({ ...user, picture: data.picture_url });
+      } else {
+        toast.error("Erreur lors de l'upload");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
