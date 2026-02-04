@@ -97,6 +97,7 @@ const AccountSettings = ({ user, onUserUpdate }) => {
     { id: "notifications", label: "Notifs", icon: Bell },
     { id: "security", label: "Sécurité", icon: Shield },
     { id: "preferences", label: "Préf.", icon: Globe },
+    ...(user?.user_type === "creator" ? [{ id: "reviews", label: "Avis", icon: Star }] : []),
   ];
 
   return (
