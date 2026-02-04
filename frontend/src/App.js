@@ -13,6 +13,7 @@ import "@fontsource/manrope/700.css";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SelectTypePage from "./pages/SelectTypePage";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
