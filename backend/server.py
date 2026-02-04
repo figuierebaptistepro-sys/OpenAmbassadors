@@ -95,6 +95,9 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'ugc-incubator-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 168  # 7 days
 
+# Frontend URL for emails
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://openambassadors.com')
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
