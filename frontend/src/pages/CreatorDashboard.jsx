@@ -166,10 +166,10 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       return;
     }
 
-    // Vérifier la taille (max 100MB)
-    const maxSize = 100 * 1024 * 1024;
+    // Vérifier la taille (max 500MB)
+    const maxSize = 500 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error("Fichier trop volumineux (max 100MB)");
+      toast.error("Fichier trop volumineux (max 500MB)");
       return;
     }
 
@@ -197,13 +197,13 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       if (response.ok) {
         const data = await response.json();
         
-        // Ajouter la vidéo au portfolio
+        // Ajouter la vidéo au portfolio - utiliser data.url (pas media_url)
         const portfolioResponse = await fetch(`${API_URL}/api/creators/me/portfolio`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ 
-            url: data.media_url,
+            url: data.url,
             title: file.name.replace(/\.[^/.]+$/, ""),
             type: "uploaded"
           }),
