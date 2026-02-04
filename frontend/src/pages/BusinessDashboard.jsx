@@ -149,14 +149,25 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
   const currentPack = packs.find(p => p.pack_id === stats?.selected_pack);
   const hasProjects = projects.length > 0;
-  const completionSteps = [
-    { done: !!profile?.company_name, label: "Nom de l'entreprise", icon: Building2 },
-    { done: !!profile?.description, label: "Description", icon: FileText },
-    { done: !!user?.picture, label: "Logo", icon: Image },
-    { done: !!profile?.website, label: "Site web", icon: Globe },
-  ];
-  const completedSteps = completionSteps.filter(s => s.done).length;
-  const completionPercent = Math.round((completedSteps / completionSteps.length) * 100);
+  
+  // Checklist avec points
+  const checklistItems = getBusinessChecklistItems(profile, user).map(item => 
+    item.id === "project" ? { ...item, done: hasProjects } : item
+  );
+  const completedItems = checklistItems.filter(i => i.done).length;
+  const totalPoints = checklistItems.reduce((sum, i) => sum + (i.done ? i.points : 0), 0);
+  const maxPoints = checklistItems.reduce((sum, i) => sum + i.points, 0);
+
+  // Gestion des actions de la checklist
+  const handleChecklistAction = (itemId) => {
+    if (itemId === "picture") {
+      pictureInputRef.current?.click();
+    } else if (itemId === "project") {
+      navigate("/projects/new");
+    } else {
+      setEditSheetOpen(true);
+    }
+  };
 
   if (loading) {
     return (
