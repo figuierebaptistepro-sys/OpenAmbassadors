@@ -339,6 +339,10 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 )}
               </div>
             </div>
+            {/* Desktop Notification Bell */}
+            <div className="hidden lg:block">
+              <NotificationBell user={user} />
+            </div>
           </div>
         </div>
 
