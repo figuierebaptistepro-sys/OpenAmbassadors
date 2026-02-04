@@ -56,7 +56,6 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
-  const [uploadMode, setUploadMode] = useState("file"); // "file" or "url"
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingPicture, setUploadingPicture] = useState(false);
@@ -68,13 +67,6 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     visibility: "",
   });
   const [newVideoUrl, setNewVideoUrl] = useState("");
-
-  // Force le mode upload à chaque ouverture du dialogue
-  useEffect(() => {
-    if (videoDialogOpen) {
-      setUploadMode("file");
-    }
-  }, [videoDialogOpen]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -416,7 +408,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               <CardHeader className="px-4 pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-gray-900 text-sm">Portfolio</CardTitle>
-                  <Button onClick={() => { setUploadMode("file"); setVideoDialogOpen(true); }} size="sm" variant="outline" className="border-gray-200 text-xs">
+                  <Button onClick={() => setVideoDialogOpen(true)} size="sm" variant="outline" className="border-gray-200 text-xs">
                     <Plus className="w-4 h-4 mr-1" />
                     Vidéo
                   </Button>
@@ -464,7 +456,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                   <div className="text-center py-6">
                     <Video className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-500 text-xs mb-2">Ajoutez vos meilleures vidéos</p>
-                    <Button onClick={() => { setUploadMode("file"); setVideoDialogOpen(true); }} size="sm" variant="outline" className="border-gray-200 text-xs">
+                    <Button onClick={() => setVideoDialogOpen(true)} size="sm" variant="outline" className="border-gray-200 text-xs">
                       <Plus className="w-4 h-4 mr-1" />
                       Ajouter
                     </Button>
