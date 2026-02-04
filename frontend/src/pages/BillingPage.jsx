@@ -71,6 +71,26 @@ const BillingPage = ({ user }) => {
       </div>
 
       <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+        {/* Contact Creator Banner */}
+        {contactReason && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-pink-100 border border-primary/20 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Abonnement requis pour contacter les créateurs</h3>
+                <p className="text-gray-600 text-sm mt-1">
+                  {creatorName 
+                    ? `Pour contacter ${creatorName} et les autres créateurs directement, choisissez un abonnement ci-dessous.`
+                    : "Pour contacter les créateurs directement, choisissez un abonnement ci-dessous."
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
           {[{ id: "plan", label: "Mon plan" }, { id: "invoices", label: "Factures" }].map((tab) => (
