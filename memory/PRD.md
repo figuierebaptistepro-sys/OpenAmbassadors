@@ -1,121 +1,152 @@
-# Incubateur des Créateurs - Product Requirements Document
+# OpenAmbassadors - Product Requirements Document
 
-## Vision
-Plateforme privée où les entreprises trouvent des créateurs qualifiés pour générer du contenu performant. Système de progression intelligent et non-bloquant.
+## Project Overview
+**OpenAmbassadors** is a premium SaaS platform connecting businesses with content creators (UGC, micro-trottoir, face cam, ads, interviews, montage).
 
-## Problem Statement Original
-Refonte vers une plateforme privée avec:
-- Login only (pas de page marketing)
-- Onboarding non-bloquant (email + type seuls obligatoires)
-- Progression intelligente impactant visibilité
-- Incubateur Premium payant
+## Tech Stack
+- **Frontend:** React, TailwindCSS, Framer Motion, Leaflet (maps), FFmpeg.wasm (video compression)
+- **Backend:** FastAPI, Pydantic, MongoDB (motor), WebSockets
+- **Authentication:** JWT + Emergent Google OAuth
+- **Storage:** Cloudflare R2
+- **Email:** Resend
 
-## Architecture
-- **Backend**: FastAPI + MongoDB
-- **Frontend**: React + Tailwind CSS + Shadcn UI
-- **Auth**: Google OAuth + OTP Email
-- **UI**: Light theme (#F6F7FB background, #FFFFFF cards) avec accent pink (#FF2E63)
+## Core Features
 
-## User Personas
-1. **Créateur**: Développer son activité, compléter son profil progressivement, accéder aux missions
-2. **Entreprise**: Trouver des créateurs qualifiés via filtres et recommandations, déposer des projets
+### ✅ Implemented
+1. **Authentication**
+   - Email/password login & registration
+   - Google social login (Emergent-managed)
+   - Password reset flow (blocked by Resend sandbox)
 
-## Core Requirements (Static)
-- Plateforme privée (login-first)
-- Auth: Google + OTP Email + Demande d'accès
-- Sélection type utilisateur après 1ère connexion
-- Dashboard avec barre progression profil
-- Système de scores (complétion/fiabilité/performance)
-- Incubateur Premium (49€/mois)
-- Bibliothèque formations
-- Système projets/missions
+2. **User Dashboards**
+   - Creator dashboard with portfolio management
+   - Business dashboard with project creation
+   - Profile completion scoring
 
-## What's Been Implemented
+3. **Creator Discovery (`/creators`)**
+   - Three views: Créateurs (list), Vidéos (TikTok-style grid), Carte (map)
+   - **Advanced filtering panel** (left sidebar on desktop, drawer on mobile):
+     - Search by name/keyword
+     - City selection
+     - Content types (multi-select)
+     - Experience level
+     - Minimum rating slider
+     - Available only toggle
+     - Premium only toggle
+   - Filter tags display with clear all option
 
-### January 2025 - Art Direction & Structure Refactor
-✅ New light/pink design system (#F6F7FB, #FFFFFF, #FF2E63)
-✅ Fixed left sidebar navigation
-✅ Account Settings page (Profile, Notifications, Security, Preferences tabs)
-✅ Support & Guides page (FAQ, Guides, Contact support)
-✅ Learn page (Free & Premium trainings with gamification)
-✅ Find Creator as dedicated page
-✅ Pack selection dialog bug fix (better accessibility with buttons)
-✅ User avatar + subscription type badge in sidebar
-✅ Creator Wallet (cagnotte) system with withdrawals
-✅ Enhanced project creation page with mandatory banner
-✅ Project cards display banners and business logos
-✅ Premium users: 0% platform fees
-✅ Verified/Premium badges on creator profiles
-✅ **Admin Dashboard** - Complete administration panel with:
-   - Overview statistics (users, revenue, pending actions)
-   - Payment/withdrawal management (approve/reject)
-   - User management (verify, toggle premium, suspend)
-   - Project management (status updates)
-   - Access request processing
+4. **Video Portfolio**
+   - 9/16 vertical aspect ratio
+   - In-app fullscreen player
+   - Client-side FFmpeg.wasm compression (>10MB files)
+   - Automatic thumbnail generation
 
-### December 2024 - Core MVP
-✅ Login page privée (Google + OTP + Demande accès)
-✅ Sélection type utilisateur
-✅ Dashboard créateur avec scores et progression
-✅ Profil éditable non-bloquant (sheet slide-out)
-✅ Portfolio avec warning <3 vidéos
-✅ CTA Incubateur Premium (49€/mois)
-✅ Bibliothèque formations (gratuites + premium verrouillées)
-✅ Page missions avec candidature
-✅ Dashboard entreprise avec sélection pack
-✅ Browse créateurs avec filtres (disponible, premium only)
-✅ Profil créateur public avec scores
-✅ Création projet (nécessite pack)
+5. **Real-Time Messaging (MVP)**
+   - WebSocket-based live messaging
+   - Conversation rules: Premium businesses can DM any creator; all businesses can chat with applicants
+   - Inbox with unread count badges
+   - Entry points from creator profiles and applications
 
-## Scoring System
-- **Complétion** (0-100%): Bio, ville, spécialités, équipement, expérience, portfolio, tarifs
-- **Fiabilité**: Basé sur missions réalisées
-- **Performance**: Basé sur résultats et avis
+6. **Project/Application System**
+   - Businesses post projects with briefs
+   - Creators apply to projects
+   - Application management workflow
 
-## Verification Statuses
-- Non vérifié
-- Identité vérifiée  
-- Portfolio validé
-- Certifié Incubateur
+### 🚧 In Progress / Blocked
+1. **Forgot Password Email** - BLOCKED on Resend domain verification
+2. **Responsive audit** - Specific bugs fixed, full audit pending
 
-## Prioritized Backlog
+### 📋 Upcoming (P0-P1)
+1. **P0 - Custom Google OAuth** - User wants to use their own credentials
+2. **P1 - Stripe Integration** - Replace mocked `is_subscribed` with real payments
 
-### P0 - Done ✅
-- [x] Auth (Google + OTP)
-- [x] Dashboards créateur/entreprise
-- [x] Système progression/scores
-- [x] Incubateur Premium (MOCKED - subscription only)
-- [x] Formations
-- [x] Projets/Missions
-- [x] Art Direction light/pink theme
-- [x] Account Settings, Support, Learn pages
+### 📦 Future (P2+)
+1. VPS deployment guidance
+2. Admin moderation workflows
+3. Image cropper for uploads
+4. Hashtag/keyword search for creators
 
-### P1 - Next Phase
-- [ ] Intégration Stripe réelle pour Incubateur (49€/mois)
-- [ ] Intégration Stripe pour packs business
-- [ ] Envoi email OTP réel (SendGrid)
-- [ ] Système de matching créateurs/projets
-- [ ] Notifications
-- [ ] Intégration PayPal pour retraits cagnotte (marqué "Soon")
+## Data Models
 
-### P2 - Future
-- [ ] Chat/messagerie via projets
-- [ ] Système escrow pour paiements
-- [ ] Analytics avancés
-- [ ] Validation identité automatique
-- [ ] Export base de données créateurs (admin)
-- [ ] App mobile
-- [ ] Interface admin pour validation des paiements/retraits
+### Users
+```json
+{
+  "user_id": "string",
+  "email": "string",
+  "name": "string",
+  "user_type": "creator|business",
+  "city": "string",
+  "content_types": ["UGC", "Face cam", ...],
+  "experience_level": "beginner|intermediate|expert",
+  "available": boolean,
+  "is_premium": boolean,
+  "is_subscribed": boolean (mocked),
+  "rating": float,
+  "portfolio_videos": [{url, title, views, platform}]
+}
+```
 
-## Current Status
-- **Frontend**: Fully functional with all pages implemented
-- **Backend**: All core APIs working
-- **Payment**: MOCKED (Stripe not integrated yet)
-- **Email**: Debug mode (OTP codes shown in toast, not sent via email)
+### Conversations (Messaging)
+```json
+{
+  "id": "string",
+  "type": "direct|project",
+  "company_id": "string",
+  "creator_id": "string",
+  "mission_id": "string|null",
+  "status": "active|archived|blocked",
+  "last_message_at": "datetime"
+}
+```
 
-## Next Tasks
-1. Intégrer Stripe pour paiement Incubateur Premium (49€/mois)
-2. Intégrer Stripe pour packs business
-3. Configurer envoi email OTP réel (SendGrid)
-4. Ajouter matching intelligent créateurs/projets
-5. Système notifications temps réel
+### Messages
+```json
+{
+  "id": "string",
+  "conversation_id": "string",
+  "sender_role": "business|creator",
+  "sender_id": "string",
+  "text": "string",
+  "file_url": "string|null",
+  "created_at": "datetime"
+}
+```
+
+## Key API Endpoints
+- `POST /api/auth/login` - User authentication
+- `GET /api/creators` - List/filter creators
+- `GET /api/creators/browse` - Discovery with videos
+- `GET /api/conversations` - User's conversations
+- `POST /api/conversations` - Create conversation (checks subscription)
+- `/ws` - WebSocket for real-time messaging
+
+## Test Credentials
+- **Business:** figuierebaptistepro@gmail.com / TempPass123!
+- **Creator:** testcreator@test.com / testtest
+
+## Known Issues
+1. Resend sandbox limits "forgot password" emails to verified owner only
+2. Subscription status is mocked (`is_subscribed` boolean)
+
+## File Structure
+```
+/app/
+├── backend/
+│   ├── server.py (main FastAPI app)
+│   ├── messaging.py (messaging module)
+│   └── .env
+├── frontend/src/
+│   ├── components/
+│   │   ├── AppLayout.jsx (main layout, sidebar)
+│   │   └── ui/ (shadcn components)
+│   ├── pages/
+│   │   ├── BrowseCreators.jsx (discovery with filters)
+│   │   ├── CreatorDashboard.jsx (portfolio management)
+│   │   ├── MessagesPage.jsx (inbox/chat)
+│   │   └── ...
+│   └── App.js
+└── memory/PRD.md
+```
+
+---
+*Last updated: 2026-02-04*
