@@ -1238,7 +1238,8 @@ async def get_me(user: dict = Depends(get_current_user)):
         "user_type": user.get("user_type"),
         "picture": user.get("picture"),
         "banner": user.get("banner"),
-        "is_premium": user.get("is_premium", False)
+        "is_premium": user.get("is_premium", False),
+        "is_subscribed": user.get("is_subscribed", False)
     }
 
 @api_router.post("/auth/set-type")
