@@ -522,6 +522,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
         </SheetContent>
       </Sheet>
 
+      {/* Hidden file input for picture upload */}
+      <input
+        ref={pictureInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handlePictureUpload}
+        className="hidden"
+      />
+
     </AppLayout>
   );
 };
