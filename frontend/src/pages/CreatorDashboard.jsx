@@ -281,10 +281,21 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     return `${API_URL}${url}`;
   };
 
-  const checklistItems = getChecklistItems(profile);
+  const checklistItems = getChecklistItems(profile, user);
   const completedItems = checklistItems.filter(i => i.done).length;
   const totalPoints = checklistItems.reduce((sum, i) => sum + (i.done ? i.points : 0), 0);
   const maxPoints = checklistItems.reduce((sum, i) => sum + i.points, 0);
+
+  // Gestion des actions de la checklist
+  const handleChecklistAction = (itemId) => {
+    if (itemId === "picture") {
+      pictureInputRef.current?.click();
+    } else if (itemId === "portfolio") {
+      setVideoDialogOpen(true);
+    } else {
+      setEditSheetOpen(true);
+    }
+  };
 
   if (loading) {
     return (
