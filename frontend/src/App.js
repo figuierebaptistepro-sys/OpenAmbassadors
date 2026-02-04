@@ -160,6 +160,7 @@ function AppRouter() {
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/review/external" element={<ExternalReviewPage />} />
       
       {/* Type selection */}
       <Route
