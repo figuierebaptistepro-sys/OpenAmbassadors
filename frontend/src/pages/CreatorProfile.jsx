@@ -356,6 +356,15 @@ const CreatorProfile = ({ currentUser }) => {
               </Card>
             </div>
           </div>
+
+          {/* Reviews Section */}
+          <div className="mt-6">
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-6">
+                <ReviewsSection userId={userId} />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
