@@ -757,7 +757,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                     📱 Choisir une vidéo
                   </p>
                   <p className="text-gray-500 text-sm">Appuyez pour ouvrir votre galerie</p>
-                  <p className="text-gray-400 text-xs mt-2">MP4, MOV, WebM • Max 100MB</p>
+                  <p className="text-gray-400 text-xs mt-2">MP4, MOV, WebM • Max 500MB</p>
                 </label>
                 
                 <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
