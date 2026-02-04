@@ -204,16 +204,36 @@ const CreatorProfile = ({ currentUser }) => {
 
                     <TabsContent value="video">
                       {creator.portfolio_videos?.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {creator.portfolio_videos.map((video, i) => (
-                            <a key={i} href={video.url} target="_blank" rel="noopener noreferrer"
-                               className="group relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow group-hover:scale-110 transition-transform">
-                                  <Play className="w-4 h-4 text-primary fill-primary ml-0.5" />
+                            <div 
+                              key={i} 
+                              className="group relative aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden cursor-pointer"
+                              onClick={() => setSelectedVideo(video)}
+                            >
+                              {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
+                                <video 
+                                  src={`${getImageUrl(video.url)}#t=0.5`}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  onLoadedData={(e) => {
+                                    e.target.currentTime = 0.5;
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                                  <Play className="w-8 h-8 text-white/60" />
+                                </div>
+                              )}
+                              {/* Overlay play */}
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                  <Play className="w-6 h-6 text-white fill-white" />
                                 </div>
                               </div>
-                            </a>
+                            </div>
                           ))}
                         </div>
                       ) : (
