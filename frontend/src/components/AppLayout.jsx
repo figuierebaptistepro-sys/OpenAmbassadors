@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
@@ -16,6 +16,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const userType = user?.user_type;
   const isPremium = user?.is_premium;
@@ -36,8 +37,28 @@ const AppLayout = ({ children, user, currentPlan }) => {
     if (user) checkAdmin();
   }, [user]);
 
+  // Fetch unread messages count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/messaging/conversations`, { credentials: "include" });
+        if (response.ok) {
+          const convs = await response.json();
+          const total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+          setUnreadMessages(total);
+        }
+      } catch (e) {}
+    };
+    if (user) {
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
@@ -45,6 +66,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
+    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
