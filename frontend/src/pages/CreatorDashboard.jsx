@@ -720,10 +720,9 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       {/* Add Video Sheet (better for mobile) */}
       <Sheet open={videoDialogOpen} onOpenChange={(open) => { 
         setVideoDialogOpen(open); 
-        if (open) { 
-          setUploadMode("file");
-        } else { 
+        if (!open) { 
           setNewVideoUrl(""); 
+          setUploadMode("file");
         } 
       }}>
         <SheetContent side="bottom" className="bg-white rounded-t-2xl h-auto max-h-[85vh]">
@@ -731,95 +730,81 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
             <SheetTitle className="text-gray-900 text-center">Ajouter une vidéo</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 pb-6">
-            {/* Mode Toggle */}
-            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setUploadMode("file")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all ${
-                  uploadMode === "file" ? "bg-white text-primary shadow-sm" : "text-gray-600"
-                }`}
-              >
-                <Upload className="w-4 h-4" />
-                <span>Uploader</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadMode("url")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all ${
-                  uploadMode === "url" ? "bg-white text-primary shadow-sm" : "text-gray-600"
-                }`}
-              >
-                <LinkIcon className="w-4 h-4" />
-                <span>Lien</span>
-              </button>
-            </div>
-
-            {uploadMode === "file" ? (
+            {/* Input file visible avec label - meilleure compatibilité mobile */}
+            <input
+              ref={videoInputRef}
+              id="video-upload-input"
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/mpeg,.mp4,.mov,.webm,.avi"
+              onChange={handleVideoFileUpload}
+              className="hidden"
+            />
+            
+            {uploading ? (
               <div className="space-y-3">
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoFileUpload}
-                  className="hidden"
-                />
-                
-                {uploading ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center py-8">
-                      <div className="text-center">
-                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p className="text-gray-600 text-sm">Upload en cours...</p>
-                        <p className="text-primary font-semibold">{uploadProgress}%</p>
-                      </div>
-                    </div>
-                    <Progress value={uploadProgress} className="h-2" />
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                    <p className="text-gray-600 text-sm">Upload en cours...</p>
+                    <p className="text-primary font-semibold">{uploadProgress}%</p>
                   </div>
-                ) : (
-                  <>
-                    <button 
-                      type="button"
-                      onClick={() => videoInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center active:bg-primary/10 transition-all"
-                    >
-                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <Upload className="w-8 h-8 text-primary" />
-                      </div>
-                      <p className="text-gray-900 font-semibold text-base mb-2">
-                        Choisir depuis ma galerie
-                      </p>
-                      <p className="text-gray-400 text-sm">MP4, MOV, WebM • Max 100MB</p>
-                    </button>
-                    
-                    <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
-                      <p className="text-green-700 text-xs text-center">
-                        ✅ Stockage Cloudflare R2 inclus
-                      </p>
-                    </div>
-                  </>
-                )}
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
               </div>
             ) : (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm">URL de la vidéo</Label>
-                  <Input 
-                    value={newVideoUrl} 
-                    onChange={(e) => setNewVideoUrl(e.target.value)}
-                    className="bg-gray-50 border-gray-200 mt-1 h-12" 
-                    placeholder="https://tiktok.com/..." 
-                  />
-                  <p className="text-gray-400 text-xs mt-1">TikTok, Instagram, YouTube...</p>
-                </div>
-                <Button 
-                  onClick={handleAddVideo} 
-                  disabled={!newVideoUrl}
-                  className="w-full bg-primary hover:bg-primary-hover h-12"
+              <>
+                {/* Bouton principal pour upload fichier */}
+                <label 
+                  htmlFor="video-upload-input"
+                  className="block w-full border-2 border-dashed border-primary/50 bg-primary/5 rounded-xl p-6 text-center cursor-pointer active:bg-primary/10 transition-all touch-manipulation"
                 >
-                  Ajouter le lien
-                </Button>
-              </div>
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Upload className="w-8 h-8 text-primary" />
+                  </div>
+                  <p className="text-gray-900 font-semibold text-base mb-2">
+                    📱 Choisir une vidéo
+                  </p>
+                  <p className="text-gray-500 text-sm">Appuyez pour ouvrir votre galerie</p>
+                  <p className="text-gray-400 text-xs mt-2">MP4, MOV, WebM • Max 100MB</p>
+                </label>
+                
+                <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
+                  <p className="text-green-700 text-xs text-center">
+                    ✅ Stockage Cloudflare R2 inclus
+                  </p>
+                </div>
+
+                {/* Séparateur */}
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-3 text-xs text-gray-400">ou ajouter un lien</span>
+                  </div>
+                </div>
+
+                {/* Option lien URL - toujours visible mais secondaire */}
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input 
+                      value={newVideoUrl} 
+                      onChange={(e) => setNewVideoUrl(e.target.value)}
+                      className="bg-gray-50 border-gray-200 h-11 flex-1" 
+                      placeholder="https://tiktok.com/..." 
+                    />
+                    <Button 
+                      onClick={handleAddVideo} 
+                      disabled={!newVideoUrl}
+                      variant="outline"
+                      className="h-11 px-4 border-gray-200"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-gray-400 text-xs text-center">TikTok, Instagram, YouTube...</p>
+                </div>
+              </>
             )}
           </div>
         </SheetContent>
