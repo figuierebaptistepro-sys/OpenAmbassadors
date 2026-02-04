@@ -125,32 +125,74 @@ async def send_email(to: str, subject: str, html: str):
 
 async def send_welcome_email(email: str, name: str, user_type: str):
     """Send welcome email to new user"""
-    type_label = "créateur" if user_type == "creator" else "entreprise"
-    await send_email(
-        to=email,
-        subject=f"🎉 Bienvenue sur Creator Incubator !",
-        html=f"""
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #E91E63; margin: 0;">Bienvenue {name or ''} ! 🚀</h1>
+    if user_type == "new":
+        # Email pour nouvelle inscription (avant choix du type)
+        await send_email(
+            to=email,
+            subject=f"🎉 Félicitations ! Votre compte Creator Incubator est créé",
+            html=f"""
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; background: #fafafa;">
+                <div style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 28px;">🎉</span>
+                        </div>
+                        <h1 style="color: #333; margin: 0; font-size: 22px;">Bienvenue {name or 'sur Creator Incubator'} !</h1>
+                    </div>
+                    
+                    <p style="color: #555; line-height: 1.7; font-size: 15px; margin-bottom: 20px;">
+                        <strong>Félicitations !</strong> Votre compte a été créé avec succès. ✅
+                    </p>
+                    
+                    <div style="background: #f0f7ff; border-left: 4px solid #2196F3; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                        <p style="color: #1976D2; margin: 0; font-size: 14px;">
+                            💡 <strong>Prochaine étape :</strong> Connectez-vous et choisissez votre profil (Créateur ou Entreprise)
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="https://creator-hub-449.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                            Se connecter maintenant →
+                        </a>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                    
+                    <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+                        Des questions ? Répondez à cet email.<br>
+                        L'équipe Creator Incubator 💜
+                    </p>
+                </div>
             </div>
-            <p style="color: #333; line-height: 1.6;">
-                Votre compte <strong>{type_label}</strong> a été créé avec succès sur Creator Incubator.
-            </p>
-            <p style="color: #333; line-height: 1.6;">
-                {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
-            </p>
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-hub-449.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                    Accéder à mon compte
-                </a>
+            """
+        )
+    else:
+        type_label = "créateur" if user_type == "creator" else "entreprise"
+        await send_email(
+            to=email,
+            subject=f"🎉 Bienvenue sur Creator Incubator !",
+            html=f"""
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #E91E63; margin: 0;">Bienvenue {name or ''} ! 🚀</h1>
+                </div>
+                <p style="color: #333; line-height: 1.6;">
+                    Votre compte <strong>{type_label}</strong> a été créé avec succès sur Creator Incubator.
+                </p>
+                <p style="color: #333; line-height: 1.6;">
+                    {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://creator-hub-449.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                        Accéder à mon compte
+                    </a>
+                </div>
+                <p style="color: #999; font-size: 12px; text-align: center;">
+                    L'équipe Creator Incubator
+                </p>
             </div>
-            <p style="color: #999; font-size: 12px; text-align: center;">
-                L'équipe Creator Incubator
-            </p>
-        </div>
-        """
-    )
+            """
+        )
 
 async def send_new_application_email(business_email: str, business_name: str, project_title: str, creator_name: str):
     """Notify business of new application"""
