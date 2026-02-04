@@ -5,6 +5,7 @@ import {
   Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield
 } from "lucide-react";
 import { Badge } from "./ui/badge";
+import NotificationBell from "./NotificationBell";
 
 const LOGO_URL = "/logo-sun.png";
 const API_URL = process.env.REACT_APP_BACKEND_URL;
