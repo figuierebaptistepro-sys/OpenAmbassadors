@@ -233,31 +233,33 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                   <div className="flex gap-3">
                     <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
                       {!hasProjects ? <Rocket className="w-5 h-5 text-primary" /> : 
-                       completionPercent < 100 ? <Target className="w-5 h-5 text-primary" /> : 
+                       completedItems < checklistItems.length ? <Target className="w-5 h-5 text-primary" /> : 
                        <Sparkles className="w-5 h-5 text-primary" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base mb-1">
                         {!hasProjects ? "Publiez votre premier projet" : 
-                         completionPercent < 100 ? "Complétez votre profil" : "Profil complet !"}
+                         completedItems < checklistItems.length ? "Complétez votre profil" : "Profil complet !"}
                       </h3>
                       <p className="text-gray-600 text-xs sm:text-sm mb-3">
                         {!hasProjects ? "Recevez des candidatures de créateurs qualifiés." : 
-                         completionPercent < 100 ? "Améliorez vos recommandations." : "Prêt à collaborer."}
+                         completedItems < checklistItems.length ? "Améliorez vos recommandations." : "Prêt à collaborer."}
                       </p>
                       
-                      {completionPercent < 100 && (
+                      {completedItems < checklistItems.length && (
                         <div className="space-y-2">
-                          {completionSteps.filter(s => !s.done).slice(0, 2).map((step, i) => (
+                          {checklistItems.filter(item => !item.done).slice(0, 2).map((item, i) => (
                             <button
                               key={i}
-                              onClick={() => setEditSheetOpen(true)}
+                              onClick={() => handleChecklistAction(item.id)}
                               className="flex items-center gap-2 w-full p-2 bg-white rounded-lg hover:bg-gray-50 transition-colors text-left"
                             >
                               <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <step.icon className="w-3.5 h-3.5 text-gray-500" />
+                                <div className="w-3.5 h-3.5 rounded-full bg-primary/20 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-primary">{item.points}</span>
+                                </div>
                               </div>
-                              <span className="text-gray-700 text-xs sm:text-sm flex-1">Ajouter {step.label.toLowerCase()}</span>
+                              <span className="text-gray-700 text-xs sm:text-sm flex-1">{item.label}</span>
                               <ArrowRight className="w-4 h-4 text-gray-400" />
                             </button>
                           ))}
@@ -274,13 +276,13 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                   </div>
                 </div>
                 
-                {completionPercent < 100 && (
+                {completedItems < checklistItems.length && (
                   <div className="px-4 py-3 bg-white border-t border-gray-100">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-gray-600">Profil entreprise</span>
-                      <span className="text-xs font-medium text-primary">{completionPercent}%</span>
+                      <span className="text-xs text-gray-600">Profil entreprise ({totalPoints}/{maxPoints} pts)</span>
+                      <span className="text-xs font-medium text-primary">{Math.round((totalPoints / maxPoints) * 100)}%</span>
                     </div>
-                    <Progress value={completionPercent} className="h-1.5" />
+                    <Progress value={(totalPoints / maxPoints) * 100} className="h-1.5" />
                   </div>
                 )}
               </Card>
