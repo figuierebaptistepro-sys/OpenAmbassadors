@@ -398,13 +398,18 @@ def setup_reviews_routes(api_router, db, get_current_user, send_email, FRONTEND_
         if not invitation:
             raise HTTPException(status_code=404, detail="Invitation invalide ou expirée")
         
-        # Vérifier l'expiration
-        if datetime.now(timezone.utc) > invitation.get("token_expires_at", datetime.min.replace(tzinfo=timezone.utc)):
-            await db.review_invitations.update_one(
-                {"token": token},
-                {"$set": {"status": "expired"}}
-            )
-            raise HTTPException(status_code=400, detail="Cette invitation a expiré")
+        # Vérifier l'expiration - handle both timezone-aware and naive datetimes
+        token_expires = invitation.get("token_expires_at")
+        if token_expires:
+            # Make sure we compare timezone-aware datetimes
+            if token_expires.tzinfo is None:
+                token_expires = token_expires.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > token_expires:
+                await db.review_invitations.update_one(
+                    {"token": token},
+                    {"$set": {"status": "expired"}}
+                )
+                raise HTTPException(status_code=400, detail="Cette invitation a expiré")
         
         # Récupérer les infos du créateur
         creator = await db.users.find_one(
