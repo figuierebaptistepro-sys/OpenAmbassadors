@@ -361,7 +361,39 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
       {/* Main Content */}
       <main className="lg:ml-64 pt-14 lg:pt-0 min-h-screen">
-        {children}
+        {/* Desktop Top Bar */}
+        <div className="hidden lg:flex fixed top-0 left-64 right-0 h-14 bg-white border-b border-gray-200 items-center justify-between px-6 z-40">
+          <div className="flex items-center gap-4">
+            <h2 className="font-heading font-semibold text-gray-900">
+              {userType === "creator" ? "Espace Créateur" : "Espace Entreprise"}
+            </h2>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Notifications Bell - Desktop */}
+            <NotificationBell user={user} />
+            
+            {/* User Info */}
+            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{user?.name || "Utilisateur"}</p>
+                <p className="text-xs text-gray-500">{isPremium ? "Premium" : currentPlan || (userType === "creator" ? "Créateur" : "Entreprise")}</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-200">
+                {user?.picture ? (
+                  <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Content with padding for desktop header */}
+        <div className="lg:pt-14">
+          {children}
+        </div>
       </main>
     </div>
   );
