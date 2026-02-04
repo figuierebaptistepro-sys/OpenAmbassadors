@@ -264,12 +264,12 @@ const AppLayout = ({ children, user, currentPlan }) => {
       </aside>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex-col z-40">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-72 bg-white border-r border-gray-200 flex-col z-40">
         {/* Logo */}
         <div className="p-6 border-b border-gray-100">
           <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="OpenAmbassadors" className="w-11 h-11 rounded-xl object-cover" />
-            <span className="font-heading font-bold text-xl text-gray-900">OpenAmbassadors</span>
+            <img src={LOGO_URL} alt="OpenAmbassadors" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+            <span className="font-heading font-bold text-lg text-gray-900">OpenAmbassadors</span>
           </Link>
         </div>
 
