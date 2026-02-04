@@ -392,7 +392,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-14 lg:pt-0 min-h-screen">
+      <main className="lg:ml-72 pt-14 lg:pt-0 min-h-screen">
         {/* Desktop Top Bar */}
         <div className="hidden lg:flex fixed top-0 left-64 right-0 h-14 bg-white border-b border-gray-200 items-center justify-between px-6 z-40">
           <div className="flex items-center gap-4">
