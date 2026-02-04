@@ -65,6 +65,38 @@ const ProjectApplicationsPage = ({ user }) => {
     }
   };
 
+  const fetchProjectNotifications = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/notifications`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Filter notifications for this project
+        const filtered = (data.notifications || []).filter(
+          n => n.data?.project_id === projectId
+        );
+        setProjectNotifications(filtered);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const markProjectNotificationsRead = async () => {
+    for (const notif of projectNotifications.filter(n => !n.is_read)) {
+      try {
+        await fetch(`${API_URL}/api/notifications/${notif.notification_id}/read`, {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+    setProjectNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
+
   const handleStatusChange = async (creatorId, newStatus) => {
     setProcessing(true);
     try {
