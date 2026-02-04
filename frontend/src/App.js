@@ -198,7 +198,7 @@ function AppRouter() {
         path="/business"
         element={
           <ProtectedRoute requireType>
-            {({ user }) => <BusinessDashboard user={user} />}
+            {({ user, onUserUpdate }) => <BusinessDashboard user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />
