@@ -331,6 +331,60 @@ const CreatorProfile = ({ currentUser }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Video Player Modal */}
+      {selectedVideo && (
+        <div 
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onClick={() => setSelectedVideo(null)}
+        >
+          {/* Close button */}
+          <button 
+            onClick={() => setSelectedVideo(null)}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-colors"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          
+          {/* Video container - 9/16 ratio */}
+          <div 
+            className="relative w-full max-w-[400px] aspect-[9/16] bg-black"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {selectedVideo.url?.includes('.mp4') || selectedVideo.url?.includes('.mov') || selectedVideo.url?.includes('.webm') || selectedVideo.type === 'uploaded' ? (
+              <video 
+                src={getImageUrl(selectedVideo.url)} 
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-white">
+                <Globe className="w-12 h-12 mb-4 opacity-60" />
+                <p className="text-sm mb-4 opacity-80">Lien externe</p>
+                <a 
+                  href={selectedVideo.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
+                >
+                  Ouvrir le lien
+                </a>
+              </div>
+            )}
+          </div>
+          
+          {/* Video title */}
+          {selectedVideo.title && (
+            <div className="absolute bottom-4 left-4 right-4 text-center">
+              <p className="text-white text-sm font-medium truncate bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full inline-block">
+                {selectedVideo.title}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </AppLayout>
   );
 };
