@@ -813,11 +813,12 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
       {/* Add Video Sheet (better for mobile) */}
       <Sheet open={videoDialogOpen} onOpenChange={(open) => { 
-        setVideoDialogOpen(open); 
-        if (!open) { 
-          setNewVideoUrl(""); 
-          setUploadMode("file");
-        } 
+        if (!uploading) {
+          setVideoDialogOpen(open); 
+          if (!open) { 
+            setNewVideoUrl(""); 
+          }
+        }
       }}>
         <SheetContent side="bottom" className="bg-white rounded-t-2xl h-auto max-h-[85vh]">
           <SheetHeader className="pb-4">
@@ -835,15 +836,30 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
             />
             
             {uploading ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-center py-8">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center py-6">
                   <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-gray-600 text-sm">Upload en cours...</p>
-                    <p className="text-primary font-semibold">{uploadProgress}%</p>
+                    {uploadStatus === "compressing" ? (
+                      <>
+                        <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        </div>
+                        <p className="text-gray-900 font-semibold mb-1">Compression en cours...</p>
+                        <p className="text-gray-500 text-sm">Optimisation pour un upload rapide</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                          <Upload className="w-8 h-8 text-primary animate-pulse" />
+                        </div>
+                        <p className="text-gray-900 font-semibold mb-1">Upload vers Cloudflare...</p>
+                        <p className="text-primary font-bold text-xl">{uploadProgress}%</p>
+                      </>
+                    )}
                   </div>
                 </div>
                 <Progress value={uploadProgress} className="h-2" />
+                <p className="text-gray-400 text-xs text-center">Ne fermez pas cette fenêtre</p>
               </div>
             ) : (
               <>
@@ -862,9 +878,9 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                   <p className="text-gray-400 text-xs mt-2">MP4, MOV, WebM • Max 500MB</p>
                 </label>
                 
-                <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
-                  <p className="text-green-700 text-xs text-center">
-                    ✅ Stockage Cloudflare R2 inclus
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <p className="text-blue-700 text-xs text-center">
+                    🚀 Compression automatique pour un upload rapide
                   </p>
                 </div>
 
