@@ -540,6 +540,21 @@ class WithdrawalRequest(BaseModel):
     iban: Optional[str] = None
     bic: Optional[str] = None
 
+# ==================== NOTIFICATION MODELS ====================
+
+class Notification(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    notification_id: str = Field(default_factory=lambda: f"notif_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    type: str  # "application", "accepted", "rejected", "project", "message", "system"
+    title: str
+    message: str
+    icon: Optional[str] = None  # emoji or icon name
+    link: Optional[str] = None  # URL to navigate to
+    data: Optional[dict] = None  # Additional data (project_id, creator_id, etc.)
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class PaymentMethodUpdate(BaseModel):
     paypal_email: Optional[str] = None
     bank_iban: Optional[str] = None
