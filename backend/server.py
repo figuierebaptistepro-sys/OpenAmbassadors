@@ -1937,6 +1937,17 @@ async def apply_to_project(project_id: str, user: dict = Depends(get_current_use
             project_title=project["title"],
             creator_name=user.get("name") or "Un créateur"
         )
+        
+        # Create notification for business
+        await create_notification(
+            user_id=project["business_id"],
+            notif_type="application",
+            title="Nouvelle candidature !",
+            message=f"{user.get('name', 'Un créateur')} a postulé à votre projet \"{project['title']}\"",
+            icon="🎯",
+            link=f"/business/projects/{project_id}",
+            data={"project_id": project_id, "creator_id": user["user_id"]}
+        )
     
     return {"message": "Candidature envoyée"}
 
