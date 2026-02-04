@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Crown, Download, ExternalLink, FileText } from "lucide-react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { Check, Crown, Download, ExternalLink, FileText, MessageCircle } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -11,11 +11,16 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BillingPage = ({ user }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "plan");
   const [stats, setStats] = useState(null);
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Check if user came from contact attempt
+  const contactReason = location.state?.reason === "contact_creator";
+  const creatorName = location.state?.creatorName;
 
   useEffect(() => { fetchData(); }, []);
 
