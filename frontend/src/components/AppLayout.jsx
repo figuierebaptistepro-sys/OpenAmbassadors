@@ -100,17 +100,20 @@ const AppLayout = ({ children, user, currentPlan }) => {
           <span className="font-heading font-bold text-base text-gray-900">Incubateur</span>
         </Link>
 
-        {/* Mobile User Avatar */}
-        <button 
-          onClick={() => setUserMenuOpen(!userMenuOpen)}
-          className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center"
-        >
-          {user?.picture ? (
-            <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <User className="w-4 h-4 text-gray-500" />
-          )}
-        </button>
+        {/* Mobile: Notifications + User Avatar */}
+        <div className="flex items-center gap-2">
+          <NotificationBell user={user} />
+          <button 
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center"
+          >
+            {user?.picture ? (
+              <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-4 h-4 text-gray-500" />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Mobile User Menu Dropdown */}
