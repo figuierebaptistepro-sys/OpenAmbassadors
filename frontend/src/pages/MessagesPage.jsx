@@ -481,23 +481,22 @@ export const ConversationPage = ({ user }) => {
   }, {});
 
   return (
-    <AppLayout user={user} hideNav>
-      <div className="h-[calc(100vh-0px)] flex flex-col bg-gray-100">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate("/messages")} className="p-1 -ml-1">
-            <ArrowLeft className="w-6 h-6 text-gray-700" />
-          </button>
+    <div className="h-screen flex flex-col bg-gray-100">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 safe-area-top">
+        <button onClick={() => navigate("/messages")} className="p-1 -ml-1">
+          <ArrowLeft className="w-6 h-6 text-gray-700" />
+        </button>
 
-          <Link to={otherParticipant ? `/creators/${otherParticipant.user_id}` : "#"} className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-              {otherParticipant?.picture ? (
-                <img src={getImageUrl(otherParticipant.picture)} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
-                  <span className="font-bold text-primary">{(otherParticipant?.name || "?")[0]}</span>
-                </div>
-              )}
+        <Link to={otherParticipant ? `/creators/${otherParticipant.user_id}` : "#"} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+            {otherParticipant?.picture ? (
+              <img src={getImageUrl(otherParticipant.picture)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
+                <span className="font-bold text-primary">{(otherParticipant?.name || "?")[0]}</span>
+              </div>
+            )}
             </div>
             <div className="min-w-0">
               <h2 className="font-semibold text-gray-900 truncate">{otherParticipant?.name || "Utilisateur"}</h2>
