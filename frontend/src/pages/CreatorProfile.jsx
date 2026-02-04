@@ -360,11 +360,36 @@ const CreatorProfile = ({ currentUser }) => {
           <DialogHeader>
             <DialogTitle className="text-gray-900">Contacter {creator.name}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 mb-4">
-              <p className="text-gray-700 text-sm">Créez un projet pour contacter ce créateur.</p>
+          <div className="py-4 space-y-3">
+            {/* Direct message option */}
+            <Button 
+              onClick={startConversation} 
+              disabled={startingConversation}
+              className="w-full bg-primary hover:bg-primary-hover"
+            >
+              {startingConversation ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Envoyer un message
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs text-gray-400">ou</span>
+              </div>
             </div>
-            <Button onClick={() => { setContactDialogOpen(false); navigate("/business"); }} className="w-full bg-primary hover:bg-primary-hover">
+            
+            {/* Create project option */}
+            <Button 
+              variant="outline" 
+              onClick={() => { setContactDialogOpen(false); navigate("/business/projects/new"); }} 
+              className="w-full border-gray-200"
+            >
               <Briefcase className="w-4 h-4 mr-2" />
               Créer un projet
             </Button>
