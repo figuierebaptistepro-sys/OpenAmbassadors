@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, Users, Star, MapPin, Crown, CheckCircle, XCircle,
   Clock, Euro, Calendar, ExternalLink, Instagram, MessageCircle,
-  User, Mail, Phone, Award, Eye, ChevronRight
+  User, Mail, Phone, Award, Eye, ChevronRight, Bell, BellRing
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -37,9 +37,12 @@ const ProjectApplicationsPage = ({ user }) => {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [projectNotifications, setProjectNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     fetchProject();
+    fetchProjectNotifications();
   }, [projectId]);
 
   const fetchProject = async () => {
