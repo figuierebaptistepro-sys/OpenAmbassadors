@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Star, CheckCircle, Clock, Globe, Video, Camera, Smartphone, 
-  Lightbulb, Mic, Play, Award, Shield, Briefcase, Heart, MessageCircle, Share2, Crown, Car, X
+  Lightbulb, Mic, Play, Award, Shield, Briefcase, Heart, MessageCircle, Share2, Crown, Car, X, Send
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -23,6 +23,7 @@ const CreatorProfile = ({ currentUser }) => {
   const [showBio, setShowBio] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [startingConversation, setStartingConversation] = useState(false);
 
   useEffect(() => { fetchCreator(); }, [userId]);
 
@@ -35,6 +36,45 @@ const CreatorProfile = ({ currentUser }) => {
       console.error("Error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startConversation = async () => {
+    if (currentUser?.user_type !== "business") {
+      toast.error("Seules les entreprises peuvent contacter les créateurs");
+      return;
+    }
+    
+    setStartingConversation(true);
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ creator_id: userId }),
+      });
+      
+      if (response.ok) {
+        const conv = await response.json();
+        navigate(`/messages/${conv.conversation_id}`);
+      } else {
+        const error = await response.json();
+        if (response.headers.get("X-Require-Subscription")) {
+          toast.error("Abonnement requis pour contacter ce créateur", {
+            action: {
+              label: "S'abonner",
+              onClick: () => navigate("/billing"),
+            },
+          });
+        } else {
+          toast.error(error.detail || "Erreur");
+        }
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion");
+    } finally {
+      setStartingConversation(false);
+      setContactDialogOpen(false);
     }
   };
 
