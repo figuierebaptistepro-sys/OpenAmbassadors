@@ -321,44 +321,93 @@ def setup_reviews_routes(api_router, db, get_current_user, send_email, FRONTEND_
         
         # Envoyer l'email d'invitation
         review_url = f"{FRONTEND_URL}/review/external?token={token}"
+        register_url = f"{FRONTEND_URL}/login?ref=review&company={invite_data.company_name.replace(' ', '%20')}"
         
         await send_email(
             to=invite_data.company_email,
             subject=f"🌟 {user.get('name', 'Un créateur')} vous invite à partager votre expérience",
             html=f"""
-            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; background: #fafafa;">
-                <div style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 28px;">⭐</span>
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #fafafa;">
+                <div style="background: white; border-radius: 16px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Logo -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="display: inline-flex; align-items: center; gap: 10px;">
+                            <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 24px;">🌟</span>
+                            </div>
+                            <span style="font-size: 20px; font-weight: 700; color: #1a1a1a;">OpenAmbassadors</span>
                         </div>
-                        <h1 style="color: #333; margin: 0; font-size: 22px;">Votre avis compte !</h1>
                     </div>
                     
-                    <p style="color: #555; line-height: 1.7; font-size: 15px;">
-                        <strong>{user.get('name', 'Un créateur')}</strong> vous invite à partager votre expérience de collaboration sur <strong>OpenAmbassadors</strong>.
-                    </p>
+                    <!-- Header -->
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h1 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">
+                            {user.get('name', 'Un créateur')} sollicite votre avis
+                        </h1>
+                        <p style="color: #666; font-size: 15px; margin: 0;">
+                            Suite à votre collaboration, partagez votre expérience en 2 minutes
+                        </p>
+                    </div>
                     
-                    {f'<p style="color: #777; font-size: 14px; font-style: italic;">"{invite_data.collaboration_description}"</p>' if invite_data.collaboration_description else ''}
+                    {f'''<div style="background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 25px; border-left: 4px solid #E91E63;">
+                        <p style="color: #555; font-size: 14px; font-style: italic; margin: 0;">
+                            "{invite_data.collaboration_description}"
+                        </p>
+                    </div>''' if invite_data.collaboration_description else ''}
                     
-                    <p style="color: #555; line-height: 1.7; font-size: 15px;">
-                        Votre avis aidera d'autres entreprises à découvrir ce créateur talentueux.
-                    </p>
-                    
+                    <!-- CTA Principal -->
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="{review_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px;">
-                            Laisser un avis
+                        <a href="{review_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);">
+                            ⭐ Laisser mon avis
+                        </a>
+                        <p style="color: #999; font-size: 12px; margin-top: 12px;">
+                            Prend moins de 2 minutes • Lien valide 7 jours
+                        </p>
+                    </div>
+                    
+                    <!-- Séparateur -->
+                    <div style="border-top: 1px solid #eee; margin: 30px 0;"></div>
+                    
+                    <!-- Section Découverte -->
+                    <div style="background: linear-gradient(135deg, #fef3f7 0%, #fff5f0 100%); border-radius: 12px; padding: 25px; text-align: center;">
+                        <h2 style="color: #1a1a1a; font-size: 18px; margin: 0 0 12px 0; font-weight: 600;">
+                            🚀 Vous cherchez des créateurs de contenu ?
+                        </h2>
+                        <p style="color: #555; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                            OpenAmbassadors connecte les entreprises avec les meilleurs créateurs UGC, 
+                            vidéastes et influenceurs. Publiez vos missions et recevez des candidatures qualifiées.
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #E91E63;">500+</div>
+                                <div style="font-size: 12px; color: #666;">Créateurs vérifiés</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #E91E63;">4.8★</div>
+                                <div style="font-size: 12px; color: #666;">Note moyenne</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #E91E63;">48h</div>
+                                <div style="font-size: 12px; color: #666;">Réponse moyenne</div>
+                            </div>
+                        </div>
+                        <a href="{register_url}" style="display: inline-block; padding: 12px 28px; background: #1a1a1a; color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 14px;">
+                            Découvrir la plateforme →
                         </a>
                     </div>
                     
-                    <p style="color: #999; font-size: 12px; text-align: center;">
-                        Ce lien expire dans 7 jours.
-                    </p>
                 </div>
                 
-                <p style="color: #999; font-size: 11px; text-align: center; margin-top: 20px;">
-                    OpenAmbassadors - La plateforme qui connecte créateurs et entreprises
-                </p>
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 25px;">
+                    <p style="color: #999; font-size: 12px; margin: 0 0 8px 0;">
+                        OpenAmbassadors - La plateforme qui connecte créateurs et entreprises
+                    </p>
+                    <p style="color: #bbb; font-size: 11px; margin: 0;">
+                        Vous recevez cet email car {user.get('name', 'un créateur')} a indiqué avoir collaboré avec vous.
+                    </p>
+                </div>
             </div>
             """
         )
