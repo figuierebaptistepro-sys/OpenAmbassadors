@@ -174,7 +174,7 @@ const ReviewsSection = ({ userId, showTitle = true }) => {
   const displayedReviews = showAll ? reviews : reviews.slice(0, 3);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="reviews-section">
       {showTitle && (
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900">Avis & Évaluations</h3>
