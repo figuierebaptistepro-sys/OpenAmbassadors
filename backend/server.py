@@ -2815,6 +2815,22 @@ async def admin_process_access_request(request_id: str, request: Request, user: 
     
     return {"message": f"Demande {new_status}", "status": new_status}
 
+# Admin endpoint to toggle subscription (mock for MVP)
+@api_router.post("/admin/users/{user_id}/subscription")
+async def toggle_subscription(user_id: str, user: dict = Depends(get_admin_user)):
+    """Toggle user subscription status"""
+    target_user = await db.users.find_one({"user_id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    new_status = not target_user.get("is_subscribed", False)
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_subscribed": new_status}}
+    )
+    
+    return {"user_id": user_id, "is_subscribed": new_status}
+
 # ==================== MESSAGING MODULE ====================
 from messaging import create_messaging_router, websocket_endpoint, manager as ws_manager
 from fastapi import WebSocket
