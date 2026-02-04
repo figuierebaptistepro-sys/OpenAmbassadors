@@ -328,6 +328,33 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
         """
     )
 
+# ==================== NOTIFICATION HELPER ====================
+
+async def create_notification(
+    user_id: str,
+    notif_type: str,
+    title: str,
+    message: str,
+    icon: str = "🔔",
+    link: str = None,
+    data: dict = None
+):
+    """Create a notification for a user"""
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": user_id,
+        "type": notif_type,
+        "title": title,
+        "message": message,
+        "icon": icon,
+        "link": link,
+        "data": data or {},
+        "is_read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    return notification
+
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
