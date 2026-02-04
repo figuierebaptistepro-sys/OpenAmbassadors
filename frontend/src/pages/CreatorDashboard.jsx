@@ -33,7 +33,8 @@ const VISIBILITY_OPTIONS = [
   { value: "1M", label: "1M+" },
 ];
 
-const getChecklistItems = (profile) => [
+const getChecklistItems = (profile, user) => [
+  { id: "picture", label: "Ajouter une photo de profil", points: 15, done: !!user?.picture },
   { id: "bio", label: "Ajouter une bio", points: 5, done: !!profile?.bio },
   { id: "city", label: "Renseigner votre ville", points: 10, done: !!profile?.city },
   { id: "content_types", label: "Sélectionner vos spécialités", points: 10, done: profile?.content_types?.length > 0 },
@@ -44,9 +45,10 @@ const getChecklistItems = (profile) => [
   { id: "visibility", label: "Indiquer votre audience", points: 10, done: !!profile?.visibility },
 ];
 
-const CreatorDashboard = ({ user }) => {
+const CreatorDashboard = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
   const videoInputRef = useRef(null);
+  const pictureInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
