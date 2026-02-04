@@ -291,7 +291,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-heading font-bold text-gray-900 text-base sm:text-lg mb-1">
-                          Complétez votre profil d'abord
+                          Complétez votre profil
                         </h3>
                         <p className="text-gray-500 text-xs sm:text-sm mb-4">
                           Pour créer un projet, remplissez ces informations obligatoires :
