@@ -59,10 +59,33 @@ const LoginPage = () => {
         throw new Error(data.detail || "Erreur lors de l'inscription");
       }
 
-      toast.success("Compte créé avec succès !");
+      toast.success("🎉 Félicitations ! Votre compte a été créé. Vérifiez votre email !");
       navigate("/select-type", { state: { user: data } });
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      toast.error("Veuillez entrer votre email");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+      toast.success("📧 Si un compte existe, vous recevrez un email de réinitialisation.");
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi");
     } finally {
       setLoading(false);
     }
