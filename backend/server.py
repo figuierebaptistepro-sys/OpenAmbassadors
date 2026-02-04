@@ -2862,6 +2862,10 @@ async def websocket_route(websocket: WebSocket):
 # Include router
 app.include_router(api_router)
 
+# Setup reviews routes
+from reviews import setup_reviews_routes
+setup_reviews_routes(api_router, db, get_current_user, send_email, FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
