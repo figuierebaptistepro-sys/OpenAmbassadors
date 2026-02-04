@@ -486,7 +486,7 @@ const ProjectApplicationsPage = ({ user }) => {
                 Aucune candidature
               </h3>
               <p className="text-gray-500 text-sm">
-                Les créateurs n'ont pas encore postulé à ce projet
+                Les créateurs n&apos;ont pas encore postulé à ce projet
               </p>
             </CardContent>
           </Card>
