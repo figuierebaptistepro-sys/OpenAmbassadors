@@ -2815,6 +2815,30 @@ async def admin_process_access_request(request_id: str, request: Request, user: 
     
     return {"message": f"Demande {new_status}", "status": new_status}
 
+# ==================== MESSAGING MODULE ====================
+from messaging import create_messaging_router, websocket_endpoint, manager as ws_manager
+from fastapi import WebSocket
+
+# Create messaging router
+messaging_router = create_messaging_router(db, get_current_user, upload_to_r2)
+app.include_router(messaging_router, prefix="/api")
+
+# WebSocket endpoint
+@app.websocket("/ws")
+async def websocket_route(websocket: WebSocket):
+    async def get_user_from_ws_token(token: str, database):
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            user_id = payload.get("user_id")
+            if user_id:
+                user = await database.users.find_one({"user_id": user_id}, {"_id": 0})
+                return user
+        except:
+            return None
+        return None
+    
+    await websocket_endpoint(websocket, db, get_user_from_ws_token)
+
 # Include router
 app.include_router(api_router)
 
