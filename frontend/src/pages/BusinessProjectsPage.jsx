@@ -63,6 +63,28 @@ const BusinessProjectsPage = ({ user }) => {
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/notifications`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Group notifications by project_id and count unread
+        const grouped = {};
+        (data.notifications || []).forEach(notif => {
+          if (notif.data?.project_id && !notif.is_read && notif.type === "application") {
+            const pid = notif.data.project_id;
+            grouped[pid] = (grouped[pid] || 0) + 1;
+          }
+        });
+        setProjectNotifications(grouped);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http")) return url;
