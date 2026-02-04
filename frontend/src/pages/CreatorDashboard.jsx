@@ -59,6 +59,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [uploadMode, setUploadMode] = useState("file"); // "file" or "url"
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   const [editForm, setEditForm] = useState({
     bio: "", city: "", phone: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
@@ -76,6 +77,36 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   }, [videoDialogOpen]);
 
   useEffect(() => { fetchData(); }, []);
+
+  // Upload photo de profil
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+
+    setUploadingPicture(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_URL}/api/upload/profile-picture`, { 
+        method: "POST", 
+        credentials: "include", 
+        body: formData 
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Photo mise à jour !");
+        onUserUpdate?.({ ...user, picture: data.picture_url });
+      } else {
+        toast.error("Erreur lors de l'upload");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
