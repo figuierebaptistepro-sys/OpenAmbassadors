@@ -455,12 +455,6 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                         >
                           <Trash2 className="w-3 h-3 text-white" />
                         </button>
-                        {/* Badge R2 */}
-                        {video.type === 'uploaded' && (
-                          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-primary/90 text-white text-[10px] font-medium rounded">
-                            R2
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
