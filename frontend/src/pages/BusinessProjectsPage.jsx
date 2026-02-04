@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Briefcase, Plus, Edit, Eye, Users, Euro, Clock, CheckCircle,
-  AlertCircle, Crown, MapPin, ChevronRight, MoreVertical, Trash2
+  AlertCircle, Crown, MapPin, ChevronRight, MoreVertical, Trash2, Bell, BellRing
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -32,9 +32,11 @@ const BusinessProjectsPage = ({ user }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, open: 0, in_progress: 0, completed: 0 });
+  const [projectNotifications, setProjectNotifications] = useState({});
 
   useEffect(() => {
     fetchProjects();
+    fetchNotifications();
   }, []);
 
   const fetchProjects = async () => {
