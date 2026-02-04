@@ -375,21 +375,35 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 </div>
                 <Progress value={(completedItems / checklistItems.length) * 100} className="h-2 mb-4" />
                 
+                {/* Input caché pour l'upload de photo */}
+                <input
+                  ref={pictureInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePictureUpload}
+                  className="hidden"
+                />
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {checklistItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => !item.done && setEditSheetOpen(true)}
+                      onClick={() => !item.done && handleChecklistAction(item.id)}
+                      disabled={uploadingPicture && item.id === "picture"}
                       className={`flex items-center gap-2 p-2 rounded-lg text-left transition-colors ${
                         item.done ? "bg-green-50" : "bg-gray-50 hover:bg-gray-100"
-                      }`}
+                      } ${uploadingPicture && item.id === "picture" ? "opacity-50" : ""}`}
                     >
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                         item.done ? "bg-green-500" : "bg-gray-200"
                       }`}>
-                        {item.done && <Check className="w-3 h-3 text-white" />}
+                        {item.done ? <Check className="w-3 h-3 text-white" /> : 
+                         (uploadingPicture && item.id === "picture") ? 
+                          <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div> : null}
                       </div>
-                      <span className={`text-xs flex-1 ${item.done ? "text-green-700" : "text-gray-700"}`}>{item.label}</span>
+                      <span className={`text-xs flex-1 ${item.done ? "text-green-700" : "text-gray-700"}`}>
+                        {uploadingPicture && item.id === "picture" ? "Upload..." : item.label}
+                      </span>
                       <span className={`text-xs ${item.done ? "text-green-600" : "text-gray-400"}`}>+{item.points}</span>
                     </button>
                   ))}
