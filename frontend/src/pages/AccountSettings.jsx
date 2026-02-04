@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { User, Bell, Lock, Camera, Trash2, ImagePlus, Shield, Globe, Moon, Sun, Upload } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { User, Bell, Lock, Camera, Trash2, ImagePlus, Shield, Globe, Moon, Sun, Upload, Star } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -9,6 +9,8 @@ import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
+import ReviewsSection from "../components/ReviewsSection";
+import InviteExternalReview from "../components/InviteExternalReview";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
