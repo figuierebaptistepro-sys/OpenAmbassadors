@@ -16,7 +16,9 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AccountSettings = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "profile";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
