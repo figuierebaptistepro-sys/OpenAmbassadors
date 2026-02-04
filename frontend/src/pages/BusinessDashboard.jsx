@@ -150,6 +150,16 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
   const currentPack = packs.find(p => p.pack_id === stats?.selected_pack);
   const hasProjects = projects.length > 0;
   
+  // Champs obligatoires pour créer un projet
+  const requiredFields = [
+    { id: "company_name", label: "Nom de l'entreprise", done: !!profile?.company_name },
+    { id: "picture", label: "Logo", done: !!user?.picture },
+    { id: "industry", label: "Secteur d'activité", done: !!profile?.industry },
+    { id: "description", label: "Description", done: !!profile?.description },
+  ];
+  const missingRequired = requiredFields.filter(f => !f.done);
+  const canCreateProject = missingRequired.length === 0;
+  
   // Checklist avec points
   const checklistItems = getBusinessChecklistItems(profile, user).map(item => 
     item.id === "project" ? { ...item, done: hasProjects } : item
@@ -166,6 +176,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
       navigate("/projects/new");
     } else {
       setEditSheetOpen(true);
+    }
+  };
+
+  // Essayer de créer un projet
+  const handleCreateProject = () => {
+    if (canCreateProject) {
+      navigate("/business/projects/new");
+    } else {
+      toast.error("Complétez d'abord votre profil entreprise");
     }
   };
 
