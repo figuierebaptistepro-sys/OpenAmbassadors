@@ -196,6 +196,24 @@ function AppRouter() {
         }
       />
       
+      {/* Messages Routes */}
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <InboxPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages/:conversationId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ConversationPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Business Routes */}
       <Route
         path="/business"
