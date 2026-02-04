@@ -29,6 +29,7 @@ import WalletPage from "./pages/WalletPage";
 import AdminPage from "./pages/AdminPage";
 import BusinessProjectsPage from "./pages/BusinessProjectsPage";
 import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
+import { InboxPage, ConversationPage } from "./pages/MessagesPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
