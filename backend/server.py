@@ -1889,7 +1889,7 @@ async def update_application_status(project_id: str, creator_id: str, request: R
             {"$set": {"status": "in_progress"}}
         )
     
-    # Send email notification to creator
+    # Send email and notification to creator
     if new_status in ["accepted", "rejected"]:
         creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
         if creator:
@@ -1899,6 +1899,28 @@ async def update_application_status(project_id: str, creator_id: str, request: R
                 project_title=project["title"],
                 status=new_status
             )
+            
+            # Create notification for creator
+            if new_status == "accepted":
+                await create_notification(
+                    user_id=creator_id,
+                    notif_type="accepted",
+                    title="Candidature acceptée ! 🎉",
+                    message=f"Votre candidature pour \"{project['title']}\" a été acceptée !",
+                    icon="✅",
+                    link=f"/projects/{project_id}",
+                    data={"project_id": project_id}
+                )
+            else:
+                await create_notification(
+                    user_id=creator_id,
+                    notif_type="rejected",
+                    title="Candidature non retenue",
+                    message=f"Votre candidature pour \"{project['title']}\" n'a pas été retenue.",
+                    icon="❌",
+                    link="/projects",
+                    data={"project_id": project_id}
+                )
     
     return {"message": "Statut mis à jour"}
 
