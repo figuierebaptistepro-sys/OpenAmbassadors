@@ -255,47 +255,101 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4">
             
-            {/* Section 1: Créer un projet - Toujours visible */}
+            {/* Section 1: Créer un projet */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-primary to-primary/80 p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0">
-                      <Rocket className="w-7 h-7 text-white" />
+                {canCreateProject ? (
+                  // Profil complet - peut créer un projet
+                  <div className="bg-gradient-to-r from-primary to-primary/80 p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <Rocket className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-heading font-bold text-white text-base sm:text-lg mb-1">
+                          Lancer une campagne
+                        </h3>
+                        <p className="text-white/80 text-xs sm:text-sm">
+                          Trouvez des créateurs et lancez votre projet UGC
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => navigate("/business/projects/new")} 
+                        className="bg-white text-primary hover:bg-gray-100 shadow-lg"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Créer un projet
+                      </Button>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-heading font-bold text-white text-base sm:text-lg mb-1">
-                        Lancer une campagne
-                      </h3>
-                      <p className="text-white/80 text-xs sm:text-sm">
-                        Trouvez des créateurs et lancez votre projet UGC
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={() => navigate("/business/projects/new")} 
-                      className="bg-white text-primary hover:bg-gray-100 shadow-lg"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Créer un projet
-                    </Button>
                   </div>
-                </div>
+                ) : (
+                  // Profil incomplet - doit d'abord compléter
+                  <div className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-7 h-7 text-orange-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-heading font-bold text-gray-900 text-base sm:text-lg mb-1">
+                          Complétez votre profil d'abord
+                        </h3>
+                        <p className="text-gray-500 text-xs sm:text-sm mb-4">
+                          Pour créer un projet, remplissez ces informations obligatoires :
+                        </p>
+                        
+                        <div className="space-y-2 mb-4">
+                          {requiredFields.map((field) => (
+                            <button
+                              key={field.id}
+                              onClick={() => handleChecklistAction(field.id)}
+                              disabled={field.done}
+                              className={`flex items-center gap-3 w-full p-3 rounded-lg transition-colors text-left ${
+                                field.done 
+                                  ? "bg-green-50 cursor-default" 
+                                  : "bg-orange-50 hover:bg-orange-100 cursor-pointer"
+                              }`}
+                            >
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                field.done ? "bg-green-500" : "bg-orange-400"
+                              }`}>
+                                {field.done ? (
+                                  <Check className="w-4 h-4 text-white" />
+                                ) : (
+                                  <span className="text-white text-xs font-bold">!</span>
+                                )}
+                              </div>
+                              <span className={`text-sm flex-1 ${field.done ? "text-green-700" : "text-orange-700 font-medium"}`}>
+                                {field.label}
+                              </span>
+                              {!field.done && <ArrowRight className="w-4 h-4 text-orange-400" />}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Clock className="w-4 h-4" />
+                          <span>2 minutes pour compléter</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
             </motion.div>
 
-            {/* Section 2: Compléter le profil - Collapsible */}
-            {completedItems < checklistItems.length && (
+            {/* Section 2: Compléter le profil (bonus) - Visible seulement si profil OK mais pas 100% */}
+            {canCreateProject && completedItems < checklistItems.length && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <Card className="border-0 shadow-sm">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                          <Target className="w-5 h-5 text-orange-500" />
+                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <Target className="w-5 h-5 text-blue-500" />
                         </div>
                         <div>
-                          <CardTitle className="text-sm text-gray-900">Complétez votre profil</CardTitle>
-                          <p className="text-xs text-gray-500">Gagnez des points et améliorez votre visibilité</p>
+                          <CardTitle className="text-sm text-gray-900">Bonus : Améliorez votre profil</CardTitle>
+                          <p className="text-xs text-gray-500">Gagnez des points et attirez plus de créateurs</p>
                         </div>
                       </div>
                       <Badge className="bg-orange-100 text-orange-600 text-xs">
