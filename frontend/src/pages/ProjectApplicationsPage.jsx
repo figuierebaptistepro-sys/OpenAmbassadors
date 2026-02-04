@@ -158,6 +158,7 @@ const ProjectApplicationsPage = ({ user }) => {
   const applications = project.applications || [];
   const pendingCount = applications.filter(a => a.status === "pending").length;
   const acceptedCount = applications.filter(a => a.status === "accepted").length;
+  const unreadProjectNotifs = projectNotifications.filter(n => !n.is_read).length;
 
   return (
     <AppLayout user={user}>
@@ -180,6 +181,74 @@ const ProjectApplicationsPage = ({ user }) => {
             <p className="text-gray-500 text-xs sm:text-sm">
               {applications.length} candidature(s) • {pendingCount} en attente
             </p>
+          </div>
+          
+          {/* Project Notifications Bell */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                if (!showNotifications && unreadProjectNotifs > 0) {
+                  markProjectNotificationsRead();
+                }
+              }}
+              className={`p-2 rounded-full transition-colors ${
+                unreadProjectNotifs > 0 ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {unreadProjectNotifs > 0 ? (
+                <BellRing className="w-5 h-5" />
+              ) : (
+                <Bell className="w-5 h-5" />
+              )}
+              {unreadProjectNotifs > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {unreadProjectNotifs}
+                </span>
+              )}
+            </button>
+            
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                    <h4 className="font-semibold text-gray-900 text-sm">Notifications du projet</h4>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {projectNotifications.length === 0 ? (
+                      <div className="py-8 text-center">
+                        <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm">Aucune notification</p>
+                      </div>
+                    ) : (
+                      projectNotifications.map((notif) => (
+                        <div
+                          key={notif.notification_id}
+                          className={`px-4 py-3 border-b border-gray-50 ${!notif.is_read ? "bg-primary/5" : ""}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className="text-lg">{notif.icon || "🔔"}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm ${!notif.is_read ? "font-semibold" : ""} text-gray-900`}>
+                                {notif.title}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(notif.created_at).toLocaleDateString("fr-FR", { 
+                                  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" 
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
