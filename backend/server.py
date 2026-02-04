@@ -2162,31 +2162,6 @@ async def get_business_stats(user: dict = Depends(get_current_user)):
         "completed_projects": len([p for p in projects if p.get("status") == "completed"])
     }
 
-# ==================== REVIEWS ROUTES ====================
-
-@api_router.post("/reviews")
-async def create_review(request: Request, user: dict = Depends(get_current_user)):
-    body = await request.json()
-    
-    review = Review(
-        creator_id=body["creator_id"],
-        business_id=user["user_id"],
-        project_id=body.get("project_id"),
-        rating=body["rating"],
-        comment=body["comment"]
-    )
-    await db.reviews.insert_one(review.model_dump())
-    
-    # Update creator stats
-    reviews = await db.reviews.find({"creator_id": body["creator_id"]}, {"_id": 0}).to_list(1000)
-    avg_rating = sum(r["rating"] for r in reviews) / len(reviews)
-    await db.creator_profiles.update_one(
-        {"user_id": body["creator_id"]},
-        {"$set": {"rating": round(avg_rating, 1), "reviews_count": len(reviews)}}
-    )
-    
-    return {"review_id": review.review_id}
-
 # ==================== NOTIFICATION ROUTES ====================
 
 @api_router.get("/notifications")
