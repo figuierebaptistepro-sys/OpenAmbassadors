@@ -111,16 +111,16 @@ async def send_email(to: str, subject: str, html: str):
     
     try:
         params = {
-            "from": "Creator Incubator <onboarding@resend.dev>",
+            "from": "Creator Incubator <delivered@resend.dev>",
             "to": [to],
             "subject": subject,
             "html": html
         }
-        resend.Emails.send(params)
-        logging.info(f"Email sent: {subject} to {to}")
+        result = resend.Emails.send(params)
+        logging.info(f"Email sent successfully: {subject} to {to} - ID: {result.get('id', 'N/A')}")
         return True
     except Exception as e:
-        logging.error(f"Failed to send email: {e}")
+        logging.error(f"Failed to send email to {to}: {e}")
         return False
 
 async def send_welcome_email(email: str, name: str, user_type: str):
