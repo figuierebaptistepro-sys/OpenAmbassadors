@@ -160,6 +160,72 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     }
   };
 
+  // Charger FFmpeg
+  const loadFFmpeg = async () => {
+    if (ffmpegLoaded) return true;
+    
+    try {
+      const ffmpeg = new FFmpeg();
+      ffmpegRef.current = ffmpeg;
+      
+      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+      });
+      
+      setFfmpegLoaded(true);
+      return true;
+    } catch (error) {
+      console.error("FFmpeg load error:", error);
+      return false;
+    }
+  };
+
+  // Compresser la vidéo
+  const compressVideo = async (file) => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) return file;
+
+    try {
+      const inputName = "input" + (file.name.includes('.mov') ? '.mov' : '.mp4');
+      const outputName = "output.mp4";
+      
+      // Écrire le fichier en entrée
+      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      
+      // Compresser: réduire qualité et résolution pour mobile
+      // -crf 28 = compression moyenne-haute (18-28 est bon, plus haut = plus compressé)
+      // -vf scale=-2:720 = max 720p de hauteur
+      // -preset fast = compression rapide
+      // -movflags +faststart = optimisé pour le streaming
+      await ffmpeg.exec([
+        "-i", inputName,
+        "-c:v", "libx264",
+        "-crf", "28",
+        "-preset", "fast",
+        "-vf", "scale=-2:720",
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-movflags", "+faststart",
+        outputName
+      ]);
+      
+      // Lire le fichier compressé
+      const data = await ffmpeg.readFile(outputName);
+      const compressedBlob = new Blob([data.buffer], { type: "video/mp4" });
+      
+      // Nettoyer
+      await ffmpeg.deleteFile(inputName);
+      await ffmpeg.deleteFile(outputName);
+      
+      return new File([compressedBlob], file.name.replace(/\.[^/.]+$/, ".mp4"), { type: "video/mp4" });
+    } catch (error) {
+      console.error("Compression error:", error);
+      return file; // Retourner le fichier original en cas d'erreur
+    }
+  };
+
   const handleVideoFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -180,15 +246,39 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
     setUploading(true);
     setUploadProgress(0);
+    
+    let fileToUpload = file;
+    const originalSize = file.size;
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      // Compression si le fichier fait plus de 10MB
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadStatus("compressing");
+        toast.info("Compression en cours...");
+        
+        // Charger FFmpeg si pas déjà chargé
+        const loaded = await loadFFmpeg();
+        
+        if (loaded) {
+          setUploadProgress(20);
+          fileToUpload = await compressVideo(file);
+          setUploadProgress(50);
+          
+          const savedMB = ((originalSize - fileToUpload.size) / (1024 * 1024)).toFixed(1);
+          if (fileToUpload.size < originalSize) {
+            toast.success(`Compressé ! ${savedMB}MB économisés`);
+          }
+        }
+      }
 
-      // Simuler la progression (car fetch ne supporte pas le suivi natif)
+      setUploadStatus("uploading");
+      const formData = new FormData();
+      formData.append("file", fileToUpload);
+
+      // Progression upload
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
+        setUploadProgress(prev => Math.min(prev + 5, 95));
+      }, 300);
 
       const response = await fetch(`${API_URL}/api/upload/portfolio`, {
         method: "POST",
@@ -202,7 +292,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       if (response.ok) {
         const data = await response.json();
         
-        // Ajouter la vidéo au portfolio - utiliser data.url (pas media_url)
+        // Ajouter la vidéo au portfolio
         const portfolioResponse = await fetch(`${API_URL}/api/creators/me/portfolio`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -231,6 +321,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadStatus("");
       if (videoInputRef.current) videoInputRef.current.value = "";
     }
   };
