@@ -427,11 +427,15 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                       >
                         {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
                           <video 
-                            src={getImageUrl(video.url)} 
+                            src={`${getImageUrl(video.url)}#t=0.5`}
                             className="w-full h-full object-cover"
                             muted
                             playsInline
                             preload="metadata"
+                            onLoadedData={(e) => {
+                              // Seek to 0.5s to show preview frame
+                              e.target.currentTime = 0.5;
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
