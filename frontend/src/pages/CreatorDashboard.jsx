@@ -60,7 +60,10 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState(""); // "compressing", "uploading"
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const ffmpegRef = useRef(null);
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
   const [editForm, setEditForm] = useState({
     bio: "", city: "", phone: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
