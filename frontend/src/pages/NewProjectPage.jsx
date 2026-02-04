@@ -585,7 +585,7 @@ const NewProjectPage = ({ user }) => {
                       <Crown className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">Réserver aux membres Incubateur</p>
+                      <p className="font-semibold text-gray-900 text-sm">Réserver aux membres Premium</p>
                       <p className="text-gray-500 text-xs">Seuls les créateurs Premium verront cette mission</p>
                     </div>
                   </div>

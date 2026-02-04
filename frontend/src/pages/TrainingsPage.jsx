@@ -158,7 +158,7 @@ const TrainingsPage = ({ user }) => {
             <Award className="w-5 h-5 text-amber-500" />
             Formations Premium
             {!user?.is_premium && (
-              <Badge className="bg-amber-500/20 text-amber-400 text-xs">Incubateur requis</Badge>
+              <Badge className="bg-amber-500/20 text-amber-400 text-xs">Premium requis</Badge>
             )}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
