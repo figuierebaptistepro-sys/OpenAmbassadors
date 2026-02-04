@@ -23,6 +23,7 @@ const ReviewCard = ({ review, onReport }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+      data-testid={`review-card-${review.review_id}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
