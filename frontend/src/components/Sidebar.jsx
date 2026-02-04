@@ -86,7 +86,14 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
+            <div className="relative">
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {item.badge > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full text-[10px] text-white font-bold flex items-center justify-center">
+                  {item.badge > 9 ? "9+" : item.badge}
+                </span>
+              )}
+            </div>
             <span className="text-sm lg:text-base">{item.label}</span>
           </button>
         ))}
