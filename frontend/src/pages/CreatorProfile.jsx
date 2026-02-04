@@ -45,6 +45,13 @@ const CreatorProfile = ({ currentUser }) => {
       return;
     }
     
+    // Check if user is subscribed before even trying
+    if (!currentUser?.is_subscribed && !currentUser?.is_premium) {
+      setContactDialogOpen(false);
+      navigate("/billing", { state: { reason: "contact_creator", creatorName: creator?.name } });
+      return;
+    }
+    
     setStartingConversation(true);
     try {
       const response = await fetch(`${API_URL}/api/messaging/conversations`, {
@@ -59,13 +66,10 @@ const CreatorProfile = ({ currentUser }) => {
         navigate(`/messages/${conv.conversation_id}`);
       } else {
         const error = await response.json();
-        if (response.headers.get("X-Require-Subscription")) {
-          toast.error("Abonnement requis pour contacter ce créateur", {
-            action: {
-              label: "S'abonner",
-              onClick: () => navigate("/billing"),
-            },
-          });
+        if (error.detail?.includes("Abonnement")) {
+          // Redirect to billing page
+          setContactDialogOpen(false);
+          navigate("/billing", { state: { reason: "contact_creator", creatorName: creator?.name } });
         } else {
           toast.error(error.detail || "Erreur");
         }
