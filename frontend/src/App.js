@@ -172,7 +172,7 @@ function AppRouter() {
         path="/dashboard"
         element={
           <ProtectedRoute requireType>
-            {({ user }) => <CreatorDashboard user={user} />}
+            {({ user, onUserUpdate }) => <CreatorDashboard user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />
