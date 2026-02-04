@@ -394,7 +394,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
       {/* Main Content */}
       <main className="lg:ml-72 pt-14 lg:pt-0 min-h-screen">
         {/* Desktop Top Bar */}
-        <div className="hidden lg:flex fixed top-0 left-64 right-0 h-14 bg-white border-b border-gray-200 items-center justify-between px-6 z-40">
+        <div className="hidden lg:flex fixed top-0 left-72 right-0 h-14 bg-white border-b border-gray-200 items-center justify-between px-6 z-40">
           <div className="flex items-center gap-4">
             <h2 className="font-heading font-semibold text-gray-900">
               {userType === "creator" ? "Espace Créateur" : "Espace Entreprise"}
