@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Star, CheckCircle, Clock, Globe, Video, Camera, Smartphone, 
-  Lightbulb, Mic, Play, Award, Shield, Briefcase, Heart, MessageCircle, Share2, Crown, Car
+  Lightbulb, Mic, Play, Award, Shield, Briefcase, Heart, MessageCircle, Share2, Crown, Car, X
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -22,6 +22,7 @@ const CreatorProfile = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [showBio, setShowBio] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
 
   useEffect(() => { fetchCreator(); }, [userId]);
 
