@@ -96,8 +96,8 @@ const AppLayout = ({ children, user, currentPlan }) => {
         </button>
         
         <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-2">
-          <img src={LOGO_URL} alt="Incubateur" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-heading font-bold text-base text-gray-900">Incubateur</span>
+          <img src={LOGO_URL} alt="OpenAmbassadors" className="w-8 h-8 rounded-lg object-cover" />
+          <span className="font-heading font-bold text-base text-gray-900">OpenAmbassadors</span>
         </Link>
 
         {/* Mobile: Notifications + User Avatar */}
@@ -220,7 +220,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Crown className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-gray-900 text-sm">Upgrade Incubateur</span>
+                <span className="font-semibold text-gray-900 text-sm">Upgrade Premium</span>
               </div>
               <p className="text-gray-600 text-xs mb-2">Boost ta visibilité</p>
               <button
@@ -239,8 +239,8 @@ const AppLayout = ({ children, user, currentPlan }) => {
         {/* Logo */}
         <div className="p-6 border-b border-gray-100">
           <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Incubateur" className="w-11 h-11 rounded-xl object-cover" />
-            <span className="font-heading font-bold text-xl text-gray-900">Incubateur</span>
+            <img src={LOGO_URL} alt="OpenAmbassadors" className="w-11 h-11 rounded-xl object-cover" />
+            <span className="font-heading font-bold text-xl text-gray-900">OpenAmbassadors</span>
           </Link>
         </div>
 
@@ -301,7 +301,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Crown className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-gray-900">Upgrade Incubateur</span>
+                <span className="font-semibold text-gray-900">Upgrade Premium</span>
               </div>
               <p className="text-gray-600 text-sm mb-3">Boost ta visibilité et accède aux missions premium</p>
               <button
