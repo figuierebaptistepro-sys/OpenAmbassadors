@@ -48,8 +48,8 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
           className="flex items-center gap-3"
           onClick={() => isMobile && setMobileMenuOpen(false)}
         >
-          <img src={LOGO_URL} alt="Incubateur" className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl object-cover" />
-          <span className="font-heading font-bold text-lg lg:text-xl text-gray-900">Incubateur</span>
+          <img src={LOGO_URL} alt="OpenAmbassadors" className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl object-cover" />
+          <span className="font-heading font-bold text-lg lg:text-xl text-gray-900">OpenAmbassadors</span>
         </Link>
       </div>
 
@@ -94,7 +94,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
           <div className="premium-card rounded-xl p-3 lg:p-4">
             <div className="flex items-center gap-2 mb-2">
               <Crown className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-gray-900 text-sm lg:text-base">Upgrade Incubateur</span>
+              <span className="font-semibold text-gray-900 text-sm lg:text-base">Upgrade Premium</span>
             </div>
             <p className="text-gray-600 text-xs lg:text-sm mb-3">
               Boost ta visibilité et accède aux missions premium
@@ -134,8 +134,8 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
       {/* Mobile Header with Hamburger */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-50">
         <Link to={userType === "creator" ? "/dashboard" : "/business"} className="flex items-center gap-2">
-          <img src={LOGO_URL} alt="Incubateur" className="w-9 h-9 rounded-xl object-cover" />
-          <span className="font-heading font-bold text-lg text-gray-900">Incubateur</span>
+          <img src={LOGO_URL} alt="OpenAmbassadors" className="w-9 h-9 rounded-xl object-cover" />
+          <span className="font-heading font-bold text-lg text-gray-900">OpenAmbassadors</span>
         </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
