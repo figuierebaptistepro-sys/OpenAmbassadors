@@ -202,10 +202,26 @@ const BusinessProjectsPage = ({ user }) => {
                                 <Euro className="w-3.5 h-3.5" />
                                 {project.budget || "—"}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
+                              <button 
+                                onClick={() => navigate(`/business/projects/${project.project_id}`)}
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors ${
+                                  projectNotifications[project.project_id] 
+                                    ? "bg-primary/10 text-primary font-semibold" 
+                                    : "hover:bg-gray-100"
+                                }`}
+                              >
+                                {projectNotifications[project.project_id] ? (
+                                  <BellRing className="w-3.5 h-3.5 text-primary" />
+                                ) : (
+                                  <Users className="w-3.5 h-3.5" />
+                                )}
                                 {project.applications?.length || 0} candidature(s)
-                              </span>
+                                {projectNotifications[project.project_id] && (
+                                  <span className="ml-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                                    +{projectNotifications[project.project_id]}
+                                  </span>
+                                )}
+                              </button>
                               {project.duration && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" />
