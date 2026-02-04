@@ -501,6 +501,92 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </CardContent>
             </Card>
 
+            {/* Solliciter des avis - Section mise en avant */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 via-pink-50 to-orange-50 overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+                      <Star className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-heading font-bold text-gray-900 text-sm mb-1">
+                        Boostez votre crédibilité ! ⭐
+                      </h3>
+                      <p className="text-gray-600 text-xs leading-relaxed mb-3">
+                        Invitez vos anciens clients à laisser un avis. Plus vous avez d'avis, plus vous attirez de missions !
+                      </p>
+                      
+                      {/* Options d'invitation */}
+                      <div className="space-y-2">
+                        <Link 
+                          to="/settings?tab=reviews"
+                          className="flex items-center gap-3 p-2.5 bg-white rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-sm transition-all group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-gray-900 font-medium text-xs">Invitation par email</p>
+                            <p className="text-gray-500 text-[10px]">Envoyez un lien sécurisé à vos clients</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
+                        </Link>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-white/70 rounded-lg border border-dashed border-gray-200">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                            <Globe className="w-4 h-4 text-pink-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-gray-900 font-medium text-xs">Via réseaux sociaux</p>
+                            <p className="text-gray-500 text-[10px]">Partagez votre profil et demandez un avis</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const profileUrl = `${window.location.origin}/creators/${user?.user_id}`;
+                              navigator.clipboard.writeText(profileUrl);
+                              toast.success("Lien copié ! Partagez-le sur vos réseaux");
+                            }}
+                            className="text-xs h-7 px-2"
+                          >
+                            Copier lien
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Stats rapides */}
+                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100/50">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                            <CheckCircle className="w-3 h-3 text-green-600" />
+                          </div>
+                          <span className="text-[10px] text-gray-600">
+                            <span className="font-semibold text-gray-900">{user?.verified_review_count || 0}</span> avis vérifiés
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center">
+                            <Star className="w-3 h-3 text-yellow-600 fill-yellow-600" />
+                          </div>
+                          <span className="text-[10px] text-gray-600">
+                            Note: <span className="font-semibold text-gray-900">{profile?.rating?.toFixed(1) || "5.0"}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
             {/* Portfolio */}
             <Card className="border-0 shadow-sm">
               <CardHeader className="px-4 pb-2">
