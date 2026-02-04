@@ -278,6 +278,19 @@ const LoginPage = () => {
                   </button>
                 </div>
 
+                {mode === "login" && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-pink-500 hover:text-pink-600 hover:underline"
+                      data-testid="forgot-password-btn"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  </div>
+                )}
+
                 {mode === "register" && (
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
