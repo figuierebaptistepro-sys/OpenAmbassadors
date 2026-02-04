@@ -241,9 +241,9 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             <span className="hidden xs:inline">Trouver </span>créateur
           </Button>
           <Button 
-            onClick={() => navigate("/business/projects/new")}
+            onClick={handleCreateProject}
             size="sm"
-            className="bg-primary hover:bg-primary-hover shadow-sm text-xs sm:text-sm"
+            className={`shadow-sm text-xs sm:text-sm ${canCreateProject ? "bg-primary hover:bg-primary-hover" : "bg-gray-300 cursor-not-allowed"}`}
             data-testid="new-project-btn"
           >
             <Plus className="w-4 h-4 mr-1.5" />
