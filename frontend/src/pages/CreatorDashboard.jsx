@@ -418,36 +418,42 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </CardHeader>
               <CardContent className="px-4">
                 {profile?.portfolio_videos?.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {profile.portfolio_videos.map((video, i) => (
-                      <div key={i} className="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                      <div 
+                        key={i} 
+                        className="relative group aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden cursor-pointer"
+                        onClick={() => setSelectedVideo(video)}
+                      >
                         {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
                           <video 
                             src={getImageUrl(video.url)} 
                             className="w-full h-full object-cover"
                             muted
                             playsInline
-                            onMouseOver={(e) => e.target.play()}
-                            onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                            preload="metadata"
                           />
                         ) : (
-                          <a href={video.url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex items-center justify-center hover:bg-gray-200 transition-colors">
-                            <Play className="w-6 h-6 text-gray-400" />
-                          </a>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                            <Play className="w-8 h-8 text-white/60" />
+                          </div>
                         )}
-                        {/* Overlay avec bouton supprimer */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <a href={video.url?.startsWith('http') ? video.url : getImageUrl(video.url)} target="_blank" rel="noopener noreferrer" 
-                             className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
-                            <Play className="w-4 h-4 text-white" />
-                          </a>
-                          <button onClick={() => handleDeleteVideo(i)} className="p-2 bg-red-500/80 rounded-full hover:bg-red-500 transition-colors">
-                            <Trash2 className="w-4 h-4 text-white" />
-                          </button>
+                        {/* Overlay play */}
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                            <Play className="w-6 h-6 text-white fill-white" />
+                          </div>
                         </div>
-                        {/* Badge pour les vidéos uploadées */}
+                        {/* Delete button */}
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteVideo(i); }} 
+                          className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                        >
+                          <Trash2 className="w-3 h-3 text-white" />
+                        </button>
+                        {/* Badge R2 */}
                         {video.type === 'uploaded' && (
-                          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-primary/90 text-white text-xs rounded">
+                          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-primary/90 text-white text-[10px] font-medium rounded">
                             R2
                           </div>
                         )}
