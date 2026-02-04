@@ -309,6 +309,25 @@ const AccountSettings = ({ user, onUserUpdate }) => {
             </CardContent>
           </Card>
         )}
+
+        {/* Reviews Tab (Creators only) */}
+        {activeTab === "reviews" && user?.user_type === "creator" && (
+          <div className="space-y-6">
+            {/* My Reviews */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-6">
+                <ReviewsSection userId={user.user_id} showTitle={true} />
+              </CardContent>
+            </Card>
+
+            {/* Invite External Reviews */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-6">
+                <InviteExternalReview />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
