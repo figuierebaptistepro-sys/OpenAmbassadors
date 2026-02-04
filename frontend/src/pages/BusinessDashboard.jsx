@@ -235,67 +235,87 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Smart Action Block */}
+            
+            {/* Section 1: Créer un projet - Toujours visible */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-                      {!hasProjects ? <Rocket className="w-5 h-5 text-primary" /> : 
-                       completedItems < checklistItems.length ? <Target className="w-5 h-5 text-primary" /> : 
-                       <Sparkles className="w-5 h-5 text-primary" />}
+                <div className="bg-gradient-to-r from-primary to-primary/80 p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <Rocket className="w-7 h-7 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base mb-1">
-                        {!hasProjects ? "Publiez votre premier projet" : 
-                         completedItems < checklistItems.length ? "Complétez votre profil" : "Profil complet !"}
+                    <div className="flex-1">
+                      <h3 className="font-heading font-bold text-white text-base sm:text-lg mb-1">
+                        Lancer une campagne
                       </h3>
-                      <p className="text-gray-600 text-xs sm:text-sm mb-3">
-                        {!hasProjects ? "Recevez des candidatures de créateurs qualifiés." : 
-                         completedItems < checklistItems.length ? "Améliorez vos recommandations." : "Prêt à collaborer."}
+                      <p className="text-white/80 text-xs sm:text-sm">
+                        Trouvez des créateurs et lancez votre projet UGC
                       </p>
-                      
-                      {completedItems < checklistItems.length && (
-                        <div className="space-y-2">
-                          {checklistItems.filter(item => !item.done).slice(0, 2).map((item, i) => (
-                            <button
-                              key={i}
-                              onClick={() => handleChecklistAction(item.id)}
-                              className="flex items-center gap-2 w-full p-2 bg-white rounded-lg hover:bg-gray-50 transition-colors text-left"
-                            >
-                              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <div className="w-3.5 h-3.5 rounded-full bg-primary/20 flex items-center justify-center">
-                                  <span className="text-xs font-bold text-primary">{item.points}</span>
-                                </div>
-                              </div>
-                              <span className="text-gray-700 text-xs sm:text-sm flex-1">{item.label}</span>
-                              <ArrowRight className="w-4 h-4 text-gray-400" />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {!hasProjects && (
-                        <Button onClick={() => navigate("/business/projects/new")} size="sm" className="bg-primary hover:bg-primary-hover mt-2 text-xs">
-                          <Plus className="w-4 h-4 mr-1.5" />
-                          Créer mon premier projet
-                        </Button>
-                      )}
                     </div>
+                    <Button 
+                      onClick={() => navigate("/business/projects/new")} 
+                      className="bg-white text-primary hover:bg-gray-100 shadow-lg"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un projet
+                    </Button>
                   </div>
                 </div>
-                
-                {completedItems < checklistItems.length && (
-                  <div className="px-4 py-3 bg-white border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-gray-600">Profil entreprise ({totalPoints}/{maxPoints} pts)</span>
-                      <span className="text-xs font-medium text-primary">{Math.round((totalPoints / maxPoints) * 100)}%</span>
-                    </div>
-                    <Progress value={(totalPoints / maxPoints) * 100} className="h-1.5" />
-                  </div>
-                )}
               </Card>
             </motion.div>
+
+            {/* Section 2: Compléter le profil - Collapsible */}
+            {completedItems < checklistItems.length && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                          <Target className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-sm text-gray-900">Complétez votre profil</CardTitle>
+                          <p className="text-xs text-gray-500">Gagnez des points et améliorez votre visibilité</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-orange-100 text-orange-600 text-xs">
+                        {totalPoints}/{maxPoints} pts
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <Progress value={(totalPoints / maxPoints) * 100} className="h-2 mb-4" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {checklistItems.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => !item.done && handleChecklistAction(item.id)}
+                          disabled={item.done || (uploadingPicture && item.id === "picture")}
+                          className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-colors ${
+                            item.done ? "bg-green-50" : "bg-gray-50 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            item.done ? "bg-green-500" : "bg-gray-200"
+                          }`}>
+                            {item.done ? (
+                              <Check className="w-3.5 h-3.5 text-white" />
+                            ) : (
+                              <span className="text-xs font-bold text-gray-500">{item.points}</span>
+                            )}
+                          </div>
+                          <span className={`text-xs flex-1 ${item.done ? "text-green-700" : "text-gray-700"}`}>
+                            {uploadingPicture && item.id === "picture" ? "Upload..." : item.label}
+                          </span>
+                          {!item.done && <ArrowRight className="w-3.5 h-3.5 text-gray-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Activity */}
             <Card className="border-0 shadow-sm">
