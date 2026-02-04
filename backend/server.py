@@ -1303,7 +1303,7 @@ async def request_access(request: Request):
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"]
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB for images
-MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB for videos
+MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB for videos
 
 @api_router.post("/upload/profile-picture")
 async def upload_profile_picture(
