@@ -661,6 +661,153 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+# ==================== PASSWORD RESET FUNCTIONS ====================
+
+async def send_password_reset_email(email: str, name: str, reset_token: str):
+    """Send password reset email"""
+    reset_url = f"https://creator-hub-449.preview.emergentagent.com/reset-password?token={reset_token}"
+    await send_email(
+        to=email,
+        subject="🔐 Réinitialisation de votre mot de passe",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #E91E63; margin: 0; font-size: 24px;">Mot de passe oublié ?</h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour{' ' + name if name else ''} ! 👋
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.
+            </p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    Réinitialiser mon mot de passe
+                </a>
+            </div>
+            <p style="color: #666; font-size: 13px; line-height: 1.6;">
+                Ce lien expire dans <strong>1 heure</strong>.
+            </p>
+            <p style="color: #666; font-size: 13px; line-height: 1.6;">
+                Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">
+                L'équipe Creator Incubator
+            </p>
+        </div>
+        """
+    )
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Request password reset email"""
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    
+    # Always return success (security: don't reveal if email exists)
+    if not user:
+        print(f"[AUTH] Password reset requested for non-existent email: {data.email}")
+        return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
+    
+    # Check if user has password (Google-only users can't reset)
+    if not user.get("password"):
+        print(f"[AUTH] Password reset requested for Google-only user: {data.email}")
+        return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
+    
+    # Generate reset token
+    reset_token = f"reset_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store reset token in database
+    await db.password_resets.update_one(
+        {"email": data.email},
+        {"$set": {
+            "email": data.email,
+            "token": reset_token,
+            "expires_at": expires_at.isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    # Send reset email
+    await send_password_reset_email(data.email, user.get("name", ""), reset_token)
+    print(f"[AUTH] Password reset email sent to: {data.email}")
+    
+    return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """Reset password with token"""
+    # Find reset token
+    reset_doc = await db.password_resets.find_one({"token": data.token}, {"_id": 0})
+    
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Lien invalide ou expiré")
+    
+    # Check expiration
+    expires_at = datetime.fromisoformat(reset_doc["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expires_at:
+        await db.password_resets.delete_one({"token": data.token})
+        raise HTTPException(status_code=400, detail="Ce lien a expiré. Veuillez faire une nouvelle demande.")
+    
+    # Hash new password
+    hashed_password = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update user password
+    result = await db.users.update_one(
+        {"email": reset_doc["email"]},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Delete used token
+    await db.password_resets.delete_one({"token": data.token})
+    
+    # Send confirmation email
+    user = await db.users.find_one({"email": reset_doc["email"]}, {"_id": 0, "name": 1})
+    await send_email(
+        to=reset_doc["email"],
+        subject="✅ Mot de passe modifié",
+        html=f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #4CAF50; margin: 0; font-size: 24px;">Mot de passe modifié ✅</h1>
+            </div>
+            <p style="color: #333; line-height: 1.6;">
+                Bonjour{' ' + user.get('name', '') if user else ''} ! 👋
+            </p>
+            <p style="color: #333; line-height: 1.6;">
+                Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+            </p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://creator-hub-449.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    Se connecter
+                </a>
+            </div>
+            <p style="color: #f44336; font-size: 13px; line-height: 1.6;">
+                ⚠️ Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">
+                L'équipe Creator Incubator
+            </p>
+        </div>
+        """
+    )
+    
+    print(f"[AUTH] Password successfully reset for: {reset_doc['email']}")
+    return {"message": "Mot de passe modifié avec succès ! Vous pouvez maintenant vous connecter."}
+
 @api_router.post("/auth/register")
 async def register_user(data: RegisterRequest, response: Response):
     """Register a new user with email and password"""
