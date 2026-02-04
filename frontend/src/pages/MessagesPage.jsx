@@ -675,7 +675,6 @@ export const ConversationPage = ({ user }) => {
           </DialogContent>
         </Dialog>
       </div>
-    </AppLayout>
   );
 };
 
