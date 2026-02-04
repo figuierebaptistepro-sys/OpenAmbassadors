@@ -267,6 +267,8 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     }
   };
 
+  const [selectedVideo, setSelectedVideo] = useState(null);
+
   const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http")) return url;
