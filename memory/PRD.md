@@ -14,7 +14,25 @@
 
 ### ✅ Implemented
 
-#### 1. Authentication
+#### 1. Système Learn/Articles (NEW - Décembre 2025)
+**Backend** (`/app/backend/articles.py`):
+- CRUD complet pour les articles de formation
+- Support bannières images et vidéos
+- Système de points par article complété
+- Filtrage par catégorie et recherche
+- Compteur de vues automatique
+- Routes admin protégées (création, modification, suppression)
+
+**Frontend**:
+- `/learn` - Liste des articles avec grille, filtres et recherche
+- `/learn/:articleId` - Page détail avec contenu formaté (markdown basique)
+- Interface admin intégrée pour créer des articles
+- Gestion du contenu premium avec verrouillage pour non-premium
+- Tracking de progression utilisateur
+
+**Collections MongoDB**: `articles`, `article_progress`
+
+#### 2. Authentication
 - Email/password login & registration
 - Google social login (Emergent-managed)
 - Password reset flow (blocked by Resend sandbox)
