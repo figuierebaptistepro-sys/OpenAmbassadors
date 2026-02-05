@@ -137,8 +137,17 @@ def setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL):
         )
         
         if not affiliate_data:
-            # Créer un nouveau code
-            code = generate_affiliate_code(user_id)
+            # Créer un nouveau code basé sur le nom
+            user_name = user.get("name", "")
+            code = generate_affiliate_code(user_name, user_id)
+            
+            # Vérifier l'unicité du code
+            existing = await db.affiliate_codes.find_one({"code": code})
+            while existing:
+                # Si le code existe déjà, régénérer avec un nouveau suffixe
+                code = generate_affiliate_code(user_name, user_id)
+                existing = await db.affiliate_codes.find_one({"code": code})
+            
             affiliate_data = {
                 "user_id": user_id,
                 "code": code,
