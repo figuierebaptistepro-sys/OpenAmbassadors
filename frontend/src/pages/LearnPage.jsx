@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BookOpen, Play, Clock, Star, Crown, Lock, Award, Eye, CheckCircle, Plus, Image, Video } from "lucide-react";
+import { Search, BookOpen, Play, Clock, Star, Crown, Lock, Award, Eye, CheckCircle, Plus, Image, Video, Youtube, ExternalLink } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
