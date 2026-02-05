@@ -1139,28 +1139,35 @@ async def login_user(request: Request, data: LoginRequest, response: Response):
     }
 
 @api_router.post("/auth/otp/request")
-async def request_otp(data: OTPRequest):
+@limiter.limit(RATE_LIMITS["auth_otp_request"])
+async def request_otp(request: Request, data: OTPRequest):
     """Request OTP code for email login"""
-    otp_code = generate_otp()
+    email = sanitize_input(data.email.lower())
+    
+    # Use secure OTP generation
+    otp_code = generate_secure_otp(6)
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     
-    # Store OTP
+    # Store OTP with attempt counter
     await db.otp_codes.update_one(
-        {"email": data.email},
+        {"email": email},
         {"$set": {
             "code": otp_code,
             "expires_at": expires_at.isoformat(),
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "attempts": 0  # Track verification attempts
         }},
         upsert=True
     )
+    
+    log_security_event("OTP_REQUESTED", request, f"email={email[:3]}***")
     
     # Send email with OTP via Resend
     if RESEND_API_KEY:
         try:
             params = {
                 "from": "OpenAmbassadors <onboarding@resend.dev>",
-                "to": [data.email],
+                "to": [email],
                 "subject": f"🔐 Votre code de connexion : {otp_code}",
                 "html": f"""
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
@@ -1190,10 +1197,9 @@ async def request_otp(data: OTPRequest):
                 """
             }
             resend.Emails.send(params)
-            logging.info(f"OTP email sent to {data.email}")
+            logging.info(f"OTP email sent to {email}")
         except Exception as e:
             logging.error(f"Failed to send OTP email: {e}")
-            # Continue anyway - we'll return the code for debugging
     
     # Return response (remove debug_code in production)
     response_data = {"message": "Code envoyé par email"}
