@@ -20,6 +20,7 @@ import BusinessDashboard from "./pages/BusinessDashboard";
 import CreatorProfile from "./pages/CreatorProfile";
 import BrowseCreators from "./pages/BrowseCreators";
 import LearnPage from "./pages/LearnPage";
+import ArticlePage from "./pages/ArticlePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import AccountSettings from "./pages/AccountSettings";
 import SupportPage from "./pages/SupportPage";
