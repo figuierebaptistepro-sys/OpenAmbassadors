@@ -9,6 +9,21 @@ import { toast } from "sonner";
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const LOGO_URL = "/logo-sun.png";
 
+// Cookie helpers
+const setCookie = (name, value, days) => {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const getCookie = (name) => {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
+};
+
+const deleteCookie = (name) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -24,18 +39,26 @@ const LoginPage = () => {
     confirmPassword: ""
   });
 
-  // Capture referral code from URL
+  // Capture referral code from URL or cookie (60 days)
   useEffect(() => {
-    const ref = searchParams.get("ref");
-    if (ref) {
-      setRefCode(ref);
+    const refFromUrl = searchParams.get("ref");
+    const refFromCookie = getCookie("affiliate_ref");
+    
+    if (refFromUrl) {
+      // URL has priority - save to cookie for 60 days
+      setRefCode(refFromUrl);
+      setCookie("affiliate_ref", refFromUrl, 60);
       setMode("register"); // Switch to register mode if coming from affiliate link
+      
       // Track the click
       fetch(`${API_URL}/api/affiliate/track-click`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ref })
+        body: JSON.stringify({ ref: refFromUrl })
       }).catch(() => {});
+    } else if (refFromCookie) {
+      // Use cookie if no URL param
+      setRefCode(refFromCookie);
     }
   }, [searchParams]);
 
@@ -59,6 +82,9 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
+      // Get ref code from state (could be from URL or cookie)
+      const affiliateRef = refCode || getCookie("affiliate_ref");
+      
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +93,7 @@ const LoginPage = () => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          ref_code: refCode // Include referral code
+          ref_code: affiliateRef // Include referral code from URL or cookie
         }),
       });
 
@@ -76,6 +102,9 @@ const LoginPage = () => {
       if (!response.ok) {
         throw new Error(data.detail || "Erreur lors de l'inscription");
       }
+
+      // Clear affiliate cookie after successful registration
+      deleteCookie("affiliate_ref");
 
       toast.success("🎉 Félicitations ! Votre compte a été créé. Vérifiez votre email !");
       navigate("/select-type", { state: { user: data } });
