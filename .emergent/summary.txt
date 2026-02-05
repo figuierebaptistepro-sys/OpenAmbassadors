@@ -1,179 +1,197 @@
 <analysis>**original_problem_statement:**
-The user wants to build a Creator Incubator premium SaaS platform.
-**Latest User Requests:**
-1.  **Integrations:** Connect the application to the user's personal MongoDB Atlas database and Cloudflare R2 for storage. Implement email sending via Resend.
-2.  **Authentication:** Overhaul the login page to be simpler, with separate Login and Register flows using email and password, while retaining the Google login option.
-3.  **Features:** Allow businesses to see the list of creators who have applied to their projects.
-4.  **Bug Fixes & UI:**
-    *   Fix an issue where a business sees an Apply button on their own projects. It should be replaced by the project's status and an Edit button.
-    *   Fix a bug where the Euro symbol (€) appears twice.
-    *   Fix a bug where a user's custom profile picture is overwritten by their Google profile picture upon re-login.
-    *   Improve the login page UI.
+The user's initial goal was to build OpenAmbassadors, a premium SaaS platform for connecting brands with creators. The initial scope included user authentication, project management, and a creator discovery page.
+
+During this session, the user pivoted to two new major features:
+1.  **Affiliate/Referral System:** A complete system allowing any user to refer others. It required a frontend dashboard to track performance (clicks, signups, status) and backend logic to handle referral code generation (username-based), tracking via URL parameters, and a 60-day persistence cookie. The revenue/commission part is to be integrated with Stripe later.
+2.  **Comprehensive Admin Panel:** A request to significantly enhance the  page. This involved:
+    *   Adding a moderation panel for the existing real-time messaging system (viewing conversations, handling reports).
+    *   Building out a full dashboard with tabs for a global overview, user management, affiliate program management, review moderation, payments, and projects.
+    *   Adding key features like a global user search (by name/email/ID), a quick-credit function for user wallets, and an advanced notification center with granular targeting (individual users, groups, and filters like premium/subscriber status).
 
 **User's preferred language**: The user's primary language is **French**. The next agent MUST respond in French.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI project that has been significantly re-architected to use external services provided by the user.
-*   **External Database:** The backend is now fully connected to the user's **MongoDB Atlas** cluster. All data persistence (users, projects, wallets, etc.) now uses this external database.
-*   **External File Storage:** All file uploads (profile pictures, project banners, portfolio files) are now handled by **Cloudflare R2**. The local file storage system has been completely replaced.
-*   **Email Service:** **Resend** has been integrated using the user's API key. Transactional emails are now sent for key events like OTP requests (though this flow was replaced), user registration, application status changes, and withdrawal notifications.
-*   **Authentication:** The login page has been rebuilt to support traditional email/password authentication, with separate tabs for Login and Register. This replaces the previous OTP-only flow. Google social login remains an option.
-*   **Feature - View Applications:** A new page () has been created, allowing businesses to view a detailed list of creators who have applied to their projects, with options to accept or refuse them.
+The application is a full-stack React/FastAPI platform with a rich feature set: user authentication, project/application management, creator discovery, real-time messaging, and a hybrid rating system.
+
+In this session, the following were built and are functional:
+1.  **Affiliate System (MVP):** The backend logic and frontend dashboard are complete. It generates user-friendly referral codes (e.g., ), tracks clicks, and uses a 60-day cookie to attribute sign-ups correctly. The commission/revenue part is mocked and awaits Stripe integration.
+2.  **Advanced Admin Panel:** A comprehensive multi-tab panel is now available at . It includes a dashboard, user management, and dedicated sections for moderating messages, reviews, and managing the affiliate program. The latest additions were a global user search, a user-crediting feature, and an advanced notification system.
 
 **Last working item**:
-- **Last item agent was working:** The agent completed a major overhaul of the authentication system. This involved creating new backend endpoints (, ) with password hashing and completely rewriting the frontend  to feature separate Login and Register tabs with email/password fields, alongside the existing Google login button.
-- **Status:** USER VERIFICATION PENDING
-- **Agent Testing Done:** Y (Took screenshots of the new UI and created the backend endpoints. However, no e2e test was performed.)
-- **Which testing method agent to use?** both. Use the frontend testing agent to run a full e2e test of the new registration and login flows (both email/password and Google). Use the backend testing agent to verify the new auth endpoints, ensuring passwords are correctly hashed and validated.
-- **User Testing Done:** N
+*   **Last item agent was working:** Implementing the final enhancements to the Admin Panel: a global user search bar, a credit user dialog, and an advanced notification center with granular targeting options.
+*   **Status:** USER VERIFICATION PENDING
+*   **Agent Testing Done:** Y (Verified via screenshots of the new search bar, credit dialog, and notification center UI and their functionality).
+*   **Which testing method agent to use?** Manual testing by the user to confirm the new admin features meet their needs.
+*   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1 (P0): Incomplete & Buggy Responsive Implementation:** User has repeatedly complained that the application is not fully responsive. This is a recurring, high-priority issue from the previous fork that was not addressed in this session.
--   **Issue 2 (P1): Google Auth Overwrites Profile Picture:** The agent implemented a fix to prevent Google login from overwriting a custom profile picture stored on R2. This fix needs to be verified by the user.
--   **Issue 3 (P2): Unfixed Login Flow Error:** The original body stream already read error from the OTP flow is likely resolved since the entire login mechanism was replaced. However, the new password-based flow is untested and may have new bugs.
+*   **Issue 1 (P0): Forgot Password Email Not Received**
+*   **Issue 2 (P1): Incomplete & Buggy Responsive Implementation**
+*   **Issue 3 (P2): Incorrect Password for Test Creator Account**
+*   **Issue 4 (P2): Flaky automated login in tests**
 
 **Issues Detail:**
--   **Issue 1: Incomplete & Buggy Responsive Implementation**
-    -   **Attempted fixes:** None in this session. This remains the user's top unresolved issue.
-    -   **Next debug checklist:**
-        1.  Audit the entire application's responsiveness. Start with  to ensure it's the single source of truth for the main layout.
-        2.  Use the screenshot tool on every page (e.g., , , , , ) in mobile, tablet, and desktop views to identify all layout breaks.
-        3.  Systematically apply responsive TailwindCSS classes (e.g., , , ) to fix the identified issues.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the user's primary frustration. Fixing it will deliver the professional, perfectly responsive app they expect and is a major blocker for user satisfaction.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on other issue:** None.
+*   **Issue 1: Forgot Password Email Not Received**
+    *   **Attempted fixes:** Identified Resend's sandbox mode as the cause.
+    *   **Next debug checklist:** Instruct the user to add and verify their domain in their Resend account and update the  in .
+    *   **Why fix this issue and what will be achieved with the fix?** This is a critical, broken authentication feature for all non-admin users.
+    *   **Status:** BLOCKED (on user action: Resend domain verification).
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** Both.
+    *   **Blocked on other issue:** None.
 
--   **Issue 2: Google Auth Overwrites Profile Picture**
-    -   **Attempted fixes:** In , the Google login logic () was modified to check if  already contains a custom URL (, , ) before updating it with the picture from the Google profile.
-    -   **Next debug checklist:**
-        1.  Log in as a user. Upload a custom profile picture.
-        2.  Log out.
-        3.  Log back in using the **Google login** button for the same account.
-        4.  Verify that the custom profile picture persists and is not replaced by the Google profile picture.
-    -   **Why fix this issue and what will be achieved with the fix?** Ensures user customization is respected, improving user experience.
-    -   **Status:** USER VERIFICATION PENDING
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on other issue:** None.
+*   **Issue 2: Incomplete & Buggy Responsive Implementation**
+    *   **Attempted fixes:** While the agent verified mobile views for new features, a full, systematic audit of all pages (as requested in a previous fork) has not been performed.
+    *   **Next debug checklist:** Perform a systematic audit of all key pages on mobile/tablet viewports, identify layout breaks with the  tool, and apply fixes.
+    *   **Why fix this issue and what will be achieved with the fix?** A consistent source of user frustration. A polished UI is key to platform credibility.
+    *   **Status:** IN PROGRESS
+    *   **Is recurring issue?** Y
+    *   **Should Test frontend/backend/both after fix?** Frontend.
+    *   **Blocked on other issue:** None.
+
+*   **Issue 3: Incorrect Password for Test Creator Account**
+    *   **Attempted fixes:** During the audit, login with  and password  failed via  and .
+    *   **Next debug checklist:**
+        1.  Create a new backend endpoint or a one-off script for an admin to reset a user's password.
+        2.  Use it to set a known password for .
+        3.  Alternatively, delete and recreate the test user with a known password.
+    *   **Why fix this issue and what will be achieved with the fix?** A reliable test creator account is essential for debugging and verifying creator-specific features without affecting real users.
+    *   **Status:** NOT STARTED
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** Backend (for the fix), Frontend (for testing).
+    *   **Blocked on other issue:** None.
+
+*   **Issue 4: Flaky automated login in tests**
+    *   **Attempted fixes:** The  tool sometimes failed to log in by filling fields, while  worked reliably.
+    *   **Next debug checklist:** Adopt a standard practice of using  to get a session token and then inject it as a cookie for  tests on protected pages.
+    *   **Why fix this issue and what will be achieved with the fix?** This is an internal process improvement that will speed up the agent's development and verification cycle.
+    *   **Status:** NOT STARTED
+    *   **Is recurring issue?** Y
+    *   **Should Test frontend/backend/both after fix?** N/A.
+    *   **Blocked on other issue:** None.
 
 **In progress Task List**:
--   None. The last active task is pending user verification.
+*   **Task 1: Advanced Admin Panel**
+    *   **Where to resume:** The feature is implemented. The agent needs to present the work to the user and ask for final verification of the new search, credit, and notification functionalities.
+    *   **What will be achieved with this?** Final validation and closure on a major feature enhancement.
+    *   **Status:** USER VERIFICATION PENDING
+    *   **Should Test frontend/backend/both after fix?** N/A (User testing needed).
+    *   **Blocked on something:** Waiting for final user approval.
 
 **Upcoming and Future Tasks**
-*   **P0 - Verification of Recent Integrations:** The user needs to confirm that the MongoDB Atlas, Cloudflare R2, and Resend integrations are working as expected. This includes checking if data is saved correctly, files are uploaded and viewable, and emails are being received.
-*   **P1 - Set up User's Own Google OAuth:** The user asked, comment mettre en place ma propre connexion par google ? (How to set up my own Google connection?). The agent must gather the Client ID from the user and update the Google login flow.
-*   **P2 - Configure Custom Domain for Resend:** The agent noted that emails are sent from . The next step is to guide the user on how to verify their own domain in Resend and update the  in .
-*   **P3 - Stripe Integration:** Connect the  page to Stripe to handle real subscriptions.
-*   **P4 - Complete Admin Page Functionality:** Enhance the admin page with dashboards, charts, and more robust validation workflows.
-*   **P5 - Add Image Cropper:** Implement a client-side image cropping tool for uploads.
+*   **Upcoming Tasks:**
+    *   **P0 - Stripe Integration:** The user explicitly asked how to connect Stripe. This is the next logical step to enable paid subscriptions (for businesses and premium creators) and calculate actual commissions for the new affiliate system.
+    *   **P1 - Set up User's Own Google OAuth:** A long-standing request to replace the Emergent-managed Google Auth with the user's own credentials.
+*   **Future Tasks:**
+    *   **P2 - Public SEO-Friendly Creator Profile Page:** Create pages like .
+    *   **P3 - Embeddable Review Widget:** Allow creators to embed their rating on their own websites.
+    *   **P4 - Gamification & Badges:** Implement dynamic badges like Top Rated.
+    *   **P5 - VPS Deployment Guidance:** Assist the user in deploying the application to a private server.
 
 **Completed work in this session**
-- **MongoDB Atlas Integration:** Successfully connected the application to the user's external MongoDB Atlas database, including handling URL encoding for special characters in the password.
-- **Cloudflare R2 Integration:** Replaced all local file storage with Cloudflare R2, including creating a  client, updating all upload endpoints, and configuring the public URL for serving files.
-- **Resend Email Integration:** Integrated the Resend API for sending transactional emails for registration, notifications on applications, and withdrawal status updates.
-- **Password-Based Authentication:** Overhauled the login system to use email/password, adding  and  endpoints with  password hashing, and redesigning  with Login / Register tabs.
-- **View Project Applications:** Implemented the backend endpoint () and frontend page () for businesses to view and manage applications for their projects.
-- **Bug Fix (Google Auth Picture):** Attempted a fix to prevent Google login from overwriting custom profile pictures.
-- **Bug Fix (Business Project View):** Fixed the business project list to show project status and an edit button instead of an Apply button.
-- **Bug Fix (Double Euro Symbol):** Removed the redundant € from budget displays in  and .
+*   **Full Technical Audit:** Performed a comprehensive check of backend services, APIs, and frontend pages, producing a report for the user.
+*   **Affiliate System (MVP):**
+    *   **Backend:** Created  to manage referral codes, track clicks, and record new signups.
+    *   **Frontend:** Built  to serve as the affiliate's dashboard, showing their unique link, performance stats, and list of referred users.
+    *   **Enhancements:** Changed referral code generation to be username-based (e.g., ) and implemented a 60-day tracking cookie for persistence.
+*   **Advanced Admin Panel:**
+    *   Overhauled  and added corresponding backend routes.
+    *   **Messaging Tab:** Added a UI for admins to view reported messages and browse all conversations.
+    *   **New Tabs:** Created tabs for an analytics overview, affiliate management, and review moderation.
+    *   **Core Features:** Implemented a global user search, a feature to directly credit a user's wallet, and a powerful notification center for targeted announcements.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Incomplete & Buggy Responsive Implementation:** The user's main complaint from the start, still unresolved and not worked on in this session.
+*   **Issue 1: Potential Truncated Token in Review Emails**
+    *   **Debug checklist:** During the audit, the agent noted the Invalid Link error for external reviews was due to a truncated token. The agent asked the user if they should fix the root cause (potentially in the email generation logic) but the user pivoted to another task. The fix was never implemented.
+    *   **Why to solve this issue and what will be achieved with this?** This breaks the external review flow, which is a key part of the Hybrid Rating System.
+    *   **Should Test frontend/backend/both after fix:** Backend (email generation).
+    *   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Full application responsiveness.
--   **Recurrence count:** High (mentioned repeatedly by the user across forks).
--   **Status:** NOT STARTED.
+*   **Incomplete & Buggy Responsive Implementation:** Recurrence count: 2. Status: IN PROGRESS.
+*   **Flaky automated login in tests:** Recurrence count: 2. Status: NOT STARTED.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, TailwindCSS, , .
--   **Backend:** FastAPI, Pydantic, MongoDB ().
--   **Authentication:** JWT with password () and Google Social Login. The OTP flow has been removed.
--   **External Services:**
-    -   **Database:** MongoDB Atlas.
-    -   **File Storage:** Cloudflare R2 (using ).
-    -   **Email:** Resend.
+*   **Frontend:** React, TailwindCSS, Shadcn UI
+*   **Backend:** FastAPI, Pydantic, MongoDB (), WebSockets
+*   **Affiliate Tracking:** URL  parameter capture and 60-day Cookie persistence.
+*   **Admin Tooling:** Advanced server-side search, filtering, and data aggregation for the admin panel.
 
 **key DB schema**
--   **users:** A  field has been added to store the user's hashed password.
-
-**changes in tech stack**
--   **Database:** Migrated from local MongoDB instance to user-provided **MongoDB Atlas**.
--   **File Storage:** Migrated from local filesystem to user-provided **Cloudflare R2**.
--   **Email Service:** Added **Resend** for transactional emails.
--   **Backend Dependencies:** Added , , .
+*   ****: 
+*   ****: 
+*   **** (New): 
+*   **** (New): 
+*   ****: Contains a mocked  boolean field.
 
 **All files of reference**
-*   : Contains all new credentials for MongoDB Atlas, Cloudflare R2, and Resend.
-*   : Major changes to integrate all external services (R2, Resend) and the new password-based authentication logic.
-*   : Completely rewritten to implement the new tabbed login/register UI.
-*   : New page to display applications for a project.
-*   : Modified to add the route for .
+*   : The file that saw the most significant changes, evolving into a comprehensive management tool.
+*   : The new module containing all backend logic for the referral program.
+*   : The new frontend page for the affiliate dashboard.
+*   : Heavily modified to integrate new admin and affiliate API routes.
+*   : Modified to implement the referral cookie logic.
 
 **Areas that need refactoring**:
-- ** is monolithic:** At over 2000 lines, it's becoming unmanageable. It desperately needs to be broken down into smaller, feature-specific modules (e.g., , , ).
-- **Global Responsiveness:** The application still lacks a coherent responsive design strategy. A global audit and refactor are needed.
+*   **:** Continues to grow and acts as a monolith. Routes for auth, projects, users, and admin functions could be split into their own modules (, , ) for better organization.
 
 **key api endpoints**
--   : (NEW) Registers a new user with an email and hashed password.
--   : (NEW) Authenticates a user with email/password and returns a JWT.
--   : (NEW) Retrieves a project and its applications for the business owner.
--   : (NEW) Updates the status of a project application (accept/reject).
--   , , , : All now upload files directly to Cloudflare R2 instead of the local filesystem.
+*   : Generates the user's affiliate link.
+*   : Records a click on a referral link.
+*   : Fetches stats and referred users for the affiliate.
+*   : Powers the global user search in the admin panel.
+*   : Endpoint for the Créditer feature.
+*   : Endpoint for the advanced notification system.
 
 **Critical Info for New Agent**
--   **Vous devez répondre en français.**
--   The application is now fully dependent on the user's external services: **MongoDB Atlas**, **Cloudflare R2**, and **Resend**. All credentials are in . Any issues with these services will break the application.
--   The user's absolute top priority remains **fixing responsiveness** across the entire application. This issue has been carried over and is a major point of frustration. It should be addressed before adding new features.
--   There are two open user requests to address: setting up their **own Google OAuth Client ID** and configuring a **custom domain for Resend emails**.
+*   **Vous devez répondre en français.**
+*   Your first step is to confirm with the user that the new, advanced admin panel (search, credit, notifications) meets their expectations. Use the  tool to present this work for verification.
+*   After user approval, the highest priority is **Stripe Integration**. The user has asked about it, and it's required to make the affiliate and subscription systems functional. Propose a plan to tackle this next.
 
 **documents and test reports created in this job**
--   None. The  update failed in the last attempt.
+*   : Updated to include requirements for the Affiliate System.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **non tu dois laisser mon logo...**: User rejected the new login page design and requested a more traditional one with a logo, separate login/register tabs, and password authentication. (COMPLETED)
-2.  **revoit la page de connexion...**: Initial request to improve the login page. (COMPLETED)
-3.  **User provides Resend API Key**: Provided the key to integrate the email service. (COMPLETED)
-4.  **comment mettre en place les mails**: User asked how to set up emails. (COMPLETED)
-5.  **comment mettre en place ma propre connexion par google ?**: User asked how to set up their own Google connection. (PENDING - NOT ADDRESSED)
-6.  **Votre image de profil uploadée disparaît...**: User confirmed the bug where their profile picture disappears after re-logging in with Google. (FIX ATTEMPTED)
-7.  **par contre quand je me deconnecte limage par...**: User first reported the profile picture bug. (IN PROGRESS)
-8.  **User provides R2 public URL**: Provided the necessary URL to complete the R2 integration. (COMPLETED)
-9.  **User provides Cloudflare access keys**: Provided the necessary credentials for R2. (COMPLETED)
-10. **je veux connecter mon propre mongo et mon propre cloudfare**: The initial request to migrate to external services. (COMPLETED)
+1.  **User:** Provided detailed specs for a new Affiliate Dashboard. (COMPLETED)
+2.  **User:** Clarified that all users can be affiliates and that Stripe would come later. (COMPLETED)
+3.  **User:** Asked how the affiliate codes were generated. (COMPLETED)
+4.  **User:** Chose the username-based format for affiliate codes. (COMPLETED)
+5.  **User:** Asked about the persistence of referral tracking (implicitly asking for cookies). (COMPLETED)
+6.  **User:** Specified a 60-day duration for the affiliate cookie. (COMPLETED)
+7.  **User:** Asked how to connect Stripe. (PENDING - Upcoming Task)
+8.  **User:** Pivoted to ask what messaging system was in place. (COMPLETED)
+9.  **User:** Asked where the admin panel was to manage messages. (COMPLETED)
+10. **User:** Gave a broad request to improve the admin panel as much as possible, leading to the latest enhancements. (COMPLETED)
+11. **User:** Requested specific admin features: a way to find user IDs, an easy way to credit users, and an advanced, targeted notification system. (COMPLETED - now in USER VERIFICATION PENDING)
 
 **Project Health Check:**
--   **Broken:**
-    -   Responsiveness is inconsistent and a major source of user complaints. The app is not usable on mobile.
--   **Mocked:**
-    -   Stripe integration for payments is still non-existent.
--   **External Dependencies:** The app's core functionality (database, file storage, email) now relies entirely on third-party services configured by the user. A failure in any of these services or their credentials will cause a critical failure in the application.
+*   **Broken:**
+    *   The Forgot Password email flow remains non-functional for general users.
+*   **Mocked:**
+    *   User subscription status ().
+    *   Affiliate commission calculations and payouts. All revenue metrics in the affiliate dashboard are currently 0.
 
 **3rd Party Integrations**
--   **Emergent-managed Google Auth:** Currently in use. User wants to replace it with their own credentials.
--   **MongoDB Atlas:** (NEW) Integrated with user-provided connection string.
--   **Cloudflare R2:** (NEW) Integrated for all file storage with user-provided keys.
--   **Resend:** (NEW) Integrated for transactional emails with a user-provided API key.
--   **Stripe:** Planned for payments, but not yet implemented.
+*   **Emergent-managed Google Auth:** In use, user wants to replace it.
+*   **MongoDB Atlas:** In use.
+*   **Cloudflare R2:** In use for file uploads in messaging.
+*   **Resend:** Integrated, but limited by sandbox mode.
+*   **FFmpeg.wasm:** Integrated for client-side video compression.
+*   **Leaflet / react-leaflet:** In use for map view.
+*   **Stripe:** Not implemented, but is the next high-priority task.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO. Major architectural changes (DB, Storage, Auth, Email) were made without running a full regression test with the testing agent. This is a high risk.
--   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None.
--   **Known regressions:** The core responsiveness issue persists and is now the most critical known regression.
+*   **Testing agent used after significant changes:** NO (in this session).
+*   **Troubleshoot agent used after agent stuck in loop:** NO
+*   **Test files created:** None.
+*   **Known regressions:** None identified in this session, but the general lack of responsive polish remains.
 
 **Credentials to test flow:**
--   **Admin User:** Register/login with  to access .
--   **External Services:** All necessary keys for MongoDB Atlas, Cloudflare R2, and Resend are located in .
+*   **Business/Admin User & Resend Owner:**  (Password: )
+*   **Creator User (created for testing):**  (Password: unknown, see Issue #3)
 
 **What agent forgot to execute**
-- The agent did not address the user's explicit question about setting up their **own Google OAuth client**.
-- The agent did not follow up on helping the user configure a **custom domain for Resend emails**.
-- The agent completely ignored the highest-priority, recurring user issue: **fixing application-wide responsiveness**.
-- The agent did not use  after implementing multiple critical integrations and refactoring the authentication system, leaving the application in a potentially unstable state.
-- The update to  failed and was not retried.</analysis>
+*   The agent did not fix the root cause of the Invalid Link error for external reviews after discovering it during the audit. The user's pivot to a new feature caused this to be dropped.
+*   The original tasks from the previous handoff (User verification of rating system, Google OAuth, Stripe) were superseded by the user's new, more immediate requests for the audit, affiliate system, and admin panel. The agent correctly prioritized the user's active requests.</analysis>
