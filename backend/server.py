@@ -121,7 +121,18 @@ JWT_EXPIRATION_HOURS = 168  # 7 days
 # Frontend URL for emails
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://openambassadors.com')
 
-app = FastAPI()
+app = FastAPI(
+    title="OpenAmbassadors API",
+    description="API sécurisée pour la plateforme OpenAmbassadors",
+    version="2.0.0"
+)
+
+# Add rate limiter state to app
+app.state.limiter = limiter
+
+# Add rate limit exceeded handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 api_router = APIRouter(prefix="/api")
 
 # Mount static files for uploads
