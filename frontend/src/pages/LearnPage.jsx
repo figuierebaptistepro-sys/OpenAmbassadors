@@ -145,6 +145,7 @@ const LearnPage = ({ user }) => {
           banner_type: "image",
           banner_url: "",
           video_url: "",
+          youtube_url: "",
           tags: ""
         });
         toast.success("Article créé avec succès !");
