@@ -918,9 +918,64 @@ async def register_user(data: RegisterRequest, response: Response):
         "user_type": None,
         "is_premium": False,
         "is_verified": False,
+        "referrer_id": None,  # Will be set if referred
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
+    
+    # Handle affiliate referral if ref_code provided
+    if data.ref_code:
+        try:
+            # Find the affiliate code
+            affiliate = await db.affiliate_codes.find_one(
+                {"code": data.ref_code.upper()},
+                {"_id": 0}
+            )
+            if affiliate and affiliate["user_id"] != user_id:
+                referrer_id = affiliate["user_id"]
+                
+                # Create referral entry
+                referral_data = {
+                    "referral_id": f"ref_{uuid.uuid4().hex[:12]}",
+                    "referrer_id": referrer_id,
+                    "referred_user_id": user_id,
+                    "referred_email": data.email,
+                    "referred_name": data.name,
+                    "referred_user_type": None,
+                    "status": "free",
+                    "plan": None,
+                    "mrr_generated": 0,
+                    "commission_rate": 0.20,
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
+                }
+                await db.affiliate_referrals.insert_one(referral_data)
+                
+                # Update user with referrer_id
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$set": {"referrer_id": referrer_id}}
+                )
+                
+                # Update affiliate stats
+                await db.affiliate_stats.update_one(
+                    {"user_id": referrer_id},
+                    {
+                        "$inc": {"total_signups": 1},
+                        "$setOnInsert": {
+                            "total_clicks": 0,
+                            "active_subscribers": 0,
+                            "mrr_generated": 0,
+                            "pending_earnings": 0,
+                            "validated_earnings": 0,
+                            "created_at": datetime.now(timezone.utc)
+                        }
+                    },
+                    upsert=True
+                )
+                logging.info(f"[AFFILIATE] User {user_id} referred by {referrer_id}")
+        except Exception as e:
+            logging.error(f"[AFFILIATE] Error processing referral: {e}")
     
     # Create session
     session_token = f"sess_{uuid.uuid4().hex}"
