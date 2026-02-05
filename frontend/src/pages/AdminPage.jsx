@@ -49,6 +49,10 @@ const AdminPage = ({ user }) => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [projects, setProjects] = useState([]);
   const [accessRequests, setAccessRequests] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [conversationMessages, setConversationMessages] = useState([]);
   
   // Filters
   const [userTypeFilter, setUserTypeFilter] = useState("all");
