@@ -86,12 +86,50 @@
 - Section avis sur `CreatorProfile.jsx`
 - Onglet "Avis" dans `AccountSettings.jsx` (créateurs)
 
+#### 8. 🆕 Système d'Affiliation (NEW - Feb 2026)
+**Backend** (`/app/backend/affiliate.py`):
+- Génération de lien d'affiliation unique par utilisateur
+- Tracking des clics sur les liens
+- Enregistrement automatique du parrainage à l'inscription
+- Dashboard avec stats (clics, inscriptions, conversion, abonnés, MRR)
+- Séparation créateurs/entreprises invités
+- Commissions 20% récurrentes sur abonnements
+
+**Collections MongoDB**:
+- `affiliate_codes`: Codes d'affiliation des utilisateurs
+- `affiliate_clicks`: Tracking des clics
+- `affiliate_referrals`: Liens parrain-filleul
+- `affiliate_stats`: Statistiques agrégées
+- `affiliate_commissions`: Historique des commissions
+
+**API Endpoints**:
+- `GET /api/affiliate/link` - Obtenir son lien d'affiliation
+- `GET /api/affiliate/dashboard` - Stats complètes
+- `POST /api/affiliate/track-click` - Tracker un clic (public)
+- `POST /api/affiliate/register-referral` - Enregistrer parrainage
+- `POST /api/affiliate/update-status` - MAJ statut (pour webhook Stripe)
+- `GET /api/affiliate/commissions` - Historique commissions
+
+**Frontend**:
+- `AffiliatePage.jsx` - Dashboard complet `/affiliate`
+- Menu "Affiliation" dans la sidebar (créateurs + entreprises)
+- Capture du `?ref=CODE` sur `/login` avec tracking automatique
+
+**Statuts utilisateur**:
+- `free` - Inscrit gratuit
+- `trial` - En période d'essai
+- `paying` - Abonné actif
+- `cancelled` - Résilié
+
+**Note**: Les commissions seront déclenchées via webhook Stripe `invoice.paid` (à implémenter avec Stripe)
+
 ### 🚧 In Progress / Blocked
 1. **Forgot Password Email** - BLOCKED on Resend domain verification
 
 ### 📋 Upcoming (P0-P1)
 1. **P0 - Custom Google OAuth** - User wants to use their own credentials
 2. **P1 - Stripe Integration** - Replace mocked `is_subscribed` with real payments
+   - Connecter les webhooks au système d'affiliation
 
 ### 📦 Future (P2+)
 1. VPS deployment guidance
