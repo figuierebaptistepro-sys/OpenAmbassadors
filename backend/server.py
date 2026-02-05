@@ -3826,12 +3826,22 @@ setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAI
 # Include router
 app.include_router(api_router)
 
+# Add Security Headers Middleware (must be added before CORS)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS Configuration - More restrictive
+cors_origins = os.environ.get('CORS_ORIGINS', '')
+if not cors_origins:
+    logging.warning("CORS_ORIGINS not set - using restrictive default")
+    cors_origins = "https://content-admin-17.preview.emergentagent.com"
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins.split(','),
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    expose_headers=["X-Request-ID"],
 )
 
 logging.basicConfig(
