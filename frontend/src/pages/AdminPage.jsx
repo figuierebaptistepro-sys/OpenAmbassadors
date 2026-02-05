@@ -183,6 +183,138 @@ const AdminPage = ({ user }) => {
     } catch (error) { console.error("Error:", error); }
   };
 
+  // Global search
+  const handleGlobalSearch = async (query) => {
+    setSearchLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/search?q=${encodeURIComponent(query)}`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data);
+        setShowSearchResults(true);
+      }
+    } catch (error) { console.error("Error:", error); }
+    setSearchLoading(false);
+  };
+
+  // Get full user data
+  const fetchFullUserData = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/full`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setFullUserData(data);
+        setUserFullDialogOpen(true);
+      }
+    } catch (error) { console.error("Error:", error); toast.error("Erreur"); }
+  };
+
+  // Quick credit
+  const handleQuickCredit = async () => {
+    if (!creditForm.user || !creditForm.amount || creditForm.amount <= 0) {
+      toast.error("Sélectionnez un utilisateur et entrez un montant");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/api/admin/wallet/quick-credit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          user_id: creditForm.user.user_id,
+          amount: parseFloat(creditForm.amount),
+          description: creditForm.description || "Crédit admin",
+          credit_type: creditForm.credit_type
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`${creditForm.amount}€ crédités ! Nouveau solde: ${data.new_balance}€`);
+        setCreditDialogOpen(false);
+        setCreditForm({ user: null, amount: "", description: "", credit_type: "payment" });
+      }
+    } catch (error) { toast.error("Erreur"); }
+  };
+
+  // Notification preview
+  const previewNotificationRecipients = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/notifications/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          target: notificationForm.target,
+          filters: notificationForm.filters,
+          user_ids: notificationForm.selectedUsers.map(u => u.user_id)
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotificationPreview(data);
+      }
+    } catch (error) { console.error("Error:", error); }
+  };
+
+  // Send advanced notification
+  const handleSendAdvancedNotification = async () => {
+    if (!notificationForm.title || !notificationForm.message) {
+      toast.error("Titre et message requis");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/api/admin/notifications/send-advanced`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          target: notificationForm.selectedUsers.length > 0 ? "specific" : notificationForm.target,
+          filters: notificationForm.filters,
+          user_ids: notificationForm.selectedUsers.map(u => u.user_id),
+          title: notificationForm.title,
+          message: notificationForm.message,
+          type: notificationForm.type,
+          link: notificationForm.link || null
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`Notification envoyée à ${data.count} utilisateur(s)`);
+        setNotificationDialogOpen(false);
+        setNotificationForm({ 
+          target: "all", title: "", message: "", type: "info", link: "",
+          filters: {}, selectedUsers: [], userSearch: ""
+        });
+        setNotificationPreview(null);
+      }
+    } catch (error) { toast.error("Erreur"); }
+  };
+
+  // Add user to notification recipients
+  const addUserToNotification = (user) => {
+    if (!notificationForm.selectedUsers.find(u => u.user_id === user.user_id)) {
+      setNotificationForm({
+        ...notificationForm,
+        selectedUsers: [...notificationForm.selectedUsers, user],
+        userSearch: ""
+      });
+    }
+  };
+
+  // Remove user from notification recipients
+  const removeUserFromNotification = (userId) => {
+    setNotificationForm({
+      ...notificationForm,
+      selectedUsers: notificationForm.selectedUsers.filter(u => u.user_id !== userId)
+    });
+  };
+
+  // Copy user ID to clipboard
+  const copyUserId = (userId) => {
+    navigator.clipboard.writeText(userId);
+    toast.success("ID copié !");
+  };
+
   const fetchWithdrawals = async () => {
     try {
       let url = `${API_URL}/api/admin/withdrawals?limit=100`;
