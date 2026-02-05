@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Users, Briefcase, CreditCard, Shield, CheckCircle, XCircle, Clock,
@@ -6,7 +6,7 @@ import {
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
   Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock, Gift,
   Star, Bell, Activity, BarChart3, Send, UserPlus, DollarSign, Percent,
-  ExternalLink, Copy, ArrowUpRight, ArrowDownRight
+  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -15,6 +15,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Textarea } from "../components/ui/textarea";
+import { Checkbox } from "../components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,16 @@ import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Debounce hook
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+};
+
 const AdminPage = ({ user }) => {
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
@@ -58,6 +69,13 @@ const AdminPage = ({ user }) => {
   const [affiliates, setAffiliates] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
+  
+  // Global search
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const debouncedSearch = useDebounce(globalSearch, 300);
   
   // Selected items
   const [selectedConversation, setSelectedConversation] = useState(null);
