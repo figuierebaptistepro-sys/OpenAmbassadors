@@ -317,11 +317,14 @@ const LearnPage = ({ user }) => {
                     )}
                     
                     {/* Video indicator */}
-                    {article.banner_type === "video" && (
+                    {(article.banner_type === "video" || article.banner_type === "youtube") && (
                       <div className="absolute bottom-2 left-2">
-                        <Badge className="bg-black/60 text-white text-xs">
-                          <Video className="w-3 h-3 mr-1" />
-                          Vidéo
+                        <Badge className={`text-xs ${article.banner_type === "youtube" ? "bg-red-600 text-white" : "bg-black/60 text-white"}`}>
+                          {article.banner_type === "youtube" ? (
+                            <><Youtube className="w-3 h-3 mr-1" />YouTube</>
+                          ) : (
+                            <><Video className="w-3 h-3 mr-1" />Vidéo</>
+                          )}
                         </Badge>
                       </div>
                     )}
