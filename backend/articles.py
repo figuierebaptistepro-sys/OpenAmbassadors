@@ -3,8 +3,8 @@ Articles/Learn Content Management Module
 Handles CRUD operations for learning articles with banner/video support
 """
 
-from fastapi import HTTPException, UploadFile, File, Form
-from pydantic import BaseModel, Field
+from fastapi import HTTPException, Depends, UploadFile, File
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
@@ -61,7 +61,7 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
         if published_only:
             query["is_published"] = True
         
-        if category and category != "Tous":
+        if category and category != "Tous" and category != "":
             query["category"] = category
         
         if search:
@@ -114,11 +114,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
     # ==================== USER PROGRESS ROUTES ====================
     
     @router.post("/articles/{article_id}/complete")
-    async def complete_article(article_id: str, user: dict = None):
+    async def complete_article(article_id: str, user: dict = Depends(get_current_user)):
         """Mark an article as completed and award points"""
-        if user is None:
-            user = await get_current_user()
-        
         user_id = user["user_id"]
         
         # Check if article exists
@@ -168,11 +165,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
         }
     
     @router.get("/articles/progress/me")
-    async def get_my_progress(user: dict = None):
+    async def get_my_progress(user: dict = Depends(get_current_user)):
         """Get current user's article completion progress"""
-        if user is None:
-            user = await get_current_user()
-        
         user_id = user["user_id"]
         
         progress = await db.article_progress.find(
@@ -200,11 +194,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
     # ==================== ADMIN ROUTES ====================
     
     @router.post("/admin/articles")
-    async def create_article(data: ArticleCreate, user: dict = None):
+    async def create_article(data: ArticleCreate, user: dict = Depends(get_current_user)):
         """Create a new article (admin only)"""
-        if user is None:
-            user = await get_current_user()
-        
         if user.get("email") not in ADMIN_EMAILS:
             raise HTTPException(status_code=403, detail="Accès refusé")
         
@@ -238,11 +229,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
         return article
     
     @router.put("/admin/articles/{article_id}")
-    async def update_article(article_id: str, data: ArticleUpdate, user: dict = None):
+    async def update_article(article_id: str, data: ArticleUpdate, user: dict = Depends(get_current_user)):
         """Update an article (admin only)"""
-        if user is None:
-            user = await get_current_user()
-        
         if user.get("email") not in ADMIN_EMAILS:
             raise HTTPException(status_code=403, detail="Accès refusé")
         
@@ -265,11 +253,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
         return article
     
     @router.delete("/admin/articles/{article_id}")
-    async def delete_article(article_id: str, user: dict = None):
+    async def delete_article(article_id: str, user: dict = Depends(get_current_user)):
         """Delete an article (admin only)"""
-        if user is None:
-            user = await get_current_user()
-        
         if user.get("email") not in ADMIN_EMAILS:
             raise HTTPException(status_code=403, detail="Accès refusé")
         
@@ -285,11 +270,8 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
         return {"message": "Article supprimé"}
     
     @router.get("/admin/articles")
-    async def get_all_articles_admin(user: dict = None, limit: int = 100):
+    async def get_all_articles_admin(user: dict = Depends(get_current_user), limit: int = 100):
         """Get all articles including unpublished (admin only)"""
-        if user is None:
-            user = await get_current_user()
-        
         if user.get("email") not in ADMIN_EMAILS:
             raise HTTPException(status_code=403, detail="Accès refusé")
         
@@ -317,12 +299,9 @@ def setup_articles_routes(router, db, get_current_user, upload_to_r2, ADMIN_EMAI
     async def upload_article_banner(
         article_id: str,
         file: UploadFile = File(...),
-        user: dict = None
+        user: dict = Depends(get_current_user)
     ):
         """Upload banner image for an article (admin only)"""
-        if user is None:
-            user = await get_current_user()
-        
         if user.get("email") not in ADMIN_EMAILS:
             raise HTTPException(status_code=403, detail="Accès refusé")
         
