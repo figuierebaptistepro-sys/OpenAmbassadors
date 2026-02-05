@@ -31,6 +31,7 @@ import BusinessProjectsPage from "./pages/BusinessProjectsPage";
 import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
 import { InboxPage, ConversationPage } from "./pages/MessagesPage";
 import ExternalReviewPage from "./pages/ExternalReviewPage";
+import AffiliatePage from "./pages/AffiliatePage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
