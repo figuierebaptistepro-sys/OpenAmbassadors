@@ -312,6 +312,18 @@ const CreatorProfile = ({ currentUser }) => {
                     </TabsContent>
 
                     <TabsContent value="info" className="space-y-4">
+                      {creator.niches?.length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2 text-sm">Niches / Secteurs</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {creator.niches.map((niche) => (
+                              <Badge key={niche} variant="outline" className="text-xs border-pink-200 bg-pink-50 text-pink-700">
+                                {NICHE_LABELS[niche]?.icon} {NICHE_LABELS[niche]?.label || niche}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {creator.content_types?.length > 0 && (
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-sm">Types de contenu</h4>
