@@ -61,6 +61,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
+    { icon: Gift, label: "Affiliation", path: "/affiliate" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
@@ -69,6 +70,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
+    { icon: Gift, label: "Affiliation", path: "/affiliate" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
