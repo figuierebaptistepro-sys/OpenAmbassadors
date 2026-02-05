@@ -1378,37 +1378,491 @@ const AdminPage = ({ user }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Notification Dialog */}
-      <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
-        <DialogContent className="bg-white border-0 shadow-xl max-w-md mx-4">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Bell className="w-5 h-5 text-blue-500" />Envoyer une notification</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm text-gray-500">Destinataires</label>
-              <Select value={notificationForm.target} onValueChange={(v) => setNotificationForm({ ...notificationForm, target: v })}>
-                <SelectTrigger className="bg-gray-50"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les utilisateurs</SelectItem>
-                  <SelectItem value="creators">Créateurs uniquement</SelectItem>
-                  <SelectItem value="businesses">Entreprises uniquement</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Notification Dialog - Advanced */}
+      <Dialog open={notificationDialogOpen} onOpenChange={(open) => { setNotificationDialogOpen(open); if (!open) setNotificationPreview(null); }}>
+        <DialogContent className="bg-white border-0 shadow-xl max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-blue-500" />
+              Centre de notifications
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 py-4">
+            {/* Selected Users */}
+            {notificationForm.selectedUsers.length > 0 && (
+              <div className="bg-blue-50 rounded-xl p-3">
+                <p className="text-sm font-medium text-blue-900 mb-2">
+                  Utilisateurs sélectionnés ({notificationForm.selectedUsers.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {notificationForm.selectedUsers.map((u) => (
+                    <Badge key={u.user_id} className="bg-white text-gray-700 pr-1 flex items-center gap-1">
+                      {u.name || u.email}
+                      <button onClick={() => removeUserFromNotification(u.user_id)} className="hover:bg-gray-100 rounded p-0.5">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Search & Add Users */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Ajouter des utilisateurs spécifiques</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={notificationForm.userSearch}
+                  onChange={async (e) => {
+                    setNotificationForm({ ...notificationForm, userSearch: e.target.value });
+                    if (e.target.value.length >= 2) {
+                      const res = await fetch(`${API_URL}/api/admin/users/search?q=${encodeURIComponent(e.target.value)}`, { credentials: "include" });
+                      if (res.ok) setSearchResults(await res.json());
+                    }
+                  }}
+                  placeholder="Rechercher par nom, email ou ID..."
+                  className="pl-10 bg-gray-50"
+                />
+              </div>
+              {notificationForm.userSearch.length >= 2 && searchResults.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-lg max-h-40 overflow-y-auto">
+                  {searchResults.filter(u => !notificationForm.selectedUsers.find(s => s.user_id === u.user_id)).slice(0, 5).map((u) => (
+                    <button
+                      key={u.user_id}
+                      onClick={() => { addUserToNotification(u); setSearchResults([]); }}
+                      className="w-full p-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
+                    >
+                      <Plus className="w-4 h-4 text-green-500" />
+                      <span className="font-medium">{u.name || "Sans nom"}</span>
+                      <span className="text-gray-500">{u.email}</span>
+                      <Badge className="text-xs ml-auto">{u.user_type === "creator" ? "Créateur" : "Entreprise"}</Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div>
-              <label className="text-sm text-gray-500">Type</label>
-              <Select value={notificationForm.type} onValueChange={(v) => setNotificationForm({ ...notificationForm, type: v })}>
-                <SelectTrigger className="bg-gray-50"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="info">Information</SelectItem>
-                  <SelectItem value="warning">Avertissement</SelectItem>
-                  <SelectItem value="promo">Promotion</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-sm font-medium text-gray-700 mb-3">Ou cibler un groupe</p>
+              
+              {/* Target */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Destinataires</label>
+                  <Select 
+                    value={notificationForm.target} 
+                    onValueChange={(v) => setNotificationForm({ ...notificationForm, target: v })}
+                    disabled={notificationForm.selectedUsers.length > 0}
+                  >
+                    <SelectTrigger className="bg-gray-50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                      <SelectItem value="creators">Créateurs uniquement</SelectItem>
+                      <SelectItem value="businesses">Entreprises uniquement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Type notification</label>
+                  <Select value={notificationForm.type} onValueChange={(v) => setNotificationForm({ ...notificationForm, type: v })}>
+                    <SelectTrigger className="bg-gray-50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="info">ℹ️ Information</SelectItem>
+                      <SelectItem value="warning">⚠️ Avertissement</SelectItem>
+                      <SelectItem value="promo">🎉 Promotion</SelectItem>
+                      <SelectItem value="update">🚀 Mise à jour</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-wrap gap-3 mb-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox 
+                    checked={notificationForm.filters.is_premium || false}
+                    onCheckedChange={(c) => setNotificationForm({ ...notificationForm, filters: { ...notificationForm.filters, is_premium: c }})}
+                    disabled={notificationForm.selectedUsers.length > 0}
+                  />
+                  <Crown className="w-4 h-4 text-yellow-500" />
+                  Premium uniquement
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox 
+                    checked={notificationForm.filters.is_subscribed || false}
+                    onCheckedChange={(c) => setNotificationForm({ ...notificationForm, filters: { ...notificationForm.filters, is_subscribed: c }})}
+                    disabled={notificationForm.selectedUsers.length > 0}
+                  />
+                  <CreditCard className="w-4 h-4 text-green-500" />
+                  Abonnés
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox 
+                    checked={notificationForm.filters.has_affiliate || false}
+                    onCheckedChange={(c) => setNotificationForm({ ...notificationForm, filters: { ...notificationForm.filters, has_affiliate: c }})}
+                    disabled={notificationForm.selectedUsers.length > 0}
+                  />
+                  <Gift className="w-4 h-4 text-pink-500" />
+                  Affiliés
+                </label>
+              </div>
+
+              {/* Preview button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={previewNotificationRecipients}
+                className="mb-3"
+                disabled={notificationForm.selectedUsers.length > 0}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Prévisualiser les destinataires
+              </Button>
+
+              {notificationPreview && (
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                  <p className="font-medium text-gray-900">{notificationPreview.count} destinataire(s)</p>
+                  {notificationPreview.sample?.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ex: {notificationPreview.sample.map(u => u.name || u.email).join(", ")}...
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <div><label className="text-sm text-gray-500">Titre</label><Input value={notificationForm.title} onChange={(e) => setNotificationForm({ ...notificationForm, title: e.target.value })} placeholder="Titre de la notification" className="bg-gray-50" /></div>
-            <div><label className="text-sm text-gray-500">Message</label><Textarea value={notificationForm.message} onChange={(e) => setNotificationForm({ ...notificationForm, message: e.target.value })} placeholder="Votre message..." className="bg-gray-50" rows={3} /></div>
-            <Button onClick={handleSendNotification} className="w-full bg-blue-500 hover:bg-blue-600"><Send className="w-4 h-4 mr-2" />Envoyer</Button>
+
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Titre *</label>
+                <Input 
+                  value={notificationForm.title} 
+                  onChange={(e) => setNotificationForm({ ...notificationForm, title: e.target.value })} 
+                  placeholder="Titre de la notification" 
+                  className="bg-gray-50 mt-1" 
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Message *</label>
+                <Textarea 
+                  value={notificationForm.message} 
+                  onChange={(e) => setNotificationForm({ ...notificationForm, message: e.target.value })} 
+                  placeholder="Votre message..." 
+                  className="bg-gray-50 mt-1" 
+                  rows={3} 
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Lien (optionnel)</label>
+                <Input 
+                  value={notificationForm.link} 
+                  onChange={(e) => setNotificationForm({ ...notificationForm, link: e.target.value })} 
+                  placeholder="/dashboard ou https://..." 
+                  className="bg-gray-50 mt-1" 
+                />
+              </div>
+            </div>
           </div>
+          
+          <div className="border-t border-gray-100 pt-4">
+            <Button onClick={handleSendAdvancedNotification} className="w-full bg-blue-500 hover:bg-blue-600">
+              <Send className="w-4 h-4 mr-2" />
+              Envoyer à {notificationForm.selectedUsers.length > 0 ? notificationForm.selectedUsers.length : notificationPreview?.count || "?"} utilisateur(s)
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Credit Dialog */}
+      <Dialog open={creditDialogOpen} onOpenChange={setCreditDialogOpen}>
+        <DialogContent className="bg-white border-0 shadow-xl max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-green-500" />
+              Créditer un utilisateur
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* User Search */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Utilisateur (créateur)</label>
+              {creditForm.user ? (
+                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg mt-1">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
+                    {creditForm.user.picture ? (
+                      <img src={getImageUrl(creditForm.user.picture)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Users className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{creditForm.user.name}</p>
+                    <p className="text-xs text-gray-500">{creditForm.user.email}</p>
+                    <code className="text-xs text-gray-400">{creditForm.user.user_id}</code>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => setCreditForm({ ...creditForm, user: null })}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Rechercher un créateur..."
+                    className="pl-10 bg-gray-50"
+                    onChange={async (e) => {
+                      if (e.target.value.length >= 2) {
+                        const res = await fetch(`${API_URL}/api/admin/users/search?q=${encodeURIComponent(e.target.value)}&user_type=creator`, { credentials: "include" });
+                        if (res.ok) setSearchResults(await res.json());
+                      }
+                    }}
+                  />
+                  {searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                      {searchResults.filter(u => u.user_type === "creator").map((u) => (
+                        <button
+                          key={u.user_id}
+                          onClick={() => { setCreditForm({ ...creditForm, user: u }); setSearchResults([]); }}
+                          className="w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            {u.name?.[0] || "?"}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{u.name}</p>
+                            <p className="text-xs text-gray-500">{u.email}</p>
+                          </div>
+                          {u.wallet && (
+                            <span className="ml-auto text-green-600 font-medium text-sm">{u.wallet.balance?.toFixed(2)}€</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Montant (€)</label>
+              <Input
+                type="number"
+                value={creditForm.amount}
+                onChange={(e) => setCreditForm({ ...creditForm, amount: e.target.value })}
+                placeholder="100"
+                className="bg-gray-50 mt-1"
+              />
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Type de crédit</label>
+              <Select value={creditForm.credit_type} onValueChange={(v) => setCreditForm({ ...creditForm, credit_type: v })}>
+                <SelectTrigger className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="payment">💰 Paiement mission</SelectItem>
+                  <SelectItem value="bonus">🎁 Bonus</SelectItem>
+                  <SelectItem value="refund">↩️ Remboursement</SelectItem>
+                  <SelectItem value="correction">🔧 Correction</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Description (optionnel)</label>
+              <Input
+                value={creditForm.description}
+                onChange={(e) => setCreditForm({ ...creditForm, description: e.target.value })}
+                placeholder="Mission XYZ terminée"
+                className="bg-gray-50 mt-1"
+              />
+            </div>
+
+            <Button 
+              onClick={handleQuickCredit} 
+              className="w-full bg-green-500 hover:bg-green-600"
+              disabled={!creditForm.user || !creditForm.amount}
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Créditer {creditForm.amount ? `${creditForm.amount}€` : ""}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full User Dialog */}
+      <Dialog open={userFullDialogOpen} onOpenChange={setUserFullDialogOpen}>
+        <DialogContent className="bg-white border-0 shadow-xl max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {fullUserData && (
+                <>
+                  <div className="w-14 h-14 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                    {fullUserData.picture ? (
+                      <img src={getImageUrl(fullUserData.picture)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Users className="w-7 h-7 text-gray-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-gray-900 text-lg">{fullUserData.name || "Utilisateur"}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className={fullUserData.user_type === "creator" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}>
+                        {fullUserData.user_type === "creator" ? "Créateur" : "Entreprise"}
+                      </Badge>
+                      {fullUserData.is_premium && <Badge className="bg-yellow-100 text-yellow-700"><Crown className="w-3 h-3 mr-1" />Premium</Badge>}
+                      {fullUserData.is_banned && <Badge className="bg-red-100 text-red-700"><Ban className="w-3 h-3 mr-1" />Banni</Badge>}
+                    </div>
+                  </div>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {fullUserData && (
+            <div className="flex-1 overflow-y-auto space-y-4 py-4">
+              {/* Quick Info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="font-medium text-sm">{fullUserData.email}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">ID</p>
+                  <div className="flex items-center gap-2">
+                    <code className="font-medium text-sm">{fullUserData.user_id}</code>
+                    <button onClick={() => copyUserId(fullUserData.user_id)} className="text-gray-400 hover:text-gray-600">
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Inscription</p>
+                  <p className="font-medium text-sm">{formatDate(fullUserData.created_at)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Vérification</p>
+                  <p className="font-medium text-sm">{fullUserData.verification_status || "Non vérifié"}</p>
+                </div>
+              </div>
+
+              {/* Wallet for creators */}
+              {fullUserData.user_type === "creator" && fullUserData.wallet && (
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-green-900 flex items-center gap-2">
+                      <Wallet className="w-5 h-5" />
+                      Cagnotte
+                    </h3>
+                    <Button 
+                      size="sm" 
+                      onClick={() => { setCreditForm({ ...creditForm, user: fullUserData }); setCreditDialogOpen(true); setUserFullDialogOpen(false); }}
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Créditer
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{fullUserData.wallet.balance?.toFixed(2) || 0}€</p>
+                      <p className="text-xs text-gray-500">Disponible</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-yellow-600">{fullUserData.wallet.pending_balance?.toFixed(2) || 0}€</p>
+                      <p className="text-xs text-gray-500">En attente</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-600">{fullUserData.wallet.total_earned?.toFixed(2) || 0}€</p>
+                      <p className="text-xs text-gray-500">Total gagné</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Affiliate info */}
+              {fullUserData.affiliate_code && (
+                <div className="bg-pink-50 rounded-xl p-4">
+                  <h3 className="font-medium text-pink-900 flex items-center gap-2 mb-2">
+                    <Gift className="w-5 h-5" />
+                    Programme Affiliation
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <code className="bg-white px-3 py-1 rounded-lg text-sm">{fullUserData.affiliate_code}</code>
+                    <span className="text-sm text-gray-600">{fullUserData.referrals_count || 0} parrainage(s)</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Referred by */}
+              {fullUserData.referred_by && (
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <h3 className="font-medium text-blue-900 flex items-center gap-2 mb-2">
+                    <Link className="w-5 h-5" />
+                    Parrainé par
+                  </h3>
+                  <p className="text-sm">{fullUserData.referred_by.name} ({fullUserData.referred_by.email})</p>
+                </div>
+              )}
+
+              {/* Profile details */}
+              {fullUserData.profile && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-medium text-gray-900 mb-2">Profil</h3>
+                  <div className="text-sm space-y-1">
+                    {fullUserData.profile.company_name && <p><strong>Entreprise:</strong> {fullUserData.profile.company_name}</p>}
+                    {fullUserData.profile.bio && <p><strong>Bio:</strong> {fullUserData.profile.bio}</p>}
+                    {fullUserData.profile.location && <p><strong>Lieu:</strong> {fullUserData.profile.location}</p>}
+                    {fullUserData.profile.website && <p><strong>Site:</strong> {fullUserData.profile.website}</p>}
+                    {fullUserData.profile.specialties?.length > 0 && (
+                      <p><strong>Spécialités:</strong> {fullUserData.profile.specialties.join(", ")}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold">{fullUserData.reviews_count || 0}</p>
+                  <p className="text-xs text-gray-500">Avis reçus</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold">{fullUserData.conversations_count || 0}</p>
+                  <p className="text-xs text-gray-500">Conversations</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t border-gray-200 pt-4 flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={() => { 
+                    setSelectedUser(fullUserData); 
+                    setUserDialogOpen(true); 
+                    setUserFullDialogOpen(false); 
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Gérer
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setNotificationForm({ ...notificationForm, selectedUsers: [fullUserData] });
+                    setNotificationDialogOpen(true);
+                    setUserFullDialogOpen(false);
+                  }}
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  Notifier
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
