@@ -308,6 +308,14 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/affiliate"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <AffiliatePage user={user} />}
+          </ProtectedRoute>
+        }
+      />
       
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
