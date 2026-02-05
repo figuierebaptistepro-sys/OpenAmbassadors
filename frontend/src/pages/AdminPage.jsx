@@ -1250,6 +1250,114 @@ const AdminPage = ({ user }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Conversation Detail Dialog */}
+      <Dialog open={conversationDialogOpen} onOpenChange={setConversationDialogOpen}>
+        <DialogContent className="bg-white border-0 shadow-xl max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-5 h-5 text-blue-500" />
+                <span>Conversation</span>
+                {selectedConversation?.status === "blocked" && (
+                  <Badge className="bg-red-100 text-red-600">
+                    <Lock className="w-3 h-3 mr-1" />Bloquée
+                  </Badge>
+                )}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleBlockConversation(
+                  selectedConversation?.conversation_id,
+                  selectedConversation?.status !== "blocked"
+                )}
+                className={selectedConversation?.status === "blocked" ? "border-green-200 text-green-600" : "border-red-200 text-red-600"}
+              >
+                {selectedConversation?.status === "blocked" ? (
+                  <><Unlock className="w-4 h-4 mr-1" />Débloquer</>
+                ) : (
+                  <><Lock className="w-4 h-4 mr-1" />Bloquer</>
+                )}
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedConversation && (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {/* Participants */}
+              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-sm font-medium text-purple-600">
+                    {selectedConversation.company?.name?.[0] || "E"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{selectedConversation.company?.name || "Entreprise"}</p>
+                    <p className="text-xs text-gray-500">Entreprise</p>
+                  </div>
+                </div>
+                <span className="text-gray-400">↔</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-600">
+                    {selectedConversation.creator?.name?.[0] || "C"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{selectedConversation.creator?.name || "Créateur"}</p>
+                    <p className="text-xs text-gray-500">Créateur</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                {conversationMessages.length > 0 ? (
+                  conversationMessages.map((msg) => (
+                    <div
+                      key={msg.message_id}
+                      className={`p-3 rounded-lg ${
+                        msg.deleted_at ? "bg-red-50 opacity-50" : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium text-gray-900">
+                              {msg.sender?.name || "Utilisateur"}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(msg.created_at).toLocaleString("fr-FR")}
+                            </span>
+                            {msg.deleted_at && (
+                              <Badge className="bg-red-100 text-red-600 text-xs">Supprimé</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700">
+                            {msg.text || (msg.file_url ? `📎 ${msg.file_name || "Fichier"}` : "—")}
+                          </p>
+                        </div>
+                        {!msg.deleted_at && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteMessage(msg.message_id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Aucun message dans cette conversation
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
