@@ -146,6 +146,39 @@
 
 ### ✅ Security Improvements (Feb 2026)
 
+#### Favicon & SEO (Feb 2026)
+- Favicon avec le logo OpenAmbassadors (32x32, 192x192, 512x512)
+- Meta tags Open Graph pour le partage social
+- Description et keywords SEO
+- Theme-color pink (#E91E63)
+
+#### Système de Niches / Secteurs pour Créateurs (Feb 2026)
+**18 niches disponibles:**
+- 💄 Beauté & Cosmétique
+- 🎰 iGaming & Paris
+- 🎮 Gaming & Esport
+- 👗 Mode & Fashion
+- 📱 Tech & Gadgets
+- 🍕 Food & Gastronomie
+- 💪 Fitness & Sport
+- ✈️ Voyage & Lifestyle
+- 💰 Finance & Crypto
+- 🏠 Immobilier
+- 🚗 Auto & Moto
+- 📚 Éducation & Formation
+- 🧘 Santé & Bien-être
+- 👶 Famille & Enfants
+- 🐾 Animaux
+- 🎵 Musique & Art
+- 💼 B2B & SaaS
+- 🛒 E-commerce
+
+**Fonctionnalités:**
+- Sélection multiple dans le profil créateur
+- Filtrage par niche sur la page Browse Creators
+- Affichage des niches sur le profil public
+- Validation côté backend
+
 #### Module de Sécurité (`/app/backend/security.py`)
 **Rate Limiting** (slowapi):
 - Login: 5 requêtes/minute
