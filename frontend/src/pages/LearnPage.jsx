@@ -380,6 +380,8 @@ const LearnPage = ({ user }) => {
       tags: ""
     });
     setSelectedArticle(null);
+    clearFile();
+    setImageInputMode("upload");
   };
 
   const completedIds = progress?.completed_articles || [];
