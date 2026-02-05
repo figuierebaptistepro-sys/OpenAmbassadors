@@ -89,7 +89,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
   const [editForm, setEditForm] = useState({
-    bio: "", city: "", phone: "", content_types: [], equipment: [], min_rate: "", max_rate: "",
+    bio: "", city: "", phone: "", content_types: [], niches: [], equipment: [], min_rate: "", max_rate: "",
     works_remote: false, can_travel: false, available: true,
     social_instagram: "", social_tiktok: "", social_youtube: "", social_twitter: "", social_linkedin: "",
     visibility: "",
