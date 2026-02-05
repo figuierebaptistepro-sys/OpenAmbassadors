@@ -199,6 +199,7 @@ const BrowseCreators = ({ user }) => {
       search: "",
       city: "",
       contentTypes: [],
+      niches: [],
       experienceLevel: "",
       available: false,
       premiumOnly: false,
@@ -212,6 +213,15 @@ const BrowseCreators = ({ user }) => {
       contentTypes: prev.contentTypes.includes(type)
         ? prev.contentTypes.filter(t => t !== type)
         : [...prev.contentTypes, type]
+    }));
+  };
+
+  const toggleNiche = (nicheId) => {
+    setFilters(prev => ({
+      ...prev,
+      niches: prev.niches.includes(nicheId)
+        ? prev.niches.filter(n => n !== nicheId)
+        : [...prev.niches, nicheId]
     }));
   };
 
