@@ -580,7 +580,7 @@ const AdminPage = ({ user }) => {
     <AppLayout user={user}>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
@@ -590,10 +590,70 @@ const AdminPage = ({ user }) => {
               <p className="text-gray-500 text-xs sm:text-sm">Centre de contrôle plateforme</p>
             </div>
           </div>
+          
+          {/* Global Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Rechercher un utilisateur (nom, email, ID)..."
+              className="pl-10 bg-gray-50 border-gray-200"
+              onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
+            />
+            {searchLoading && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+                {searchResults.map((u) => (
+                  <div
+                    key={u.user_id}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => {
+                      fetchFullUserData(u.user_id);
+                      setShowSearchResults(false);
+                      setGlobalSearch("");
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {u.picture ? <img src={getImageUrl(u.picture)} alt="" className="w-full h-full object-cover" /> : <Users className="w-5 h-5 text-gray-400" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 text-sm truncate">{u.name || "Sans nom"}</p>
+                          <Badge className={`text-xs ${u.user_type === "creator" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                            {u.user_type === "creator" ? "Créateur" : "Entreprise"}
+                          </Badge>
+                          {u.is_premium && <Crown className="w-3 h-3 text-yellow-500" />}
+                        </div>
+                        <p className="text-gray-500 text-xs truncate">{u.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{u.user_id}</code>
+                          {u.wallet && <span className="text-xs text-green-600 font-medium">{u.wallet.balance?.toFixed(2)}€</span>}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <div className="flex gap-2">
+            <Button onClick={() => setCreditDialogOpen(true)} className="bg-green-500 hover:bg-green-600" size="sm">
+              <DollarSign className="w-4 h-4 mr-1" />
+              Créditer
+            </Button>
             <Button onClick={() => setNotificationDialogOpen(true)} variant="outline" size="sm" className="border-gray-200">
-              <Bell className="w-4 h-4 mr-2" />
-              Notifier
+              <Bell className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Notifier</span>
             </Button>
             <Button onClick={() => { fetchStats(); fetchAnalytics(); }} variant="outline" size="sm" className="border-gray-200">
               <RefreshCw className="w-4 h-4" />
