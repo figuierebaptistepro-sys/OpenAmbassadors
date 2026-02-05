@@ -69,6 +69,7 @@ const AdminPage = ({ user }) => {
   const [earningDialogOpen, setEarningDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationDialogOpen, setConversationDialogOpen] = useState(false);
   const [banReason, setBanReason] = useState("");
   
   // Earning form
