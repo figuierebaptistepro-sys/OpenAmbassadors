@@ -478,9 +478,35 @@ const LearnPage = ({ user }) => {
                     </h3>
                     <p className="text-gray-500 text-xs mb-3 line-clamp-2">{article.description}</p>
                     
-                    <Badge variant="outline" className="text-xs">
-                      {article.category}
-                    </Badge>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {article.category}
+                      </Badge>
+                      
+                      {/* Admin actions menu */}
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => handleEditClick(article, e)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => handleDeleteClick(article, e)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
