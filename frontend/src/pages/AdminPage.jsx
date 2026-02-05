@@ -59,6 +59,7 @@ const AdminPage = ({ user }) => {
   const [userStatusFilter, setUserStatusFilter] = useState("all");
   const [withdrawalStatusFilter, setWithdrawalStatusFilter] = useState("pending");
   const [projectStatusFilter, setProjectStatusFilter] = useState("all");
+  const [reportStatusFilter, setReportStatusFilter] = useState("open");
   
   // Dialog states
   const [selectedUser, setSelectedUser] = useState(null);
