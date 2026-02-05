@@ -789,6 +789,259 @@ const LearnPage = ({ user }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Article Dialog (Admin only) */}
+      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier l'article</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Titre *</Label>
+              <Input
+                id="edit-title"
+                value={newArticle.title}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+            
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description courte *</Label>
+              <Input
+                id="edit-description"
+                value={newArticle.description}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            
+            {/* Content */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-content">Contenu *</Label>
+              <Textarea
+                id="edit-content"
+                value={newArticle.content}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, content: e.target.value }))}
+                rows={10}
+              />
+            </div>
+            
+            {/* Category & Duration */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Catégorie</Label>
+                <Select 
+                  value={newArticle.category} 
+                  onValueChange={(v) => setNewArticle(prev => ({ ...prev, category: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-duration">Durée</Label>
+                <Input
+                  id="edit-duration"
+                  value={newArticle.duration}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, duration: e.target.value }))}
+                  placeholder="Ex: 30 min, 1h"
+                />
+              </div>
+            </div>
+            
+            {/* Points & Premium */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-points">Points</Label>
+                <Input
+                  id="edit-points"
+                  type="number"
+                  min={1}
+                  value={newArticle.points}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, points: parseInt(e.target.value) || 5 }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Options</Label>
+                <div className="flex items-center gap-4 pt-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch
+                      checked={newArticle.is_premium}
+                      onCheckedChange={(v) => setNewArticle(prev => ({ ...prev, is_premium: v }))}
+                    />
+                    Premium
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch
+                      checked={newArticle.is_published}
+                      onCheckedChange={(v) => setNewArticle(prev => ({ ...prev, is_published: v }))}
+                    />
+                    Publié
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Banner Type */}
+            <div className="space-y-2">
+              <Label>Type de média</Label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "image" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "image" }))}
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  Image
+                </Button>
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "video" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "video" }))}
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Vidéo
+                </Button>
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "youtube" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "youtube" }))}
+                  className={newArticle.banner_type === "youtube" ? "bg-red-600 hover:bg-red-700" : ""}
+                >
+                  <Youtube className="w-4 h-4 mr-2" />
+                  YouTube
+                </Button>
+              </div>
+            </div>
+            
+            {/* Media URL fields based on type */}
+            {newArticle.banner_type === "image" && (
+              <div className="space-y-2">
+                <Label>URL de l'image</Label>
+                <Input
+                  value={newArticle.banner_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
+                  placeholder="https://..."
+                />
+                {newArticle.banner_url && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-gray-200">
+                    <img src={newArticle.banner_url} alt="Preview" className="w-full h-32 object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {newArticle.banner_type === "video" && (
+              <div className="space-y-2">
+                <Label>URL de la vidéo</Label>
+                <Input
+                  value={newArticle.video_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, video_url: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+            )}
+            
+            {newArticle.banner_type === "youtube" && (
+              <div className="space-y-2">
+                <Label>Lien YouTube</Label>
+                <Input
+                  value={newArticle.youtube_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, youtube_url: e.target.value }))}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+                {newArticle.youtube_url && getYoutubeId(newArticle.youtube_url) && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 bg-black aspect-video">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYoutubeId(newArticle.youtube_url)}`}
+                      title="YouTube Preview"
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label>Tags (séparés par des virgules)</Label>
+              <Input
+                value={newArticle.tags}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, tags: e.target.value }))}
+                placeholder="ugc, débutant, tips"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowEditDialog(false); resetForm(); }}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleUpdateArticle}
+              disabled={creating}
+              className="bg-primary hover:bg-primary-hover"
+            >
+              {creating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Enregistrement...
+                </>
+              ) : (
+                "Enregistrer les modifications"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet article ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer "<strong>{selectedArticle?.title}</strong>" ? 
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowDeleteDialog(false); setSelectedArticle(null); }}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteArticle}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
