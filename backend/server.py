@@ -2850,6 +2850,361 @@ async def admin_process_access_request(request_id: str, request: Request, user: 
     
     return {"message": f"Demande {new_status}", "status": new_status}
 
+# ==================== ADMIN USER SEARCH ====================
+
+@api_router.get("/admin/users/search")
+async def admin_search_users(
+    q: str,
+    user_type: Optional[str] = None,
+    limit: int = 20,
+    user: dict = Depends(get_admin_user)
+):
+    """Search users by name, email or ID"""
+    if not q or len(q) < 2:
+        return []
+    
+    # Build query
+    search_query = {
+        "$or": [
+            {"name": {"$regex": q, "$options": "i"}},
+            {"email": {"$regex": q, "$options": "i"}},
+            {"user_id": {"$regex": q, "$options": "i"}}
+        ]
+    }
+    
+    if user_type and user_type != "all":
+        search_query["user_type"] = user_type
+    
+    users = await db.users.find(
+        search_query,
+        {"_id": 0, "password": 0}
+    ).limit(limit).to_list(limit)
+    
+    # Enrich with profile info
+    for u in users:
+        if u.get("user_type") == "creator":
+            profile = await db.creator_profiles.find_one(
+                {"user_id": u["user_id"]},
+                {"_id": 0, "bio": 1, "location": 1, "specialties": 1}
+            )
+            if profile:
+                u["profile"] = profile
+            # Get wallet balance
+            wallet = await db.wallets.find_one(
+                {"user_id": u["user_id"]},
+                {"_id": 0, "balance": 1, "pending_balance": 1}
+            )
+            u["wallet"] = wallet or {"balance": 0, "pending_balance": 0}
+        elif u.get("user_type") == "business":
+            profile = await db.business_profiles.find_one(
+                {"user_id": u["user_id"]},
+                {"_id": 0, "company_name": 1, "industry": 1, "website": 1}
+            )
+            if profile:
+                u["profile"] = profile
+    
+    return users
+
+@api_router.get("/admin/users/{user_id}/full")
+async def admin_get_user_full(user_id: str, user: dict = Depends(get_admin_user)):
+    """Get complete user info including profile, wallet, activity"""
+    target_user = await db.users.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "password": 0}
+    )
+    
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    result = {**target_user}
+    
+    # Get profile
+    if target_user.get("user_type") == "creator":
+        profile = await db.creator_profiles.find_one({"user_id": user_id}, {"_id": 0})
+        result["profile"] = profile
+        
+        # Get wallet
+        wallet = await db.wallets.find_one({"user_id": user_id}, {"_id": 0})
+        result["wallet"] = wallet or {"balance": 0, "pending_balance": 0}
+        
+        # Get recent transactions
+        transactions = await db.wallet_transactions.find(
+            {"user_id": user_id},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(10).to_list(10)
+        result["recent_transactions"] = transactions
+        
+        # Get applications
+        applications = await db.applications.find(
+            {"creator_id": user_id},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(10).to_list(10)
+        result["recent_applications"] = applications
+        
+    elif target_user.get("user_type") == "business":
+        profile = await db.business_profiles.find_one({"user_id": user_id}, {"_id": 0})
+        result["profile"] = profile
+        
+        # Get their projects
+        projects = await db.projects.find(
+            {"business_id": user_id},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(10).to_list(10)
+        result["projects"] = projects
+    
+    # Get affiliate info if exists
+    affiliate = await db.affiliate_codes.find_one({"user_id": user_id}, {"_id": 0})
+    if affiliate:
+        result["affiliate_code"] = affiliate.get("code")
+        
+        # Get referral stats
+        referral_count = await db.affiliate_referrals.count_documents({"referrer_id": user_id})
+        result["referrals_count"] = referral_count
+    
+    # Check if referred by someone
+    if target_user.get("referrer_id"):
+        referrer = await db.users.find_one(
+            {"user_id": target_user["referrer_id"]},
+            {"_id": 0, "name": 1, "email": 1}
+        )
+        result["referred_by"] = referrer
+    
+    # Get reviews
+    reviews_received = await db.reviews.count_documents({"reviewee_id": user_id})
+    result["reviews_count"] = reviews_received
+    
+    # Get conversations count
+    conversations_count = await db.conversations.count_documents({
+        "$or": [{"creator_id": user_id}, {"company_id": user_id}]
+    })
+    result["conversations_count"] = conversations_count
+    
+    return result
+
+# ==================== ADMIN QUICK CREDIT ====================
+
+@api_router.post("/admin/wallet/quick-credit")
+async def admin_quick_credit(request: Request, user: dict = Depends(get_admin_user)):
+    """Quick credit a user's wallet"""
+    body = await request.json()
+    user_id = body.get("user_id")
+    amount = body.get("amount", 0)
+    description = body.get("description", "Crédit admin")
+    credit_type = body.get("credit_type", "bonus")  # bonus, refund, correction, payment
+    
+    if not user_id or amount <= 0:
+        raise HTTPException(status_code=400, detail="user_id et montant positif requis")
+    
+    # Verify user exists and is creator
+    target_user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    if target_user.get("user_type") != "creator":
+        raise HTTPException(status_code=400, detail="Seuls les créateurs ont une cagnotte")
+    
+    # Get or create wallet
+    wallet = await db.wallets.find_one({"user_id": user_id})
+    if not wallet:
+        wallet = {
+            "wallet_id": f"wallet_{uuid.uuid4().hex[:12]}",
+            "user_id": user_id,
+            "balance": 0,
+            "pending_balance": 0,
+            "total_earned": 0,
+            "total_withdrawn": 0,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.wallets.insert_one(wallet)
+    
+    # Create transaction
+    transaction = {
+        "transaction_id": f"txn_{uuid.uuid4().hex[:12]}",
+        "user_id": user_id,
+        "transaction_type": "admin_credit",
+        "credit_type": credit_type,
+        "amount": amount,
+        "fee_amount": 0,
+        "net_amount": amount,
+        "description": description,
+        "status": "completed",
+        "admin_id": user["user_id"],
+        "admin_name": user.get("name", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.wallet_transactions.insert_one(transaction)
+    
+    # Update wallet balance
+    await db.wallets.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {
+                "balance": amount,
+                "total_earned": amount
+            }
+        }
+    )
+    
+    # Get updated wallet
+    updated_wallet = await db.wallets.find_one({"user_id": user_id}, {"_id": 0})
+    
+    return {
+        "message": f"{amount}€ crédités à {target_user.get('name', 'utilisateur')}",
+        "transaction_id": transaction["transaction_id"],
+        "new_balance": updated_wallet.get("balance", 0),
+        "user": {
+            "user_id": user_id,
+            "name": target_user.get("name"),
+            "email": target_user.get("email")
+        }
+    }
+
+# ==================== ADMIN NOTIFICATIONS ADVANCED ====================
+
+@api_router.post("/admin/notifications/preview")
+async def preview_notification_recipients(request: Request, user: dict = Depends(get_admin_user)):
+    """Preview how many users will receive the notification"""
+    body = await request.json()
+    target = body.get("target", "all")
+    filters = body.get("filters", {})
+    user_ids = body.get("user_ids", [])
+    
+    query = {}
+    
+    if user_ids:
+        # Specific users
+        query["user_id"] = {"$in": user_ids}
+    else:
+        # Build query based on target
+        if target == "creators":
+            query["user_type"] = "creator"
+        elif target == "businesses":
+            query["user_type"] = "business"
+        elif target != "all":
+            # Specific user
+            query["user_id"] = target
+        else:
+            query["user_type"] = {"$in": ["creator", "business"]}
+        
+        # Apply filters
+        if filters.get("is_premium"):
+            query["is_premium"] = True
+        if filters.get("is_subscribed"):
+            query["is_subscribed"] = True
+        if filters.get("is_verified"):
+            query["verification_status"] = "verified"
+        if filters.get("has_affiliate"):
+            affiliate_user_ids = await db.affiliate_codes.distinct("user_id")
+            query["user_id"] = {"$in": affiliate_user_ids}
+    
+    count = await db.users.count_documents(query)
+    
+    # Get sample of recipients
+    sample = await db.users.find(
+        query,
+        {"_id": 0, "user_id": 1, "name": 1, "email": 1, "user_type": 1}
+    ).limit(5).to_list(5)
+    
+    return {
+        "count": count,
+        "sample": sample
+    }
+
+@api_router.post("/admin/notifications/send-advanced")
+async def send_advanced_notification(request: Request, user: dict = Depends(get_admin_user)):
+    """Send notification with advanced targeting"""
+    body = await request.json()
+    target = body.get("target", "all")
+    filters = body.get("filters", {})
+    user_ids = body.get("user_ids", [])
+    title = body.get("title")
+    message = body.get("message")
+    notification_type = body.get("type", "info")
+    link = body.get("link")  # Optional link
+    
+    if not title or not message:
+        raise HTTPException(status_code=400, detail="Titre et message requis")
+    
+    query = {}
+    
+    if user_ids:
+        # Specific users
+        query["user_id"] = {"$in": user_ids}
+    else:
+        # Build query based on target
+        if target == "creators":
+            query["user_type"] = "creator"
+        elif target == "businesses":
+            query["user_type"] = "business"
+        elif target != "all":
+            # Specific user ID
+            query["user_id"] = target
+        else:
+            query["user_type"] = {"$in": ["creator", "business"]}
+        
+        # Apply filters
+        if filters.get("is_premium"):
+            query["is_premium"] = True
+        if filters.get("is_subscribed"):
+            query["is_subscribed"] = True
+        if filters.get("is_verified"):
+            query["verification_status"] = "verified"
+        if filters.get("has_affiliate"):
+            affiliate_user_ids = await db.affiliate_codes.distinct("user_id")
+            if "user_id" in query:
+                query["user_id"] = {"$in": list(set(query["user_id"].get("$in", [])) & set(affiliate_user_ids))}
+            else:
+                query["user_id"] = {"$in": affiliate_user_ids}
+    
+    # Get target users
+    target_users = await db.users.find(query, {"_id": 0, "user_id": 1}).to_list(10000)
+    
+    if not target_users:
+        raise HTTPException(status_code=400, detail="Aucun destinataire trouvé")
+    
+    # Create notifications
+    notifications = []
+    for target_user in target_users:
+        notif = {
+            "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+            "user_id": target_user["user_id"],
+            "type": notification_type,
+            "title": title,
+            "message": message,
+            "link": link,
+            "is_read": False,
+            "is_admin": True,
+            "sent_by": user["user_id"],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        notifications.append(notif)
+    
+    if notifications:
+        await db.notifications.insert_many(notifications)
+    
+    # Log this action
+    log_entry = {
+        "log_id": f"log_{uuid.uuid4().hex[:12]}",
+        "action": "notification_sent",
+        "admin_id": user["user_id"],
+        "admin_name": user.get("name"),
+        "details": {
+            "target": target,
+            "filters": filters,
+            "user_ids": user_ids[:10] if user_ids else [],
+            "recipient_count": len(notifications),
+            "title": title
+        },
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.admin_logs.insert_one(log_entry)
+    
+    return {
+        "message": f"Notification envoyée à {len(notifications)} utilisateur(s)",
+        "count": len(notifications)
+    }
+
 # ==================== ADMIN AFFILIATE MANAGEMENT ====================
 
 @api_router.get("/admin/affiliates")
