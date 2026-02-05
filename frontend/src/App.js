@@ -278,6 +278,14 @@ function AppRouter() {
         }
       />
       <Route
+        path="/learn/:articleId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ArticlePage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute requireType>
