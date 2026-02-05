@@ -158,6 +158,11 @@ const BrowseCreators = ({ user }) => {
             filters.contentTypes.every(type => c.content_types?.includes(type))
           );
         }
+        if (filters.niches.length > 0) {
+          data = data.filter(c => 
+            filters.niches.some(niche => c.niches?.includes(niche))
+          );
+        }
         
         setCreators(data);
         
