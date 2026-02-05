@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -11,9 +11,11 @@ const LOGO_URL = "/logo-sun.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState("login"); // login or register
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refCode, setRefCode] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -21,6 +23,21 @@ const LoginPage = () => {
     password: "",
     confirmPassword: ""
   });
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setRefCode(ref);
+      setMode("register"); // Switch to register mode if coming from affiliate link
+      // Track the click
+      fetch(`${API_URL}/api/affiliate/track-click`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ref })
+      }).catch(() => {});
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -49,7 +66,8 @@ const LoginPage = () => {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          ref_code: refCode // Include referral code
         }),
       });
 
