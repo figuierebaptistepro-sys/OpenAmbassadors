@@ -24,6 +24,29 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const CONTENT_TYPES = ["UGC", "Micro-trottoir", "Face cam", "Ads", "Interview", "Montage"];
 const EQUIPMENT_OPTIONS = ["Smartphone", "Caméra", "Micro", "Éclairage", "Trépied", "Stabilisateur"];
+
+// Niches / Secteurs d'activité
+const NICHES = [
+  { id: "beaute", label: "Beauté & Cosmétique", icon: "💄" },
+  { id: "igaming", label: "iGaming & Paris", icon: "🎰" },
+  { id: "gaming", label: "Gaming & Esport", icon: "🎮" },
+  { id: "mode", label: "Mode & Fashion", icon: "👗" },
+  { id: "tech", label: "Tech & Gadgets", icon: "📱" },
+  { id: "food", label: "Food & Gastronomie", icon: "🍕" },
+  { id: "fitness", label: "Fitness & Sport", icon: "💪" },
+  { id: "voyage", label: "Voyage & Lifestyle", icon: "✈️" },
+  { id: "finance", label: "Finance & Crypto", icon: "💰" },
+  { id: "immobilier", label: "Immobilier", icon: "🏠" },
+  { id: "auto", label: "Auto & Moto", icon: "🚗" },
+  { id: "education", label: "Éducation & Formation", icon: "📚" },
+  { id: "sante", label: "Santé & Bien-être", icon: "🧘" },
+  { id: "enfants", label: "Famille & Enfants", icon: "👶" },
+  { id: "animaux", label: "Animaux", icon: "🐾" },
+  { id: "musique", label: "Musique & Art", icon: "🎵" },
+  { id: "b2b", label: "B2B & SaaS", icon: "💼" },
+  { id: "ecommerce", label: "E-commerce", icon: "🛒" },
+];
+
 const VISIBILITY_OPTIONS = [
   { value: "1K", label: "1K+" },
   { value: "5K", label: "5K+" },
