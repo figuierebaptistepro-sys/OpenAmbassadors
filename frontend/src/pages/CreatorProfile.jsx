@@ -16,6 +16,28 @@ import ReviewsSection from "../components/ReviewsSection";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Niches / Secteurs d'activité
+const NICHE_LABELS = {
+  beaute: { label: "Beauté & Cosmétique", icon: "💄" },
+  igaming: { label: "iGaming & Paris", icon: "🎰" },
+  gaming: { label: "Gaming & Esport", icon: "🎮" },
+  mode: { label: "Mode & Fashion", icon: "👗" },
+  tech: { label: "Tech & Gadgets", icon: "📱" },
+  food: { label: "Food & Gastronomie", icon: "🍕" },
+  fitness: { label: "Fitness & Sport", icon: "💪" },
+  voyage: { label: "Voyage & Lifestyle", icon: "✈️" },
+  finance: { label: "Finance & Crypto", icon: "💰" },
+  immobilier: { label: "Immobilier", icon: "🏠" },
+  auto: { label: "Auto & Moto", icon: "🚗" },
+  education: { label: "Éducation & Formation", icon: "📚" },
+  sante: { label: "Santé & Bien-être", icon: "🧘" },
+  enfants: { label: "Famille & Enfants", icon: "👶" },
+  animaux: { label: "Animaux", icon: "🐾" },
+  musique: { label: "Musique & Art", icon: "🎵" },
+  b2b: { label: "B2B & SaaS", icon: "💼" },
+  ecommerce: { label: "E-commerce", icon: "🛒" },
+};
+
 const CreatorProfile = ({ currentUser }) => {
   const { userId } = useParams();
   const navigate = useNavigate();
