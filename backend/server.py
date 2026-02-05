@@ -2838,6 +2838,10 @@ async def websocket_route(websocket: WebSocket):
 from reviews import setup_reviews_routes
 setup_reviews_routes(api_router, db, get_current_user, send_email, FRONTEND_URL)
 
+# Setup affiliate routes
+from affiliate import setup_affiliate_routes
+setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL)
+
 # Include router
 app.include_router(api_router)
 
