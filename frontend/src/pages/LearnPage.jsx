@@ -1106,18 +1106,91 @@ const LearnPage = ({ user }) => {
               </div>
             </div>
             
-            {/* Media URL fields based on type */}
+            {/* Image - Upload or URL (Edit mode) */}
             {newArticle.banner_type === "image" && (
-              <div className="space-y-2">
-                <Label>URL de l'image</Label>
-                <Input
-                  value={newArticle.banner_url}
-                  onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
-                  placeholder="https://..."
-                />
-                {newArticle.banner_url && (
-                  <div className="mt-2 rounded-lg overflow-hidden border border-gray-200">
-                    <img src={newArticle.banner_url} alt="Preview" className="w-full h-32 object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+              <div className="space-y-3">
+                <Label>Image de couverture</Label>
+                
+                <Tabs value={imageInputMode} onValueChange={setImageInputMode} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upload" className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      Depuis ma galerie
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="flex items-center gap-2">
+                      <Link className="w-4 h-4" />
+                      URL externe
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                
+                {imageInputMode === "upload" && (
+                  <div className="space-y-3">
+                    {filePreview ? (
+                      <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                        <img src={filePreview} alt="Preview" className="w-full h-40 object-cover" />
+                        <button
+                          type="button"
+                          onClick={clearFile}
+                          className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          {selectedFile?.name}
+                        </div>
+                      </div>
+                    ) : newArticle.banner_url ? (
+                      <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                        <img src={newArticle.banner_url} alt="Current" className="w-full h-40 object-cover" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          Image actuelle
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-gray-700">Cliquer pour choisir une image</p>
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP ou GIF (max 10 MB)</p>
+                      </div>
+                    )}
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {filePreview || newArticle.banner_url ? "Changer l'image" : "Choisir une image"}
+                    </Button>
+                  </div>
+                )}
+                
+                {imageInputMode === "url" && (
+                  <div className="space-y-2">
+                    <Input
+                      value={newArticle.banner_url}
+                      onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                    {newArticle.banner_url && (
+                      <div className="rounded-lg overflow-hidden border border-gray-200">
+                        <img src={newArticle.banner_url} alt="Preview" className="w-full h-40 object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
