@@ -25,6 +25,28 @@ const EXPERIENCE_LEVELS = [
   { value: "expert", label: "Expert" },
 ];
 
+// Niches / Secteurs d'activité
+const NICHES = [
+  { id: "beaute", label: "Beauté", icon: "💄" },
+  { id: "igaming", label: "iGaming", icon: "🎰" },
+  { id: "gaming", label: "Gaming", icon: "🎮" },
+  { id: "mode", label: "Mode", icon: "👗" },
+  { id: "tech", label: "Tech", icon: "📱" },
+  { id: "food", label: "Food", icon: "🍕" },
+  { id: "fitness", label: "Fitness", icon: "💪" },
+  { id: "voyage", label: "Voyage", icon: "✈️" },
+  { id: "finance", label: "Finance", icon: "💰" },
+  { id: "immobilier", label: "Immobilier", icon: "🏠" },
+  { id: "auto", label: "Auto", icon: "🚗" },
+  { id: "education", label: "Éducation", icon: "📚" },
+  { id: "sante", label: "Santé", icon: "🧘" },
+  { id: "enfants", label: "Famille", icon: "👶" },
+  { id: "animaux", label: "Animaux", icon: "🐾" },
+  { id: "musique", label: "Musique", icon: "🎵" },
+  { id: "b2b", label: "B2B", icon: "💼" },
+  { id: "ecommerce", label: "E-commerce", icon: "🛒" },
+];
+
 const FRENCH_CITIES = [
   "Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", 
   "Bordeaux", "Lille", "Strasbourg", "Montpellier", "Rennes"
