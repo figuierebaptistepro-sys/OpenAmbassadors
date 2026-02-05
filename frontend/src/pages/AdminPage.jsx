@@ -4,7 +4,7 @@ import {
   Users, Briefcase, CreditCard, Shield, CheckCircle, XCircle, Clock,
   Euro, TrendingUp, Crown, Building2, UserCheck, UserX, Eye, ChevronRight,
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
-  Ban, Trash2, AlertTriangle
+  Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
