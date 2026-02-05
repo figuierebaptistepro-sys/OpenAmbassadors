@@ -88,7 +88,11 @@ const AdminPage = ({ user }) => {
     if (activeTab === "withdrawals") fetchWithdrawals();
     if (activeTab === "projects") fetchProjects();
     if (activeTab === "access") fetchAccessRequests();
-  }, [activeTab, userTypeFilter, userStatusFilter, withdrawalStatusFilter, projectStatusFilter]);
+    if (activeTab === "messages") {
+      fetchConversations();
+      fetchReports();
+    }
+  }, [activeTab, userTypeFilter, userStatusFilter, withdrawalStatusFilter, projectStatusFilter, reportStatusFilter]);
 
   const fetchStats = async () => {
     try {
