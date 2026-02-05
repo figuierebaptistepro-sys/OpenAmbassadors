@@ -218,10 +218,21 @@ const ArticlePage = ({ user }) => {
           </div>
         ) : (
           <>
-            {/* Banner/Video */}
+            {/* Banner/Video/YouTube */}
             {(article.banner_url || article.video_url) && (
               <div className="mb-6 rounded-xl overflow-hidden bg-gray-100" data-testid="article-media">
-                {article.banner_type === "video" && article.video_url ? (
+                {/* YouTube embed */}
+                {article.banner_type === "youtube" && article.video_url && getYoutubeId(article.video_url) ? (
+                  <div className="aspect-video bg-black">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYoutubeId(article.video_url)}?rel=0`}
+                      title={article.title}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : article.banner_type === "video" && article.video_url ? (
                   <video 
                     src={article.video_url}
                     controls
