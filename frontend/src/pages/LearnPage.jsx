@@ -495,8 +495,8 @@ const LearnPage = ({ user }) => {
             
             {/* Banner Type */}
             <div className="space-y-2">
-              <Label>Type de bannière</Label>
-              <div className="flex gap-2">
+              <Label>Type de média</Label>
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   type="button"
                   variant={newArticle.banner_type === "image" ? "default" : "outline"}
@@ -515,29 +515,96 @@ const LearnPage = ({ user }) => {
                   <Video className="w-4 h-4 mr-2" />
                   Vidéo
                 </Button>
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "youtube" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "youtube" }))}
+                  className={newArticle.banner_type === "youtube" ? "bg-red-600 hover:bg-red-700" : ""}
+                >
+                  <Youtube className="w-4 h-4 mr-2" />
+                  YouTube
+                </Button>
               </div>
             </div>
             
-            {/* Banner/Video URL */}
-            <div className="space-y-2">
-              <Label htmlFor="banner_url">URL de la bannière (image)</Label>
-              <Input
-                id="banner_url"
-                value={newArticle.banner_url}
-                onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
+            {/* Image URL */}
+            {newArticle.banner_type === "image" && (
+              <div className="space-y-2">
+                <Label htmlFor="banner_url">URL de l'image</Label>
+                <Input
+                  id="banner_url"
+                  value={newArticle.banner_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
+                  placeholder="https://images.unsplash.com/..."
+                />
+                {newArticle.banner_url && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-gray-200">
+                    <img 
+                      src={newArticle.banner_url} 
+                      alt="Preview" 
+                      className="w-full h-32 object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             
+            {/* Video URL */}
             {newArticle.banner_type === "video" && (
               <div className="space-y-2">
-                <Label htmlFor="video_url">URL de la vidéo</Label>
+                <Label htmlFor="video_url">URL de la vidéo (MP4, WebM)</Label>
                 <Input
                   id="video_url"
                   value={newArticle.video_url}
                   onChange={(e) => setNewArticle(prev => ({ ...prev, video_url: e.target.value }))}
                   placeholder="https://..."
                 />
+              </div>
+            )}
+            
+            {/* YouTube URL with Preview */}
+            {newArticle.banner_type === "youtube" && (
+              <div className="space-y-2">
+                <Label htmlFor="youtube_url">Lien YouTube</Label>
+                <Input
+                  id="youtube_url"
+                  value={newArticle.youtube_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, youtube_url: e.target.value }))}
+                  placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+                />
+                <p className="text-xs text-gray-500">
+                  Formats acceptés : youtube.com/watch?v=..., youtu.be/..., ou juste l'ID de la vidéo
+                </p>
+                
+                {/* YouTube Preview */}
+                {newArticle.youtube_url && getYoutubeId(newArticle.youtube_url) && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-sm text-gray-600">Aperçu :</Label>
+                    <div className="rounded-lg overflow-hidden border border-gray-200 bg-black">
+                      <div className="aspect-video">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${getYoutubeId(newArticle.youtube_url)}`}
+                          title="YouTube Preview"
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-green-600">
+                      <CheckCircle className="w-3 h-3" />
+                      Vidéo détectée ! ID: {getYoutubeId(newArticle.youtube_url)}
+                    </div>
+                  </div>
+                )}
+                
+                {newArticle.youtube_url && !getYoutubeId(newArticle.youtube_url) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    ⚠️ URL YouTube invalide. Vérifiez le format du lien.
+                  </p>
+                )}
               </div>
             )}
             
