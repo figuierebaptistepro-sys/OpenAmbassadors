@@ -82,6 +82,7 @@ const AdminPage = ({ user }) => {
   const [conversationMessages, setConversationMessages] = useState([]);
   const [selectedAffiliate, setSelectedAffiliate] = useState(null);
   const [affiliateReferrals, setAffiliateReferrals] = useState([]);
+  const [fullUserData, setFullUserData] = useState(null);
   
   // Filters
   const [userTypeFilter, setUserTypeFilter] = useState("all");
@@ -94,6 +95,8 @@ const AdminPage = ({ user }) => {
   // Dialog states
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [userFullDialogOpen, setUserFullDialogOpen] = useState(false);
+  const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [earningDialogOpen, setEarningDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -104,7 +107,33 @@ const AdminPage = ({ user }) => {
   
   // Forms
   const [earningForm, setEarningForm] = useState({ creator_id: "", amount: "", description: "" });
-  const [notificationForm, setNotificationForm] = useState({ target: "all", title: "", message: "", type: "info" });
+  const [creditForm, setCreditForm] = useState({ 
+    user: null, 
+    amount: "", 
+    description: "", 
+    credit_type: "payment" 
+  });
+  const [notificationForm, setNotificationForm] = useState({ 
+    target: "all", 
+    title: "", 
+    message: "", 
+    type: "info",
+    link: "",
+    filters: {},
+    selectedUsers: [],
+    userSearch: ""
+  });
+  const [notificationPreview, setNotificationPreview] = useState(null);
+
+  // Global search effect
+  useEffect(() => {
+    if (debouncedSearch.length >= 2) {
+      handleGlobalSearch(debouncedSearch);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  }, [debouncedSearch]);
 
   useEffect(() => {
     fetchStats();
