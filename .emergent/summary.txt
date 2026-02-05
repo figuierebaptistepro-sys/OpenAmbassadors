@@ -1,87 +1,100 @@
 <analysis>**original_problem_statement:**
-The user's initial goal was to build OpenAmbassadors, a premium SaaS platform for connecting brands with creators. The initial scope included user authentication, project management, and a creator discovery page.
+The user's initial goal was to build OpenAmbassadors, a premium SaaS platform. The scope evolved to include an affiliate/referral system and an advanced admin panel.
 
-During this session, the user pivoted to two new major features:
-1.  **Affiliate/Referral System:** A complete system allowing any user to refer others. It required a frontend dashboard to track performance (clicks, signups, status) and backend logic to handle referral code generation (username-based), tracking via URL parameters, and a 60-day persistence cookie. The revenue/commission part is to be integrated with Stripe later.
-2.  **Comprehensive Admin Panel:** A request to significantly enhance the  page. This involved:
-    *   Adding a moderation panel for the existing real-time messaging system (viewing conversations, handling reports).
-    *   Building out a full dashboard with tabs for a global overview, user management, affiliate program management, review moderation, payments, and projects.
-    *   Adding key features like a global user search (by name/email/ID), a quick-credit function for user wallets, and an advanced notification center with granular targeting (individual users, groups, and filters like premium/subscriber status).
+In the current session, the user requested a complete overhaul of the static  page. The requirements were:
+1.  Make the page dynamic, pulling content from a database.
+2.  Admins should be able to perform full CRUD (Create, Read, Update, Delete) operations on articles.
+3.  Articles must support either a banner image or an embedded YouTube video with a preview.
+4.  The banner image can be provided via an external URL or uploaded directly from the user's device.
+5.  Create a detail page for viewing individual articles.
+
+PRODUCT REQUIREMENTS:
+-   A new backend module to manage articles.
+-   A dynamic  page displaying a grid of articles.
+-   A detail page  to display a single article with its content, banner/video.
+-   Admin-only controls on the  page to Create, Edit, and Delete articles.
+-   A creation/edition form (as a dialog/modal) that allows setting:
+    -   Title, description, content (markdown).
+    -   Tags, points, premium status.
+    -   Media type: Image URL, Local Image Upload, or YouTube URL.
+    -   Live preview for YouTube links within the form.
+    -   File input for local image uploads with a preview.
+-   The system should handle file uploads and store them.
 
 **User's preferred language**: The user's primary language is **French**. The next agent MUST respond in French.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI platform with a rich feature set: user authentication, project/application management, creator discovery, real-time messaging, and a hybrid rating system.
+A full-stack React/FastAPI application with user authentication, project management, real-time messaging, an affiliate system, and an advanced admin panel.
 
-In this session, the following were built and are functional:
-1.  **Affiliate System (MVP):** The backend logic and frontend dashboard are complete. It generates user-friendly referral codes (e.g., ), tracks clicks, and uses a 60-day cookie to attribute sign-ups correctly. The commission/revenue part is mocked and awaits Stripe integration.
-2.  **Advanced Admin Panel:** A comprehensive multi-tab panel is now available at . It includes a dashboard, user management, and dedicated sections for moderating messages, reviews, and managing the affiliate program. The latest additions were a global user search, a user-crediting feature, and an advanced notification system.
+The latest addition is a complete Learn section. This includes:
+-   A backend module () with full CRUD API endpoints for managing articles.
+-   A dynamic  page () that fetches and displays articles in a grid. It includes admin controls for creating, editing, and deleting articles via modals.
+-   An article detail page () that displays the full content, including embedded YouTube videos if applicable.
+-   The article creation/editing form supports three media types: an external image URL, a direct image upload from the user's gallery, and a YouTube video link with a live preview in the form.
 
 **Last working item**:
-*   **Last item agent was working:** Implementing the final enhancements to the Admin Panel: a global user search bar, a credit user dialog, and an advanced notification center with granular targeting options.
-*   **Status:** USER VERIFICATION PENDING
-*   **Agent Testing Done:** Y (Verified via screenshots of the new search bar, credit dialog, and notification center UI and their functionality).
-*   **Which testing method agent to use?** Manual testing by the user to confirm the new admin features meet their needs.
-*   **User Testing Done:** N
+-   **Last item agent was working:** Implementing the frontend UI to allow an admin to upload an image from their local machine (depuis ma galerie) instead of providing a URL when creating or editing an article. This involved adding a file input, upload progress state, and modifying the form submission logic to handle .
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y (Verified via screenshot that the new UI elements for file upload are present in the modal.)
+-   **Which testing method agent to use?** Manual user testing. The user needs to try creating/editing an article by uploading an image from their computer.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*   **Issue 1 (P0): Forgot Password Email Not Received**
-*   **Issue 2 (P1): Incomplete & Buggy Responsive Implementation**
-*   **Issue 3 (P2): Incorrect Password for Test Creator Account**
-*   **Issue 4 (P2): Flaky automated login in tests**
+-   **Issue 1 (P0): Forgot Password Email Not Received**
+-   **Issue 2 (P1): Incomplete & Buggy Responsive Implementation**
+-   **Issue 3 (P2): Incorrect Password for Test Creator Account**
+-   **Issue 4 (P2): Flaky automated login in tests**
 
 **Issues Detail:**
-*   **Issue 1: Forgot Password Email Not Received**
-    *   **Attempted fixes:** Identified Resend's sandbox mode as the cause.
-    *   **Next debug checklist:** Instruct the user to add and verify their domain in their Resend account and update the  in .
-    *   **Why fix this issue and what will be achieved with the fix?** This is a critical, broken authentication feature for all non-admin users.
-    *   **Status:** BLOCKED (on user action: Resend domain verification).
-    *   **Is recurring issue?** N
-    *   **Should Test frontend/backend/both after fix?** Both.
-    *   **Blocked on other issue:** None.
+-   **Issue 1: Forgot Password Email Not Received**
+    -   **Attempted fixes:** Identified Resend's sandbox mode as the cause.
+    -   **Next debug checklist:** Instruct the user to add and verify their domain in their Resend account and update the  in .
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical, broken authentication feature for all non-admin users.
+    -   **Status:** BLOCKED (on user action: Resend domain verification).
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both.
+    -   **Blocked on other issue:** None.
 
-*   **Issue 2: Incomplete & Buggy Responsive Implementation**
-    *   **Attempted fixes:** While the agent verified mobile views for new features, a full, systematic audit of all pages (as requested in a previous fork) has not been performed.
-    *   **Next debug checklist:** Perform a systematic audit of all key pages on mobile/tablet viewports, identify layout breaks with the  tool, and apply fixes.
-    *   **Why fix this issue and what will be achieved with the fix?** A consistent source of user frustration. A polished UI is key to platform credibility.
-    *   **Status:** IN PROGRESS
-    *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** Frontend.
-    *   **Blocked on other issue:** None.
+-   **Issue 2: Incomplete & Buggy Responsive Implementation**
+    -   **Attempted fixes:** None in this session. A full, systematic audit of all pages has not been performed.
+    -   **Next debug checklist:** Perform a systematic audit of all key pages on mobile/tablet viewports, identify layout breaks with the  tool, and apply fixes.
+    -   **Why fix this issue and what will be achieved with the fix?** A consistent source of user frustration. A polished UI is key to platform credibility.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** None.
 
-*   **Issue 3: Incorrect Password for Test Creator Account**
-    *   **Attempted fixes:** During the audit, login with  and password  failed via  and .
-    *   **Next debug checklist:**
-        1.  Create a new backend endpoint or a one-off script for an admin to reset a user's password.
-        2.  Use it to set a known password for .
-        3.  Alternatively, delete and recreate the test user with a known password.
-    *   **Why fix this issue and what will be achieved with the fix?** A reliable test creator account is essential for debugging and verifying creator-specific features without affecting real users.
-    *   **Status:** NOT STARTED
-    *   **Is recurring issue?** N
-    *   **Should Test frontend/backend/both after fix?** Backend (for the fix), Frontend (for testing).
-    *   **Blocked on other issue:** None.
+-   **Issue 3: Incorrect Password for Test Creator Account**
+    -   **Attempted fixes:** None. Login with  and password  failed.
+    -   **Next debug checklist:** Create a new backend endpoint or a one-off script for an admin to reset a user's password. Use it to set a known password for .
+    -   **Why fix this issue and what will be achieved with the fix?** A reliable test creator account is essential for debugging and verifying creator-specific features.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend (for the fix), Frontend (for testing).
+    -   **Blocked on other issue:** None.
 
-*   **Issue 4: Flaky automated login in tests**
-    *   **Attempted fixes:** The  tool sometimes failed to log in by filling fields, while  worked reliably.
-    *   **Next debug checklist:** Adopt a standard practice of using  to get a session token and then inject it as a cookie for  tests on protected pages.
-    *   **Why fix this issue and what will be achieved with the fix?** This is an internal process improvement that will speed up the agent's development and verification cycle.
-    *   **Status:** NOT STARTED
-    *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** N/A.
-    *   **Blocked on other issue:** None.
+-   **Issue 4: Flaky automated login in tests**
+    -   **Attempted fixes:** The agent observed this issue firsthand when the  tool repeatedly failed to log in, even with correct selectors. The agent had to switch to  to get a session token and inject it as a cookie for  tests, which is the recommended fix.
+    -   **Next debug checklist:** Adopt a standard practice of using  to get a session token and then inject it as a cookie for  tests on protected pages.
+    -   **Why fix this issue and what will be achieved with the fix?** This will significantly speed up the agent's development and verification cycle.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** N/A.
+    -   **Blocked on other issue:** None.
 
 **In progress Task List**:
-*   **Task 1: Advanced Admin Panel**
-    *   **Where to resume:** The feature is implemented. The agent needs to present the work to the user and ask for final verification of the new search, credit, and notification functionalities.
-    *   **What will be achieved with this?** Final validation and closure on a major feature enhancement.
-    *   **Status:** USER VERIFICATION PENDING
-    *   **Should Test frontend/backend/both after fix?** N/A (User testing needed).
-    *   **Blocked on something:** Waiting for final user approval.
+-   **Task 1: Complete Learn Page Feature**
+    -   **Where to resume:** The feature is fully implemented. The agent needs to present the final piece (local image upload) to the user and ask for verification of the entire feature set (CRUD, YouTube support, image upload).
+    -   **What will be achieved with this?** Final validation and closure on a major feature requested by the user.
+    -   **Status:** USER VERIFICATION PENDING
+    -   **Should Test frontend/backend/both after fix?** N/A (User testing needed).
+    -   **Blocked on something:** Waiting for final user approval.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **P0 - Stripe Integration:** The user explicitly asked how to connect Stripe. This is the next logical step to enable paid subscriptions (for businesses and premium creators) and calculate actual commissions for the new affiliate system.
-    *   **P1 - Set up User's Own Google OAuth:** A long-standing request to replace the Emergent-managed Google Auth with the user's own credentials.
+    *   **P0 - Stripe Integration:** To enable paid subscriptions and calculate affiliate commissions.
+    *   **P1 - Set up User's Own Google OAuth:** To replace the Emergent-managed Google Auth.
+    *   **P2 - WYSIWYG Editor:** An enhancement suggested by the agent to improve the article writing experience, moving from markdown to a rich-text editor.
 *   **Future Tasks:**
     *   **P2 - Public SEO-Friendly Creator Profile Page:** Create pages like .
     *   **P3 - Embeddable Review Widget:** Allow creators to embed their rating on their own websites.
@@ -89,109 +102,95 @@ In this session, the following were built and are functional:
     *   **P5 - VPS Deployment Guidance:** Assist the user in deploying the application to a private server.
 
 **Completed work in this session**
-*   **Full Technical Audit:** Performed a comprehensive check of backend services, APIs, and frontend pages, producing a report for the user.
-*   **Affiliate System (MVP):**
-    *   **Backend:** Created  to manage referral codes, track clicks, and record new signups.
-    *   **Frontend:** Built  to serve as the affiliate's dashboard, showing their unique link, performance stats, and list of referred users.
-    *   **Enhancements:** Changed referral code generation to be username-based (e.g., ) and implemented a 60-day tracking cookie for persistence.
-*   **Advanced Admin Panel:**
-    *   Overhauled  and added corresponding backend routes.
-    *   **Messaging Tab:** Added a UI for admins to view reported messages and browse all conversations.
-    *   **New Tabs:** Created tabs for an analytics overview, affiliate management, and review moderation.
-    *   **Core Features:** Implemented a global user search, a feature to directly credit a user's wallet, and a powerful notification center for targeted announcements.
+-   **Full Learn Page Rework:** Transformed the static  into a fully dynamic, feature-rich module.
+    -   **Backend:** Created  with FastAPI endpoints for full article CRUD, including handling file uploads. Integrated it into .
+    -   **Frontend List View:** Rebuilt  to display a grid of articles, with admin-only buttons for Nouvel article, Modifier, and Supprimer. Implemented creation/edit/delete functionality within modals.
+    -   **Frontend Detail View:** Created  to display individual articles, including embedded YouTube players.
+    -   **Media Support:** Implemented logic to handle three media types for articles: external image URL, direct image upload, and YouTube video URL.
+    -   **Admin UI:** Added menus and dialogs for admins to manage all aspects of articles directly from the frontend.
 
 **Earlier issues found/mentioned but not fixed**
-*   **Issue 1: Potential Truncated Token in Review Emails**
-    *   **Debug checklist:** During the audit, the agent noted the Invalid Link error for external reviews was due to a truncated token. The agent asked the user if they should fix the root cause (potentially in the email generation logic) but the user pivoted to another task. The fix was never implemented.
-    *   **Why to solve this issue and what will be achieved with this?** This breaks the external review flow, which is a key part of the Hybrid Rating System.
-    *   **Should Test frontend/backend/both after fix:** Backend (email generation).
-    *   **Is recurring issue?** N
+-   **Issue 1: Potential Truncated Token in Review Emails**
+    -   **Debug checklist:** The Invalid Link error for external reviews was noted to be due to a truncated token. The agent asked the user if they should fix it, but the user pivoted. The fix was never implemented.
+    -   **Why to solve this issue and what will be achieved with this?** This breaks the external review flow, a key part of the Hybrid Rating System.
+    -   **Should Test frontend/backend/both after fix:** Backend (email generation).
+    -   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
-*   **Incomplete & Buggy Responsive Implementation:** Recurrence count: 2. Status: IN PROGRESS.
-*   **Flaky automated login in tests:** Recurrence count: 2. Status: NOT STARTED.
+-   **Incomplete & Buggy Responsive Implementation:** Recurrence count: 3. Status: IN PROGRESS.
+-   **Flaky automated login in tests:** Recurrence count: 3. Status: NOT STARTED. This was highly visible during this session's  attempts.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **Frontend:** React, TailwindCSS, Shadcn UI
-*   **Backend:** FastAPI, Pydantic, MongoDB (), WebSockets
-*   **Affiliate Tracking:** URL  parameter capture and 60-day Cookie persistence.
-*   **Admin Tooling:** Advanced server-side search, filtering, and data aggregation for the admin panel.
+-   **Frontend:** React, TailwindCSS, Shadcn UI, 
+-   **Backend:** FastAPI, Pydantic, MongoDB ()
+-   **File Upload:** Using  on the frontend to send files, and  on the backend to receive and save them.
+-   **Component-Based State Management:** Extensive use of  and  in  to manage articles, modals, forms, and API states.
 
 **key DB schema**
-*   ****: 
-*   ****: 
-*   **** (New): 
-*   **** (New): 
-*   ****: Contains a mocked  boolean field.
+-   ** (New)**: 
 
 **All files of reference**
-*   : The file that saw the most significant changes, evolving into a comprehensive management tool.
-*   : The new module containing all backend logic for the referral program.
-*   : The new frontend page for the affiliate dashboard.
-*   : Heavily modified to integrate new admin and affiliate API routes.
-*   : Modified to implement the referral cookie logic.
+-   : **New file** containing all backend logic for the articles feature.
+-   : **Heavily modified**, now a large component (~1200 lines) handling the article list, modals for creation, editing, and deletion, and file upload logic.
+-   : **New file** for displaying a single article.
+-   : Modified to add the router from .
+-   : Modified to add the new route for .
 
 **Areas that need refactoring**:
-*   **:** Continues to grow and acts as a monolith. Routes for auth, projects, users, and admin functions could be split into their own modules (, , ) for better organization.
+-   **:** Still a monolith. The new  is a good step, but other routes (auth, projects, admin) could also be split out.
+-   **:** This file has become very large and complex. It manages multiple states for modals, forms, and API calls. It should be broken down into smaller, more manageable components (e.g., , , ).
 
 **key api endpoints**
-*   : Generates the user's affiliate link.
-*   : Records a click on a referral link.
-*   : Fetches stats and referred users for the affiliate.
-*   : Powers the global user search in the admin panel.
-*   : Endpoint for the Créditer feature.
-*   : Endpoint for the advanced notification system.
+-   : Create a new article (handles file upload).
+-   : Get a list of all articles.
+-   : Get a single article's details.
+-   : Update an article (handles file upload).
+-   : Delete an article.
+-   : Mark an article as completed by a user.
 
 **Critical Info for New Agent**
-*   **Vous devez répondre en français.**
-*   Your first step is to confirm with the user that the new, advanced admin panel (search, credit, notifications) meets their expectations. Use the  tool to present this work for verification.
-*   After user approval, the highest priority is **Stripe Integration**. The user has asked about it, and it's required to make the affiliate and subscription systems functional. Propose a plan to tackle this next.
+-   **Vous devez répondre en français.**
+-   Your first action should be to confirm with the user that the entire Learn Page feature, including the latest addition of image uploads, is working as they expect.
+-   Once the user approves, you should propose a plan to tackle the next high-priority items from the backlog, starting with **Stripe Integration (P0)**.
 
 **documents and test reports created in this job**
-*   : Updated to include requirements for the Affiliate System.
+-   : Updated to reflect the new Learn Page requirements.
+-   : Test report from the testing agent for the initial article functionality.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Provided detailed specs for a new Affiliate Dashboard. (COMPLETED)
-2.  **User:** Clarified that all users can be affiliates and that Stripe would come later. (COMPLETED)
-3.  **User:** Asked how the affiliate codes were generated. (COMPLETED)
-4.  **User:** Chose the username-based format for affiliate codes. (COMPLETED)
-5.  **User:** Asked about the persistence of referral tracking (implicitly asking for cookies). (COMPLETED)
-6.  **User:** Specified a 60-day duration for the affiliate cookie. (COMPLETED)
-7.  **User:** Asked how to connect Stripe. (PENDING - Upcoming Task)
-8.  **User:** Pivoted to ask what messaging system was in place. (COMPLETED)
-9.  **User:** Asked where the admin panel was to manage messages. (COMPLETED)
-10. **User:** Gave a broad request to improve the admin panel as much as possible, leading to the latest enhancements. (COMPLETED)
-11. **User:** Requested specific admin features: a way to find user IDs, an easy way to credit users, and an advanced, targeted notification system. (COMPLETED - now in USER VERIFICATION PENDING)
+1.  **User:** mais comment je créer met et aoujte les articles si cest une video youtube avce un lien faut mettre preview (How do I create/add articles if it's a YouTube video with a link, you need a preview). **Status: COMPLETED**.
+2.  **User:** je peux supprimer ou modifier les articles existant ? (Can I delete or modify existing articles?). **Status: COMPLETED**.
+3.  **User:** je dois pouvoir ajouter une photo de ma galerie (I must be able to add a photo from my gallery). **Status: COMPLETED** (implementation is done, pending user verification).
+The previous 7 messages are from the agent, summarizing progress and showing screenshots.
 
 **Project Health Check:**
-*   **Broken:**
-    *   The Forgot Password email flow remains non-functional for general users.
-*   **Mocked:**
-    *   User subscription status ().
-    *   Affiliate commission calculations and payouts. All revenue metrics in the affiliate dashboard are currently 0.
+-   **Broken:**
+    -   The Forgot Password email flow remains non-functional for general users due to Resend sandbox limitations.
+-   **Mocked:**
+    -   User subscription status ().
+    -   Affiliate commission calculations and payouts.
 
 **3rd Party Integrations**
-*   **Emergent-managed Google Auth:** In use, user wants to replace it.
-*   **MongoDB Atlas:** In use.
-*   **Cloudflare R2:** In use for file uploads in messaging.
-*   **Resend:** Integrated, but limited by sandbox mode.
-*   **FFmpeg.wasm:** Integrated for client-side video compression.
-*   **Leaflet / react-leaflet:** In use for map view.
-*   **Stripe:** Not implemented, but is the next high-priority task.
+-   **Emergent-managed Google Auth:** In use, user wants to replace it.
+-   **MongoDB Atlas:** In use.
+-   **Cloudflare R2:** In use for file uploads.
+-   **Resend:** Integrated, but limited by sandbox mode.
+-   **FFmpeg.wasm:** Integrated for client-side video compression.
+-   **Leaflet / react-leaflet:** In use for map view.
+-   **Stripe:** Not implemented, but is the next high-priority task.
 
 **Testing status**
-*   **Testing agent used after significant changes:** NO (in this session).
-*   **Troubleshoot agent used after agent stuck in loop:** NO
-*   **Test files created:** None.
-*   **Known regressions:** None identified in this session, but the general lack of responsive polish remains.
+-   **Testing agent used after significant changes:** YES, for the initial implementation of the article system.
+-   **Troubleshoot agent used after agent stuck in loop:** NO.
+-   **Test files created:** None.
+-   **Known regressions:** The flaky login with the  tool remains a persistent issue.
 
 **Credentials to test flow:**
-*   **Business/Admin User & Resend Owner:**  (Password: )
-*   **Creator User (created for testing):**  (Password: unknown, see Issue #3)
+-   **Business/Admin User:**  (Password: )
+-   **Creator User (created for testing):**  (Password: unknown, see Issue #3)
 
 **What agent forgot to execute**
-*   The agent did not fix the root cause of the Invalid Link error for external reviews after discovering it during the audit. The user's pivot to a new feature caused this to be dropped.
-*   The original tasks from the previous handoff (User verification of rating system, Google OAuth, Stripe) were superseded by the user's new, more immediate requests for the audit, affiliate system, and admin panel. The agent correctly prioritized the user's active requests.</analysis>
+-   The agent correctly followed all user requests in this session. All pending work is tracked in the issue list and upcoming tasks.</analysis>
