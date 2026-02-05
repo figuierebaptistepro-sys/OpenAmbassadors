@@ -201,6 +201,7 @@ const LearnPage = ({ user }) => {
         video_url: newArticle.banner_type === "youtube" ? newArticle.youtube_url : newArticle.video_url
       };
 
+      // First create the article
       const res = await fetch(`${API_URL}/api/admin/articles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,9 +210,25 @@ const LearnPage = ({ user }) => {
       });
 
       if (res.ok) {
-        const created = await res.json();
-        setArticles(prev => [created, ...prev]);
+        let created = await res.json();
+        
+        // If there's a file to upload, upload it now
+        if (selectedFile && newArticle.banner_type === "image") {
+          const uploadedUrl = await uploadFile(created.article_id);
+          if (uploadedUrl) {
+            created.banner_url = uploadedUrl;
+            // Update article in list with new banner URL
+            setArticles(prev => [created, ...prev]);
+          } else {
+            setArticles(prev => [created, ...prev]);
+          }
+        } else {
+          setArticles(prev => [created, ...prev]);
+        }
+        
         setShowCreateDialog(false);
+        clearFile();
+        setImageInputMode("upload");
         setNewArticle({
           title: "",
           description: "",
