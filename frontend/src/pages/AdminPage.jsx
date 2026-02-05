@@ -163,6 +163,99 @@ const AdminPage = ({ user }) => {
     }
   };
 
+  const fetchConversations = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/admin/conversations`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const fetchReports = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/admin/reports?status=${reportStatusFilter}`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setReports(data);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const fetchConversationMessages = async (conversationId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/conversations/${conversationId}/messages?limit=100`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setConversationMessages(data);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleViewConversation = async (conversation) => {
+    setSelectedConversation(conversation);
+    setConversationDialogOpen(true);
+    await fetchConversationMessages(conversation.conversation_id);
+  };
+
+  const handleBlockConversation = async (conversationId, block) => {
+    try {
+      const endpoint = block ? "block" : "unblock";
+      const response = await fetch(`${API_URL}/api/messaging/admin/conversations/${conversationId}/${endpoint}`, {
+        method: "POST",
+        credentials: "include"
+      });
+      if (response.ok) {
+        toast.success(block ? "Conversation bloquée" : "Conversation débloquée");
+        fetchConversations();
+        if (selectedConversation?.conversation_id === conversationId) {
+          setSelectedConversation({ ...selectedConversation, status: block ? "blocked" : "active" });
+        }
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/admin/messages/${messageId}/delete`, {
+        method: "POST",
+        credentials: "include"
+      });
+      if (response.ok) {
+        toast.success("Message supprimé");
+        if (selectedConversation) {
+          fetchConversationMessages(selectedConversation.conversation_id);
+        }
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
+  const handleCloseReport = async (reportId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/messaging/admin/reports/${reportId}/close`, {
+        method: "POST",
+        credentials: "include"
+      });
+      if (response.ok) {
+        toast.success("Signalement traité");
+        fetchReports();
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    }
+  };
+
   const handleVerifyUser = async (userId, status) => {
     try {
       const response = await fetch(`${API_URL}/api/admin/users/${userId}/verify`, {
