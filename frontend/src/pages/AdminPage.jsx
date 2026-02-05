@@ -740,6 +740,166 @@ const AdminPage = ({ user }) => {
             </Card>
           </TabsContent>
 
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="space-y-6">
+            {/* Reports Section */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Flag className="w-5 h-5 text-red-500" />
+                    Signalements
+                  </CardTitle>
+                  <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Ouverts</SelectItem>
+                      <SelectItem value="closed">Traités</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {reports.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {reports.map((report) => (
+                      <div key={report.report_id} className="p-4 hover:bg-gray-50">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge className={`text-xs ${
+                                report.reason === "spam" ? "bg-yellow-100 text-yellow-700" :
+                                report.reason === "harassment" ? "bg-red-100 text-red-700" :
+                                report.reason === "scam" ? "bg-orange-100 text-orange-700" :
+                                "bg-gray-100 text-gray-700"
+                              }`}>
+                                {report.reason === "spam" && "Spam"}
+                                {report.reason === "harassment" && "Harcèlement"}
+                                {report.reason === "scam" && "Arnaque"}
+                                {report.reason === "hate" && "Haine"}
+                                {report.reason === "other" && "Autre"}
+                              </Badge>
+                              <span className="text-xs text-gray-400">{formatDate(report.created_at)}</span>
+                            </div>
+                            <p className="text-sm text-gray-900">
+                              Signalé par: <span className="font-medium">{report.reporter?.name || "Utilisateur"}</span>
+                            </p>
+                            {report.note && (
+                              <p className="text-sm text-gray-500 mt-1">{report.note}</p>
+                            )}
+                            {report.message && (
+                              <div className="mt-2 p-2 bg-gray-50 rounded-lg text-sm">
+                                <p className="text-gray-500 text-xs mb-1">Message signalé:</p>
+                                <p className="text-gray-900">{report.message.text}</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const conv = conversations.find(c => c.conversation_id === report.conversation_id);
+                                if (conv) handleViewConversation(conv);
+                              }}
+                              className="border-gray-200"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            {report.status === "open" && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleCloseReport(report.report_id)}
+                                className="bg-green-500 hover:bg-green-600"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-10 h-10 text-green-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">Aucun signalement {reportStatusFilter === "open" ? "en attente" : ""}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Conversations Section */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-blue-500" />
+                  Toutes les conversations ({conversations.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {conversations.length > 0 ? (
+                  <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                    {conversations.map((conv) => (
+                      <div key={conv.conversation_id} className={`p-4 hover:bg-gray-50 ${conv.status === "blocked" ? "bg-red-50" : ""}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex -space-x-2">
+                              <div className="w-8 h-8 rounded-full bg-purple-100 border-2 border-white flex items-center justify-center text-xs font-medium text-purple-600">
+                                {conv.company?.name?.[0] || "E"}
+                              </div>
+                              <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-xs font-medium text-blue-600">
+                                {conv.creator?.name?.[0] || "C"}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {conv.company?.name || "Entreprise"} ↔ {conv.creator?.name || "Créateur"}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span>{conv.message_count || 0} messages</span>
+                                {conv.status === "blocked" && (
+                                  <Badge className="bg-red-100 text-red-600 text-xs">
+                                    <Lock className="w-3 h-3 mr-1" />Bloquée
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewConversation(conv)}
+                              className="border-gray-200"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleBlockConversation(conv.conversation_id, conv.status !== "blocked")}
+                              className={conv.status === "blocked" ? "border-green-200 text-green-600" : "border-red-200 text-red-600"}
+                            >
+                              {conv.status === "blocked" ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">Aucune conversation</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Projects Tab */}
           <TabsContent value="projects" className="space-y-4">
             <div className="flex items-center gap-3 flex-wrap">
