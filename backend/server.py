@@ -439,7 +439,8 @@ class CreatorProfile(BaseModel):
     
     # Specialties
     content_types: List[str] = []  # UGC, Micro-trottoir, Face cam, Ads, Interview, Montage
-    sectors: List[str] = []
+    sectors: List[str] = []  # Legacy field
+    niches: List[str] = []  # Niches: beaute, igaming, gaming, mode, tech, food, etc.
     
     # Equipment
     equipment: List[str] = []  # smartphone, camera, micro, lighting, etc.
