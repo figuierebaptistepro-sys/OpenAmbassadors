@@ -262,7 +262,15 @@ const LearnPage = ({ user }) => {
                 >
                   {/* Banner/Video Preview */}
                   <div className="h-32 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center relative overflow-hidden">
-                    {article.banner_url ? (
+                    {/* YouTube video thumbnail */}
+                    {article.banner_type === "youtube" && article.video_url ? (
+                      <img 
+                        src={`https://img.youtube.com/vi/${getYoutubeId(article.video_url)}/hqdefault.jpg`}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : article.banner_url ? (
                       <img 
                         src={article.banner_url} 
                         alt={article.title}
@@ -274,6 +282,15 @@ const LearnPage = ({ user }) => {
                       </div>
                     ) : (
                       <BookOpen className="w-10 h-10 text-gray-300" />
+                    )}
+                    
+                    {/* Play overlay for YouTube */}
+                    {article.banner_type === "youtube" && article.video_url && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                          <Play className="w-5 h-5 text-white ml-1" fill="white" />
+                        </div>
+                      </div>
                     )}
                     
                     {/* Badges overlay */}
