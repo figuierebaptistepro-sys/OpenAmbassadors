@@ -144,6 +144,52 @@
 ### 🚧 In Progress / Blocked
 1. **Forgot Password Email** - BLOCKED on Resend domain verification
 
+### ✅ Security Improvements (Feb 2026)
+
+#### Module de Sécurité (`/app/backend/security.py`)
+**Rate Limiting** (slowapi):
+- Login: 5 requêtes/minute
+- Register: 3 requêtes/minute  
+- OTP Request: 3 requêtes/minute
+- OTP Verify: 5 requêtes/minute
+- Password Reset: 3-5 requêtes/minute
+- Uploads: 10 requêtes/minute
+
+**Protection Brute-Force**:
+- Verrouillage compte après 10 tentatives échouées
+- Durée de verrouillage: 15 minutes
+- OTP limité à 5 tentatives par code
+
+**Headers de Sécurité HTTP**:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Content-Security-Policy` (restrictif)
+- `Strict-Transport-Security` (HTTPS)
+
+**Validation & Sanitization**:
+- Longueurs maximales pour tous les champs
+- Sanitization des entrées (null bytes, control chars)
+- Validation de force de mot de passe (8+ chars, lettre + chiffre)
+
+**Logs de Sécurité** (`/app/backend/security.log`):
+- Tentatives d'authentification (success/fail)
+- Rate limits atteints
+- Événements de sécurité importants
+- Emails masqués pour confidentialité
+
+**Tokens Sécurisés**:
+- JWT_SECRET obligatoire (64+ caractères)
+- OTP cryptographiquement sécurisé
+- Tokens de session avec `secrets.token_urlsafe()`
+- Invalidation des anciens tokens de reset
+
+**CORS Restrictif**:
+- Origins explicites uniquement
+- Méthodes HTTP spécifiques
+- Headers autorisés spécifiques
+
 ### 📋 Upcoming (P0-P1)
 1. **P0 - Custom Google OAuth** - User wants to use their own credentials
 2. **P1 - Stripe Integration** - Replace mocked `is_subscribed` with real payments
