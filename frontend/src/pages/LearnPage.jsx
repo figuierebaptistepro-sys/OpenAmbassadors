@@ -31,7 +31,11 @@ const LearnPage = ({ user }) => {
   
   // Admin state
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [newArticle, setNewArticle] = useState({
     title: "",
     description: "",
