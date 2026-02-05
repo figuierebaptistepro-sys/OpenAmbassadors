@@ -63,11 +63,12 @@ const getChecklistItems = (profile, user) => [
   { id: "bio", label: "Ajouter une bio", points: 5, done: !!profile?.bio },
   { id: "city", label: "Renseigner votre ville", points: 10, done: !!profile?.city },
   { id: "content_types", label: "Sélectionner vos spécialités", points: 10, done: profile?.content_types?.length > 0 },
+  { id: "niches", label: "Choisir vos niches", points: 10, done: profile?.niches?.length > 0 },
   { id: "equipment", label: "Lister votre matériel", points: 10, done: profile?.equipment?.length > 0 },
-  { id: "portfolio", label: "Ajouter 3 vidéos", points: 20, done: profile?.portfolio_videos?.length >= 3 },
+  { id: "portfolio", label: "Ajouter 3 vidéos", points: 15, done: profile?.portfolio_videos?.length >= 3 },
   { id: "rates", label: "Définir vos tarifs", points: 10, done: !!profile?.min_rate },
-  { id: "social", label: "Lier vos réseaux sociaux", points: 15, done: !!(profile?.social_instagram || profile?.social_tiktok || profile?.social_youtube) },
-  { id: "visibility", label: "Indiquer votre audience", points: 10, done: !!profile?.visibility },
+  { id: "social", label: "Lier vos réseaux sociaux", points: 10, done: !!(profile?.social_instagram || profile?.social_tiktok || profile?.social_youtube) },
+  { id: "visibility", label: "Indiquer votre audience", points: 5, done: !!profile?.visibility },
 ];
 
 const CreatorDashboard = ({ user, onUserUpdate }) => {
