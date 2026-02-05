@@ -2850,6 +2850,453 @@ async def admin_process_access_request(request_id: str, request: Request, user: 
     
     return {"message": f"Demande {new_status}", "status": new_status}
 
+# ==================== ADMIN AFFILIATE MANAGEMENT ====================
+
+@api_router.get("/admin/affiliates")
+async def get_admin_affiliates(user: dict = Depends(get_admin_user)):
+    """Get all affiliates with their stats"""
+    # Get all affiliate codes
+    affiliates = await db.affiliate_codes.find({}, {"_id": 0}).to_list(500)
+    
+    result = []
+    for aff in affiliates:
+        # Get user info
+        aff_user = await db.users.find_one(
+            {"user_id": aff["user_id"]},
+            {"_id": 0, "name": 1, "email": 1, "picture": 1, "user_type": 1}
+        )
+        
+        # Get stats
+        stats = await db.affiliate_stats.find_one(
+            {"user_id": aff["user_id"]},
+            {"_id": 0}
+        )
+        
+        # Count referrals
+        referral_count = await db.affiliate_referrals.count_documents({"referrer_id": aff["user_id"]})
+        paying_count = await db.affiliate_referrals.count_documents({
+            "referrer_id": aff["user_id"],
+            "status": "paying"
+        })
+        
+        result.append({
+            "user_id": aff["user_id"],
+            "code": aff["code"],
+            "created_at": aff["created_at"].isoformat() if isinstance(aff["created_at"], datetime) else aff["created_at"],
+            "user": aff_user,
+            "stats": {
+                "total_clicks": stats.get("total_clicks", 0) if stats else 0,
+                "total_signups": referral_count,
+                "paying_users": paying_count,
+                "mrr_generated": stats.get("mrr_generated", 0) if stats else 0,
+                "pending_earnings": stats.get("pending_earnings", 0) if stats else 0,
+                "validated_earnings": stats.get("validated_earnings", 0) if stats else 0
+            }
+        })
+    
+    # Sort by signups desc
+    result.sort(key=lambda x: x["stats"]["total_signups"], reverse=True)
+    
+    return result
+
+@api_router.get("/admin/affiliates/{user_id}/referrals")
+async def get_admin_affiliate_referrals(user_id: str, user: dict = Depends(get_admin_user)):
+    """Get all referrals for a specific affiliate"""
+    referrals = await db.affiliate_referrals.find(
+        {"referrer_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    for ref in referrals:
+        # Get referred user info
+        referred = await db.users.find_one(
+            {"user_id": ref["referred_user_id"]},
+            {"_id": 0, "name": 1, "email": 1, "user_type": 1, "is_subscribed": 1, "is_premium": 1}
+        )
+        ref["referred_user"] = referred
+        if isinstance(ref.get("created_at"), datetime):
+            ref["created_at"] = ref["created_at"].isoformat()
+    
+    return referrals
+
+@api_router.put("/admin/affiliates/{user_id}/commission-rate")
+async def update_affiliate_commission_rate(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
+    """Update commission rate for an affiliate"""
+    body = await request.json()
+    rate = body.get("rate", 0.20)
+    
+    if rate < 0 or rate > 1:
+        raise HTTPException(status_code=400, detail="Le taux doit être entre 0 et 1")
+    
+    # Update all referrals for this affiliate
+    await db.affiliate_referrals.update_many(
+        {"referrer_id": user_id},
+        {"$set": {"commission_rate": rate}}
+    )
+    
+    return {"user_id": user_id, "commission_rate": rate}
+
+@api_router.post("/admin/affiliates/{user_id}/payout")
+async def process_affiliate_payout(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
+    """Process payout for affiliate earnings"""
+    body = await request.json()
+    amount = body.get("amount", 0)
+    
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Montant invalide")
+    
+    # Get current pending earnings
+    stats = await db.affiliate_stats.find_one({"user_id": user_id})
+    if not stats or stats.get("pending_earnings", 0) < amount:
+        raise HTTPException(status_code=400, detail="Solde insuffisant")
+    
+    # Create payout record
+    payout = {
+        "payout_id": f"payout_{uuid.uuid4().hex[:12]}",
+        "user_id": user_id,
+        "amount": amount,
+        "status": "completed",
+        "created_at": datetime.now(timezone.utc),
+        "processed_by": user["user_id"]
+    }
+    await db.affiliate_payouts.insert_one(payout)
+    
+    # Update stats
+    await db.affiliate_stats.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"pending_earnings": -amount, "paid_earnings": amount},
+            "$set": {"last_payout_at": datetime.now(timezone.utc)}
+        }
+    )
+    
+    return {"message": "Paiement effectué", "amount": amount}
+
+# ==================== ADMIN REVIEWS MANAGEMENT ====================
+
+@api_router.get("/admin/reviews")
+async def get_admin_reviews(
+    user: dict = Depends(get_admin_user),
+    source: Optional[str] = None,
+    status: Optional[str] = None
+):
+    """Get all reviews for moderation"""
+    query = {}
+    if source:
+        query["source"] = source
+    if status == "flagged":
+        query["is_flagged"] = True
+    elif status == "hidden":
+        query["is_hidden"] = True
+    
+    reviews = await db.reviews.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    
+    for review in reviews:
+        # Get reviewer info
+        if review.get("reviewer_id"):
+            reviewer = await db.users.find_one(
+                {"user_id": review["reviewer_id"]},
+                {"_id": 0, "name": 1, "email": 1}
+            )
+            review["reviewer"] = reviewer
+        
+        # Get reviewee info
+        reviewee = await db.users.find_one(
+            {"user_id": review["reviewee_id"]},
+            {"_id": 0, "name": 1, "email": 1, "user_type": 1}
+        )
+        review["reviewee"] = reviewee
+        
+        if isinstance(review.get("created_at"), datetime):
+            review["created_at"] = review["created_at"].isoformat()
+    
+    return reviews
+
+@api_router.put("/admin/reviews/{review_id}/moderate")
+async def moderate_review(review_id: str, request: Request, user: dict = Depends(get_admin_user)):
+    """Moderate a review (hide, flag, delete)"""
+    body = await request.json()
+    action = body.get("action")  # hide, unhide, flag, unflag, delete
+    
+    if action == "delete":
+        await db.reviews.delete_one({"review_id": review_id})
+        return {"message": "Avis supprimé", "action": "delete"}
+    
+    update = {}
+    if action == "hide":
+        update["is_hidden"] = True
+    elif action == "unhide":
+        update["is_hidden"] = False
+    elif action == "flag":
+        update["is_flagged"] = True
+        update["flagged_reason"] = body.get("reason", "")
+    elif action == "unflag":
+        update["is_flagged"] = False
+        update["flagged_reason"] = None
+    else:
+        raise HTTPException(status_code=400, detail="Action invalide")
+    
+    update["moderated_at"] = datetime.now(timezone.utc).isoformat()
+    update["moderated_by"] = user["user_id"]
+    
+    await db.reviews.update_one(
+        {"review_id": review_id},
+        {"$set": update}
+    )
+    
+    return {"message": f"Avis {action}", "action": action}
+
+# ==================== ADMIN NOTIFICATIONS ====================
+
+@api_router.post("/admin/notifications/send")
+async def send_admin_notification(request: Request, user: dict = Depends(get_admin_user)):
+    """Send notification to users"""
+    body = await request.json()
+    target = body.get("target")  # all, creators, businesses, user_id
+    title = body.get("title")
+    message = body.get("message")
+    notification_type = body.get("type", "info")  # info, warning, promo
+    
+    if not title or not message:
+        raise HTTPException(status_code=400, detail="Titre et message requis")
+    
+    # Build target query
+    if target == "all":
+        query = {"user_type": {"$in": ["creator", "business"]}}
+    elif target == "creators":
+        query = {"user_type": "creator"}
+    elif target == "businesses":
+        query = {"user_type": "business"}
+    elif target and target.startswith("user_"):
+        query = {"user_id": target}
+    else:
+        raise HTTPException(status_code=400, detail="Cible invalide")
+    
+    # Get target users
+    target_users = await db.users.find(query, {"_id": 0, "user_id": 1}).to_list(10000)
+    
+    # Create notifications
+    notifications = []
+    for target_user in target_users:
+        notif = {
+            "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+            "user_id": target_user["user_id"],
+            "type": notification_type,
+            "title": title,
+            "message": message,
+            "is_read": False,
+            "is_admin": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        notifications.append(notif)
+    
+    if notifications:
+        await db.notifications.insert_many(notifications)
+    
+    return {"message": f"Notification envoyée à {len(notifications)} utilisateurs", "count": len(notifications)}
+
+# ==================== ADMIN ACTIVITY LOGS ====================
+
+@api_router.get("/admin/activity-logs")
+async def get_activity_logs(user: dict = Depends(get_admin_user), limit: int = 100):
+    """Get recent activity logs"""
+    # Aggregate recent activities from various collections
+    activities = []
+    
+    # Recent users
+    recent_users = await db.users.find(
+        {}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "user_type": 1, "created_at": 1}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    for u in recent_users:
+        activities.append({
+            "type": "user_signup",
+            "icon": "UserPlus",
+            "title": f"Nouvel utilisateur: {u.get('name', u.get('email', 'Inconnu'))}",
+            "subtitle": u.get("user_type", "—"),
+            "timestamp": u.get("created_at"),
+            "data": u
+        })
+    
+    # Recent projects
+    recent_projects = await db.projects.find(
+        {}, {"_id": 0, "project_id": 1, "title": 1, "status": 1, "created_at": 1, "company_name": 1}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    for p in recent_projects:
+        activities.append({
+            "type": "project_created",
+            "icon": "Briefcase",
+            "title": f"Nouveau projet: {p.get('title', 'Sans titre')}",
+            "subtitle": p.get("company_name", "—"),
+            "timestamp": p.get("created_at"),
+            "data": p
+        })
+    
+    # Recent reviews
+    recent_reviews = await db.reviews.find(
+        {}, {"_id": 0, "review_id": 1, "rating": 1, "source": 1, "created_at": 1, "reviewer_name": 1}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    for r in recent_reviews:
+        activities.append({
+            "type": "review_posted",
+            "icon": "Star",
+            "title": f"Nouvel avis: {r.get('rating', '?')}/5",
+            "subtitle": f"Par {r.get('reviewer_name', 'Anonyme')} ({r.get('source', '?')})",
+            "timestamp": r.get("created_at"),
+            "data": r
+        })
+    
+    # Recent referrals
+    recent_referrals = await db.affiliate_referrals.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    for ref in recent_referrals:
+        activities.append({
+            "type": "referral",
+            "icon": "Gift",
+            "title": f"Nouveau parrainage: {ref.get('referred_name', ref.get('referred_email', 'Inconnu'))}",
+            "subtitle": f"Status: {ref.get('status', '?')}",
+            "timestamp": ref.get("created_at").isoformat() if isinstance(ref.get("created_at"), datetime) else ref.get("created_at"),
+            "data": ref
+        })
+    
+    # Recent withdrawals
+    recent_withdrawals = await db.wallet_transactions.find(
+        {"transaction_type": "withdrawal"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    for w in recent_withdrawals:
+        activities.append({
+            "type": "withdrawal",
+            "icon": "Wallet",
+            "title": f"Demande de retrait: {w.get('amount', 0)}€",
+            "subtitle": f"Status: {w.get('status', '?')}",
+            "timestamp": w.get("created_at"),
+            "data": w
+        })
+    
+    # Sort all by timestamp
+    def get_timestamp(item):
+        ts = item.get("timestamp")
+        if isinstance(ts, str):
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except:
+                return datetime.min.replace(tzinfo=timezone.utc)
+        elif isinstance(ts, datetime):
+            return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=timezone.utc)
+    
+    activities.sort(key=get_timestamp, reverse=True)
+    
+    return activities[:limit]
+
+# ==================== ADMIN ANALYTICS ====================
+
+@api_router.get("/admin/analytics")
+async def get_admin_analytics(user: dict = Depends(get_admin_user)):
+    """Get detailed platform analytics"""
+    now = datetime.now(timezone.utc)
+    thirty_days_ago = now - timedelta(days=30)
+    seven_days_ago = now - timedelta(days=7)
+    
+    # User growth
+    total_users = await db.users.count_documents({})
+    users_this_month = await db.users.count_documents({
+        "created_at": {"$gte": thirty_days_ago.isoformat()}
+    })
+    users_this_week = await db.users.count_documents({
+        "created_at": {"$gte": seven_days_ago.isoformat()}
+    })
+    
+    # Creators vs Businesses
+    total_creators = await db.users.count_documents({"user_type": "creator"})
+    total_businesses = await db.users.count_documents({"user_type": "business"})
+    premium_creators = await db.users.count_documents({"user_type": "creator", "is_premium": True})
+    subscribed_businesses = await db.users.count_documents({"user_type": "business", "is_subscribed": True})
+    
+    # Projects
+    total_projects = await db.projects.count_documents({})
+    open_projects = await db.projects.count_documents({"status": "open"})
+    completed_projects = await db.projects.count_documents({"status": "completed"})
+    
+    # Affiliate stats
+    total_affiliates = await db.affiliate_codes.count_documents({})
+    total_referrals = await db.affiliate_referrals.count_documents({})
+    paying_referrals = await db.affiliate_referrals.count_documents({"status": "paying"})
+    
+    # Aggregate affiliate earnings
+    aff_stats = await db.affiliate_stats.aggregate([
+        {"$group": {
+            "_id": None,
+            "total_clicks": {"$sum": "$total_clicks"},
+            "total_mrr": {"$sum": "$mrr_generated"},
+            "total_pending": {"$sum": "$pending_earnings"},
+            "total_paid": {"$sum": {"$ifNull": ["$paid_earnings", 0]}}
+        }}
+    ]).to_list(1)
+    
+    affiliate_totals = aff_stats[0] if aff_stats else {}
+    
+    # Reviews
+    total_reviews = await db.reviews.count_documents({})
+    verified_reviews = await db.reviews.count_documents({"source": "verified"})
+    external_reviews = await db.reviews.count_documents({"source": "external"})
+    
+    # Messages
+    total_conversations = await db.conversations.count_documents({})
+    total_messages = await db.messages.count_documents({})
+    
+    # Revenue (from wallet transactions)
+    revenue_pipeline = await db.wallet_transactions.aggregate([
+        {"$match": {"transaction_type": "earning", "status": "completed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$platform_fee"}}}
+    ]).to_list(1)
+    total_platform_revenue = revenue_pipeline[0]["total"] if revenue_pipeline else 0
+    
+    return {
+        "users": {
+            "total": total_users,
+            "this_month": users_this_month,
+            "this_week": users_this_week,
+            "creators": total_creators,
+            "businesses": total_businesses,
+            "premium_creators": premium_creators,
+            "subscribed_businesses": subscribed_businesses
+        },
+        "projects": {
+            "total": total_projects,
+            "open": open_projects,
+            "completed": completed_projects
+        },
+        "affiliates": {
+            "total_affiliates": total_affiliates,
+            "total_referrals": total_referrals,
+            "paying_referrals": paying_referrals,
+            "conversion_rate": round((paying_referrals / total_referrals * 100), 2) if total_referrals > 0 else 0,
+            "total_clicks": affiliate_totals.get("total_clicks", 0),
+            "total_mrr": affiliate_totals.get("total_mrr", 0),
+            "pending_commissions": affiliate_totals.get("total_pending", 0),
+            "paid_commissions": affiliate_totals.get("total_paid", 0)
+        },
+        "reviews": {
+            "total": total_reviews,
+            "verified": verified_reviews,
+            "external": external_reviews
+        },
+        "engagement": {
+            "conversations": total_conversations,
+            "messages": total_messages
+        },
+        "revenue": {
+            "platform_fees": total_platform_revenue
+        }
+    }
+
 # Admin endpoint to toggle subscription (mock for MVP)
 @api_router.post("/admin/users/{user_id}/subscription")
 async def toggle_subscription(user_id: str, user: dict = Depends(get_admin_user)):
