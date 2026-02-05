@@ -1209,27 +1209,46 @@ async def request_otp(request: Request, data: OTPRequest):
     return response_data
 
 @api_router.post("/auth/otp/verify")
-async def verify_otp(data: OTPVerify, response: Response):
+@limiter.limit(RATE_LIMITS["auth_otp_verify"])
+async def verify_otp(request: Request, data: OTPVerify, response: Response):
     """Verify OTP code and authenticate"""
-    otp_doc = await db.otp_codes.find_one({"email": data.email}, {"_id": 0})
+    email = sanitize_input(data.email.lower())
+    
+    otp_doc = await db.otp_codes.find_one({"email": email}, {"_id": 0})
     
     if not otp_doc:
+        log_auth_attempt(request, email, False, "otp_not_found")
         raise HTTPException(status_code=400, detail="Code invalide")
     
+    # Check attempt count to prevent brute-force
+    attempts = otp_doc.get("attempts", 0)
+    if attempts >= 5:
+        await db.otp_codes.delete_one({"email": email})
+        log_auth_attempt(request, email, False, "otp_max_attempts")
+        raise HTTPException(status_code=400, detail="Trop de tentatives. Veuillez demander un nouveau code.")
+    
     if otp_doc["code"] != data.code:
+        # Increment attempt counter
+        await db.otp_codes.update_one(
+            {"email": email},
+            {"$inc": {"attempts": 1}}
+        )
+        log_auth_attempt(request, email, False, "otp_wrong_code")
         raise HTTPException(status_code=400, detail="Code incorrect")
     
     expires_at = datetime.fromisoformat(otp_doc["expires_at"])
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at < datetime.now(timezone.utc):
+        await db.otp_codes.delete_one({"email": email})
+        log_auth_attempt(request, email, False, "otp_expired")
         raise HTTPException(status_code=400, detail="Code expiré")
     
-    # Delete OTP
-    await db.otp_codes.delete_one({"email": data.email})
+    # Delete OTP after successful verification
+    await db.otp_codes.delete_one({"email": email})
     
     # Check if user exists
-    existing_user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    existing_user = await db.users.find_one({"email": email}, {"_id": 0})
     
     if existing_user:
         user_id = existing_user["user_id"]
@@ -1239,7 +1258,7 @@ async def verify_otp(data: OTPVerify, response: Response):
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_doc = {
             "user_id": user_id,
-            "email": data.email,
+            "email": email,
             "name": None,
             "picture": None,
             "user_type": None,
@@ -1248,6 +1267,9 @@ async def verify_otp(data: OTPVerify, response: Response):
         }
         await db.users.insert_one(user_doc)
         user_type = None
+        log_security_event("USER_CREATED_VIA_OTP", request, f"user_id={user_id}")
+    
+    log_auth_attempt(request, email, True, "otp_verified")
     
     # Create session
     token = create_jwt_token(user_id, user_type)
@@ -1263,7 +1285,7 @@ async def verify_otp(data: OTPVerify, response: Response):
     
     return {
         "user_id": user_id,
-        "email": data.email,
+        "email": email,
         "user_type": user_type,
         "is_new_user": not existing_user,
         "token": token
