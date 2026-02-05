@@ -37,6 +37,12 @@ const LearnPage = ({ user }) => {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageInputMode, setImageInputMode] = useState("upload"); // "upload" or "url"
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  
   const [newArticle, setNewArticle] = useState({
     title: "",
     description: "",
@@ -55,6 +61,72 @@ const LearnPage = ({ user }) => {
 
   const isPremium = user?.is_premium;
   const isAdmin = ADMIN_EMAILS.includes(user?.email);
+
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Format non supporté. Utilisez JPG, PNG, WebP ou GIF");
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image trop volumineuse (max 10 MB)");
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => setFilePreview(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  // Clear selected file
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Upload file to server
+  const uploadFile = async (articleId) => {
+    if (!selectedFile) return null;
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      
+      const res = await fetch(`${API_URL}/api/admin/articles/${articleId}/banner`, {
+        method: "POST",
+        credentials: "include",
+        body: formData
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        return data.url;
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || "Erreur lors de l'upload");
+        return null;
+      }
+    } catch (error) {
+      toast.error("Erreur lors de l'upload de l'image");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Helper: Extract YouTube video ID from various URL formats
   const getYoutubeId = (url) => {
