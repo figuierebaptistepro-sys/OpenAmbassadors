@@ -41,12 +41,45 @@ class AffiliateLink(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 
-def generate_affiliate_code(user_id: str) -> str:
-    """Génère un code d'affiliation unique basé sur le user_id"""
-    # Utilise les 8 premiers caractères du user_id + 4 caractères aléatoires
-    base = user_id.replace("user_", "")[:8]
-    suffix = secrets.token_hex(2)
-    return f"{base}{suffix}".upper()
+def normalize_name(name: str) -> str:
+    """Normalise un nom pour créer un slug URL-friendly"""
+    import unicodedata
+    import re
+    
+    # Convertir en minuscules
+    name = name.lower().strip()
+    
+    # Supprimer les accents
+    name = unicodedata.normalize('NFD', name)
+    name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
+    
+    # Garder uniquement lettres et chiffres, remplacer espaces par tirets
+    name = re.sub(r'[^a-z0-9\s-]', '', name)
+    name = re.sub(r'[\s_]+', '-', name)
+    name = re.sub(r'-+', '-', name)
+    name = name.strip('-')
+    
+    return name
+
+def generate_affiliate_code(user_name: str, user_id: str) -> str:
+    """
+    Génère un code d'affiliation basé sur le nom d'utilisateur.
+    Format: prenom-nom-XXXX (avec suffixe aléatoire pour unicité)
+    Exemple: baptiste-figuiere-a3f2
+    """
+    if user_name:
+        base = normalize_name(user_name)
+        # Limiter la longueur du nom à 20 caractères
+        if len(base) > 20:
+            base = base[:20].rstrip('-')
+    else:
+        # Fallback si pas de nom
+        base = f"user-{user_id.replace('user_', '')[:6]}"
+    
+    # Ajouter un suffixe court pour garantir l'unicité
+    suffix = secrets.token_hex(2)  # 4 caractères hex
+    
+    return f"{base}-{suffix}"
 
 def calculate_conversion_rate(clicks: int, signups: int) -> float:
     """Calcule le taux de conversion"""
