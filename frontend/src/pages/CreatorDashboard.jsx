@@ -874,6 +874,25 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 ))}
               </div>
             </div>
+
+            <div>
+              <Label className="text-sm">Niches / Secteurs</Label>
+              <p className="text-xs text-gray-500 mb-2">Sélectionnez les secteurs dans lesquels vous êtes spécialisé(e)</p>
+              <div className="grid grid-cols-2 gap-2 mt-1 max-h-48 overflow-y-auto pr-1">
+                {NICHES.map((niche) => (
+                  <label key={niche.id} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${editForm.niches?.includes(niche.id) ? 'bg-pink-50 border border-pink-200' : 'bg-gray-50 hover:bg-gray-100'}`}>
+                    <input type="checkbox" checked={editForm.niches?.includes(niche.id)}
+                      onChange={(e) => setEditForm({ ...editForm, niches: e.target.checked 
+                        ? [...(editForm.niches || []), niche.id] 
+                        : (editForm.niches || []).filter(n => n !== niche.id) })}
+                      className="rounded border-gray-300 text-pink-500 focus:ring-pink-500" />
+                    <span className="text-sm">{niche.icon}</span>
+                    <span className="text-xs">{niche.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div>
               <Label className="text-sm">Équipement</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
