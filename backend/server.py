@@ -8,7 +8,7 @@ import os
 import logging
 import shutil
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -20,6 +20,27 @@ import string
 import boto3
 from botocore.config import Config
 import resend
+
+# Security imports
+from security import (
+    limiter, 
+    rate_limit_exceeded_handler,
+    SecurityHeadersMiddleware,
+    log_auth_attempt,
+    log_security_event,
+    check_lockout,
+    record_failed_attempt,
+    clear_failed_attempts,
+    validate_password_strength,
+    generate_secure_otp,
+    generate_secure_token,
+    sanitize_input,
+    validate_length,
+    MAX_LENGTHS,
+    RATE_LIMITS
+)
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
