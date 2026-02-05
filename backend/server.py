@@ -926,9 +926,9 @@ async def register_user(data: RegisterRequest, response: Response):
     # Handle affiliate referral if ref_code provided
     if data.ref_code:
         try:
-            # Find the affiliate code
+            # Find the affiliate code (case-insensitive)
             affiliate = await db.affiliate_codes.find_one(
-                {"code": data.ref_code.upper()},
+                {"code": {"$regex": f"^{data.ref_code}$", "$options": "i"}},
                 {"_id": 0}
             )
             if affiliate and affiliate["user_id"] != user_id:
