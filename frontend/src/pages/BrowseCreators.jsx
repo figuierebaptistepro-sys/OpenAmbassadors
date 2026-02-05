@@ -315,6 +315,35 @@ const BrowseCreators = ({ user }) => {
         </div>
       </div>
 
+      {/* Niches */}
+      <div className="space-y-3 mt-4">
+        <Label className="text-sm font-medium text-gray-700">Niches / Secteurs</Label>
+        <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+          {NICHES.map(niche => (
+            <button
+              key={niche.id}
+              onClick={() => toggleNiche(niche.id)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                filters.niches.includes(niche.id)
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <span>{niche.icon}</span>
+              <span>{niche.label}</span>
+            </button>
+          ))}
+        </div>
+        {filters.niches.length > 0 && (
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, niches: [] }))}
+            className="text-xs text-gray-500 hover:text-primary"
+          >
+            Effacer les niches
+          </button>
+        )}
+      </div>
+
       {/* Experience Level */}
       <div className="space-y-2 mt-4">
         <Label className="text-sm font-medium text-gray-700">Niveau d'expérience</Label>
