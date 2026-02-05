@@ -470,6 +470,12 @@ const AdminPage = ({ user }) => {
             <TabsTrigger value="users" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               Utilisateurs
             </TabsTrigger>
+            <TabsTrigger value="messages" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+              Messages
+              {reports.filter(r => r.status === "open").length > 0 && (
+                <Badge className="ml-2 bg-red-500 text-white text-xs">{reports.filter(r => r.status === "open").length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="projects" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               Projets
             </TabsTrigger>
