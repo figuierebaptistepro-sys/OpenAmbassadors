@@ -42,11 +42,32 @@ const LearnPage = ({ user }) => {
     banner_type: "image",
     banner_url: "",
     video_url: "",
+    youtube_url: "",
     tags: ""
   });
 
   const isPremium = user?.is_premium;
   const isAdmin = ADMIN_EMAILS.includes(user?.email);
+
+  // Helper: Extract YouTube video ID from various URL formats
+  const getYoutubeId = (url) => {
+    if (!url) return null;
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  // Get YouTube thumbnail
+  const getYoutubeThumbnail = (url) => {
+    const id = getYoutubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  };
 
   // Fetch articles and progress
   useEffect(() => {
