@@ -1069,23 +1069,43 @@ async def register_user(request: Request, data: RegisterRequest, response: Respo
     }
 
 @api_router.post("/auth/login")
-async def login_user(data: LoginRequest, response: Response):
+@limiter.limit(RATE_LIMITS["auth_login"])
+async def login_user(request: Request, data: LoginRequest, response: Response):
     """Login user with email and password"""
-    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    email = sanitize_input(data.email.lower())
+    
+    # Check for lockout
+    if check_lockout(email):
+        log_auth_attempt(request, email, False, "account_locked")
+        raise HTTPException(
+            status_code=429, 
+            detail="Compte temporairement verrouillé suite à trop de tentatives. Réessayez dans 15 minutes."
+        )
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     
     if not user:
+        record_failed_attempt(email)
+        log_auth_attempt(request, email, False, "user_not_found")
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
     
     # Check if user has a password (might be Google-only user)
     if not user.get("password"):
+        log_auth_attempt(request, email, False, "google_only_account")
         raise HTTPException(status_code=401, detail="Ce compte utilise la connexion Google. Veuillez vous connecter avec Google.")
     
     # Verify password
     if not bcrypt.checkpw(data.password.encode('utf-8'), user["password"].encode('utf-8')):
+        record_failed_attempt(email)
+        log_auth_attempt(request, email, False, "wrong_password")
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
     
+    # Clear failed attempts on successful login
+    clear_failed_attempts(email)
+    log_auth_attempt(request, email, True)
+    
     # Create session
-    session_token = f"sess_{uuid.uuid4().hex}"
+    session_token = generate_secure_token(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
     
     await db.user_sessions.update_one(
