@@ -1,42 +1,164 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BookOpen, Play, Clock, Star, Crown, Lock, Award } from "lucide-react";
+import { Search, BookOpen, Play, Clock, Star, Crown, Lock, Award, Eye, CheckCircle, Plus, Image, Video } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Switch } from "../components/ui/switch";
+import { toast } from "sonner";
 
-const CATEGORIES = ["Tous", "Fondamentaux", "Spécialisation", "Avancé", "Business"];
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const TRAININGS = [
-  { id: 1, title: "Les bases du contenu UGC", description: "Apprenez à créer du contenu authentique", duration: "45 min", category: "Fondamentaux", premium: false, image: "📱", points: 5 },
-  { id: 2, title: "Maîtriser l'éclairage", description: "Techniques d'éclairage professionnelles", duration: "30 min", category: "Fondamentaux", premium: false, image: "💡", points: 5 },
-  { id: 3, title: "Storytelling pour marques", description: "Racontez des histoires qui convertissent", duration: "1h", category: "Spécialisation", premium: false, image: "📖", points: 10 },
-  { id: 4, title: "Montage mobile avancé", description: "Capcut, InShot et outils pro", duration: "1h30", category: "Spécialisation", premium: true, image: "🎬", points: 15 },
-  { id: 5, title: "Négocier ses tarifs", description: "Maximisez votre valeur", duration: "45 min", category: "Business", premium: true, image: "💰", points: 10 },
-  { id: 6, title: "Personal Branding", description: "Construisez votre marque personnelle", duration: "2h", category: "Avancé", premium: true, image: "⭐", points: 20 },
-];
+const ADMIN_EMAILS = ["figuierebaptistepro@gmail.com"];
+const DEFAULT_CATEGORIES = ["Fondamentaux", "Spécialisation", "Avancé", "Business", "Technique"];
 
 const LearnPage = ({ user }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tous");
+  const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(null);
+  
+  // Admin state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newArticle, setNewArticle] = useState({
+    title: "",
+    description: "",
+    content: "",
+    category: "Fondamentaux",
+    duration: "",
+    points: 5,
+    is_premium: false,
+    is_published: true,
+    banner_type: "image",
+    banner_url: "",
+    video_url: "",
+    tags: ""
+  });
 
   const isPremium = user?.is_premium;
+  const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
-  const filteredTrainings = TRAININGS.filter((t) => {
-    const matchCategory = activeCategory === "Tous" || t.category === activeCategory;
-    const matchSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  // Fetch articles and progress
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch articles
+        const articlesRes = await fetch(
+          `${API_URL}/api/articles?category=${activeCategory === "Tous" ? "" : activeCategory}&search=${searchQuery}`,
+          { credentials: "include" }
+        );
+        
+        if (articlesRes.ok) {
+          const data = await articlesRes.json();
+          setArticles(data.articles || []);
+          
+          // Build category list with "Tous" first
+          const fetchedCategories = data.categories || [];
+          setCategories(fetchedCategories);
+        }
+
+        // Fetch user progress
+        const progressRes = await fetch(`${API_URL}/api/articles/progress/me`, {
+          credentials: "include"
+        });
+        
+        if (progressRes.ok) {
+          const progressData = await progressRes.json();
+          setProgress(progressData);
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeCategory, searchQuery]);
+
+  const handleCreateArticle = async () => {
+    if (!newArticle.title || !newArticle.description || !newArticle.content) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const payload = {
+        ...newArticle,
+        tags: newArticle.tags ? newArticle.tags.split(",").map(t => t.trim()).filter(Boolean) : []
+      };
+
+      const res = await fetch(`${API_URL}/api/admin/articles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const created = await res.json();
+        setArticles(prev => [created, ...prev]);
+        setShowCreateDialog(false);
+        setNewArticle({
+          title: "",
+          description: "",
+          content: "",
+          category: "Fondamentaux",
+          duration: "",
+          points: 5,
+          is_premium: false,
+          is_published: true,
+          banner_type: "image",
+          banner_url: "",
+          video_url: "",
+          tags: ""
+        });
+        toast.success("Article créé avec succès !");
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || "Erreur lors de la création");
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la création");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const completedIds = progress?.completed_articles || [];
+  const allCategories = ["Tous", ...DEFAULT_CATEGORIES];
 
   return (
     <AppLayout user={user}>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
-        <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Learn</h1>
-        <p className="text-gray-500 text-xs sm:text-sm">Formez-vous et gagnez des points</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Learn</h1>
+            <p className="text-gray-500 text-xs sm:text-sm">Formez-vous et gagnez des points</p>
+          </div>
+          {isAdmin && (
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              className="bg-primary hover:bg-primary-hover"
+              data-testid="create-article-btn"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvel article
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="p-4 sm:p-6 lg:p-8">
@@ -48,8 +170,12 @@ const LearnPage = ({ user }) => {
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-heading font-bold text-sm sm:text-base">+5 points par formation</p>
-                <p className="text-white/80 text-xs">Complétez des formations pour booster votre score</p>
+                <p className="font-heading font-bold text-sm sm:text-base">
+                  {progress ? `${progress.total_points || 0} points gagnés` : "Gagnez des points"}
+                </p>
+                <p className="text-white/80 text-xs">
+                  {progress ? `${progress.total_completed || 0} formations complétées` : "Complétez des formations pour booster votre score"}
+                </p>
               </div>
             </div>
             {!isPremium && (
@@ -66,14 +192,15 @@ const LearnPage = ({ user }) => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              placeholder="Rechercher..."
+              placeholder="Rechercher un article..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-gray-50 border-gray-200"
+              data-testid="search-articles"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-            {CATEGORIES.map((cat) => (
+            {allCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -82,6 +209,7 @@ const LearnPage = ({ user }) => {
                     ? "bg-primary text-white"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                 }`}
+                data-testid={`category-${cat.toLowerCase()}`}
               >
                 {cat}
               </button>
@@ -89,67 +217,320 @@ const LearnPage = ({ user }) => {
           </div>
         </div>
 
-        {/* Trainings Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTrainings.map((training) => {
-            const isLocked = training.premium && !isPremium;
-            
-            return (
-              <Card key={training.id} className={`border-0 shadow-sm overflow-hidden ${isLocked ? "opacity-75" : ""}`}>
-                <div className="h-28 sm:h-32 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center relative">
-                  <span className="text-4xl sm:text-5xl">{training.image}</span>
-                  {training.premium && (
-                    <Badge className="absolute top-2 right-2 bg-primary text-xs">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Premium
-                    </Badge>
-                  )}
-                  {!training.premium && (
-                    <Badge className="absolute top-2 right-2 bg-green-100 text-green-700 text-xs">Accès libre</Badge>
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {training.duration}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-500" />
-                      +{training.points} pts
-                    </span>
-                  </div>
-                  <h3 className="font-heading font-semibold text-gray-900 text-sm mb-1">{training.title}</h3>
-                  <p className="text-gray-500 text-xs mb-3 line-clamp-2">{training.description}</p>
-                  <Button
-                    size="sm"
-                    disabled={isLocked}
-                    className={`w-full text-xs ${
-                      isLocked
-                        ? "bg-gray-100 text-gray-500"
-                        : "bg-primary hover:bg-primary-hover"
-                    }`}
-                  >
-                    {isLocked ? (
-                      <><Lock className="w-3 h-3 mr-1" />Réservé Premium</>
+        {/* Loading state */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : articles.length > 0 ? (
+          /* Articles Grid */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="articles-grid">
+            {articles.map((article) => {
+              const isLocked = article.is_premium && !isPremium;
+              const isComplete = completedIds.includes(article.article_id);
+              
+              return (
+                <Card 
+                  key={article.article_id} 
+                  className={`border-0 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all ${isLocked ? "opacity-75" : ""}`}
+                  onClick={() => navigate(`/learn/${article.article_id}`)}
+                  data-testid={`article-card-${article.article_id}`}
+                >
+                  {/* Banner/Video Preview */}
+                  <div className="h-32 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center relative overflow-hidden">
+                    {article.banner_url ? (
+                      <img 
+                        src={article.banner_url} 
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : article.video_url ? (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                        <Play className="w-10 h-10 text-white/80" />
+                      </div>
                     ) : (
-                      <><Play className="w-3 h-3 mr-1" />Commencer</>
+                      <BookOpen className="w-10 h-10 text-gray-300" />
                     )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {filteredTrainings.length === 0 && (
+                    
+                    {/* Badges overlay */}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {article.is_premium && (
+                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
+                      {!article.is_premium && (
+                        <Badge className="bg-green-100 text-green-700 text-xs">Gratuit</Badge>
+                      )}
+                    </div>
+                    
+                    {/* Completed badge */}
+                    {isComplete && (
+                      <div className="absolute top-2 left-2">
+                        <Badge className="bg-green-500 text-white text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Complété
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Video indicator */}
+                    {article.banner_type === "video" && (
+                      <div className="absolute bottom-2 left-2">
+                        <Badge className="bg-black/60 text-white text-xs">
+                          <Video className="w-3 h-3 mr-1" />
+                          Vidéo
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                      {article.duration && (
+                        <>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {article.duration}
+                          </span>
+                          <span>•</span>
+                        </>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500" />
+                        +{article.points} pts
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {article.views || 0}
+                      </span>
+                    </div>
+                    
+                    <h3 className="font-heading font-semibold text-gray-900 text-sm mb-1 line-clamp-1">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-500 text-xs mb-3 line-clamp-2">{article.description}</p>
+                    
+                    <Badge variant="outline" className="text-xs">
+                      {article.category}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          /* Empty state */
           <div className="text-center py-12">
             <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Aucune formation trouvée</p>
+            <p className="text-gray-500 mb-2">Aucun article trouvé</p>
+            {isAdmin && (
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                variant="outline"
+                className="mt-4"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Créer le premier article
+              </Button>
+            )}
           </div>
         )}
       </div>
+
+      {/* Create Article Dialog (Admin only) */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Créer un nouvel article</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Titre *</Label>
+              <Input
+                id="title"
+                value={newArticle.title}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ex: Les bases du contenu UGC"
+                data-testid="article-title-input"
+              />
+            </div>
+            
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description courte *</Label>
+              <Input
+                id="description"
+                value={newArticle.description}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Une phrase d'accroche"
+                data-testid="article-description-input"
+              />
+            </div>
+            
+            {/* Content */}
+            <div className="space-y-2">
+              <Label htmlFor="content">Contenu *</Label>
+              <Textarea
+                id="content"
+                value={newArticle.content}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Le contenu complet de l'article. Supporte le markdown basique (# ## ### pour les titres, **gras**, *italique*, - pour les listes)"
+                rows={10}
+                data-testid="article-content-input"
+              />
+            </div>
+            
+            {/* Category & Duration */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Catégorie</Label>
+                <Select 
+                  value={newArticle.category} 
+                  onValueChange={(v) => setNewArticle(prev => ({ ...prev, category: v }))}
+                >
+                  <SelectTrigger data-testid="article-category-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="duration">Durée (optionnel)</Label>
+                <Input
+                  id="duration"
+                  value={newArticle.duration}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, duration: e.target.value }))}
+                  placeholder="Ex: 30 min, 1h"
+                />
+              </div>
+            </div>
+            
+            {/* Points & Premium */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="points">Points</Label>
+                <Input
+                  id="points"
+                  type="number"
+                  min={1}
+                  value={newArticle.points}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, points: parseInt(e.target.value) || 5 }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Options</Label>
+                <div className="flex items-center gap-4 pt-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch
+                      checked={newArticle.is_premium}
+                      onCheckedChange={(v) => setNewArticle(prev => ({ ...prev, is_premium: v }))}
+                    />
+                    Premium
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch
+                      checked={newArticle.is_published}
+                      onCheckedChange={(v) => setNewArticle(prev => ({ ...prev, is_published: v }))}
+                    />
+                    Publié
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Banner Type */}
+            <div className="space-y-2">
+              <Label>Type de bannière</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "image" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "image" }))}
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  Image
+                </Button>
+                <Button
+                  type="button"
+                  variant={newArticle.banner_type === "video" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewArticle(prev => ({ ...prev, banner_type: "video" }))}
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Vidéo
+                </Button>
+              </div>
+            </div>
+            
+            {/* Banner/Video URL */}
+            <div className="space-y-2">
+              <Label htmlFor="banner_url">URL de la bannière (image)</Label>
+              <Input
+                id="banner_url"
+                value={newArticle.banner_url}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, banner_url: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
+            
+            {newArticle.banner_type === "video" && (
+              <div className="space-y-2">
+                <Label htmlFor="video_url">URL de la vidéo</Label>
+                <Input
+                  id="video_url"
+                  value={newArticle.video_url}
+                  onChange={(e) => setNewArticle(prev => ({ ...prev, video_url: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+            )}
+            
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+              <Input
+                id="tags"
+                value={newArticle.tags}
+                onChange={(e) => setNewArticle(prev => ({ ...prev, tags: e.target.value }))}
+                placeholder="ugc, débutant, tips"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleCreateArticle}
+              disabled={creating}
+              className="bg-primary hover:bg-primary-hover"
+              data-testid="submit-article-btn"
+            >
+              {creating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Création...
+                </>
+              ) : (
+                "Créer l'article"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
