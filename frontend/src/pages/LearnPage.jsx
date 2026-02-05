@@ -117,7 +117,9 @@ const LearnPage = ({ user }) => {
     try {
       const payload = {
         ...newArticle,
-        tags: newArticle.tags ? newArticle.tags.split(",").map(t => t.trim()).filter(Boolean) : []
+        tags: newArticle.tags ? newArticle.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+        // Store YouTube URL in video_url if banner_type is youtube
+        video_url: newArticle.banner_type === "youtube" ? newArticle.youtube_url : newArticle.video_url
       };
 
       const res = await fetch(`${API_URL}/api/admin/articles`, {
