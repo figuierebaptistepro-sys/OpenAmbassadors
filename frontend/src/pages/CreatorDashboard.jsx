@@ -140,7 +140,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         setProfile(data);
         setEditForm({
           bio: data.bio || "", city: data.city || "", phone: data.phone || "",
-          content_types: data.content_types || [], equipment: data.equipment || [],
+          content_types: data.content_types || [], niches: data.niches || [], equipment: data.equipment || [],
           min_rate: data.min_rate || "", max_rate: data.max_rate || "",
           works_remote: data.works_remote || false, can_travel: data.can_travel || false,
           available: data.available ?? true,
