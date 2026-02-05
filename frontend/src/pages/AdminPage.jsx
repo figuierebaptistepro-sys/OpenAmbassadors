@@ -6,7 +6,7 @@ import {
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
   Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock, Gift,
   Star, Bell, Activity, BarChart3, Send, UserPlus, DollarSign, Percent,
-  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash
+  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash, Settings
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
