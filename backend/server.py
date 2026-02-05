@@ -485,6 +485,7 @@ class CreatorProfileUpdate(BaseModel):
     works_remote: Optional[bool] = None
     content_types: Optional[List[str]] = None
     sectors: Optional[List[str]] = None
+    niches: Optional[List[str]] = None  # Niches: beaute, igaming, gaming, mode, tech, food, etc.
     equipment: Optional[List[str]] = None
     experience_level: Optional[str] = None
     brands_worked: Optional[List[str]] = None
@@ -501,6 +502,16 @@ class CreatorProfileUpdate(BaseModel):
     social_linkedin: Optional[str] = None
     # Visibility/Followers
     visibility: Optional[str] = None  # "1K", "5K", "10K", "35K", "50K", "100K", "250K", "1M"
+    
+    @field_validator('niches')
+    @classmethod
+    def validate_niches(cls, v):
+        if v is None:
+            return v
+        valid_niches = ["beaute", "igaming", "gaming", "mode", "tech", "food", "fitness", "voyage", 
+                        "finance", "immobilier", "auto", "education", "sante", "enfants", "animaux", 
+                        "musique", "b2b", "ecommerce"]
+        return [n for n in v if n in valid_niches]
 
 class BusinessProfile(BaseModel):
     model_config = ConfigDict(extra="ignore")
