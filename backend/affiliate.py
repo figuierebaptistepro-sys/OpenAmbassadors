@@ -174,9 +174,9 @@ def setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL):
         if not ref_code:
             return {"tracked": False}
         
-        # Trouver le propriétaire du code
+        # Trouver le propriétaire du code (case-insensitive)
         affiliate = await db.affiliate_codes.find_one(
-            {"code": ref_code.upper()},
+            {"code": {"$regex": f"^{ref_code}$", "$options": "i"}},
             {"_id": 0}
         )
         
@@ -187,7 +187,7 @@ def setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL):
         click_data = {
             "click_id": f"click_{uuid.uuid4().hex[:12]}",
             "referrer_id": affiliate["user_id"],
-            "ref_code": ref_code.upper(),
+            "ref_code": ref_code.lower(),
             "ip_hash": hash(request.client.host) if request.client else None,
             "user_agent": request.headers.get("user-agent", "")[:200],
             "created_at": datetime.now(timezone.utc)
