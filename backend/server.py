@@ -743,6 +743,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
+    ref_code: Optional[str] = None  # Code de parrainage
 
 class LoginRequest(BaseModel):
     email: EmailStr
