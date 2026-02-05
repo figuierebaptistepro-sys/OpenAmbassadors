@@ -3700,6 +3700,10 @@ setup_reviews_routes(api_router, db, get_current_user, send_email, FRONTEND_URL)
 from affiliate import setup_affiliate_routes
 setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL)
 
+# Setup article/learn content routes
+from articles import setup_articles_routes
+setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAILS)
+
 # Include router
 app.include_router(api_router)
 
