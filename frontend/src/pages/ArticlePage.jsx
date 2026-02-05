@@ -1,12 +1,26 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Star, Eye, CheckCircle, Crown, Play, Lock, Share2, BookOpen } from "lucide-react";
+import { ArrowLeft, Clock, Star, Eye, CheckCircle, Crown, Play, Lock, Share2, BookOpen, Youtube } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper: Extract YouTube video ID
+const getYoutubeId = (url) => {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
 
 const ArticlePage = ({ user }) => {
   const { articleId } = useParams();
