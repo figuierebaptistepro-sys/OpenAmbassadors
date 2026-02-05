@@ -166,6 +166,121 @@ const LearnPage = ({ user }) => {
     }
   };
 
+  // Open edit dialog with article data
+  const handleEditClick = (article, e) => {
+    e.stopPropagation();
+    setSelectedArticle(article);
+    setNewArticle({
+      title: article.title,
+      description: article.description,
+      content: article.content,
+      category: article.category,
+      duration: article.duration || "",
+      points: article.points,
+      is_premium: article.is_premium,
+      is_published: article.is_published,
+      banner_type: article.banner_type || "image",
+      banner_url: article.banner_url || "",
+      video_url: article.banner_type === "youtube" ? "" : (article.video_url || ""),
+      youtube_url: article.banner_type === "youtube" ? (article.video_url || "") : "",
+      tags: article.tags ? article.tags.join(", ") : ""
+    });
+    setShowEditDialog(true);
+  };
+
+  // Update article
+  const handleUpdateArticle = async () => {
+    if (!newArticle.title || !newArticle.description || !newArticle.content) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const payload = {
+        ...newArticle,
+        tags: newArticle.tags ? newArticle.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+        video_url: newArticle.banner_type === "youtube" ? newArticle.youtube_url : newArticle.video_url
+      };
+
+      const res = await fetch(`${API_URL}/api/admin/articles/${selectedArticle.article_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setArticles(prev => prev.map(a => a.article_id === updated.article_id ? updated : a));
+        setShowEditDialog(false);
+        setSelectedArticle(null);
+        toast.success("Article modifié avec succès !");
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || "Erreur lors de la modification");
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la modification");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Delete article
+  const handleDeleteArticle = async () => {
+    if (!selectedArticle) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/articles/${selectedArticle.article_id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      if (res.ok) {
+        setArticles(prev => prev.filter(a => a.article_id !== selectedArticle.article_id));
+        setShowDeleteDialog(false);
+        setSelectedArticle(null);
+        toast.success("Article supprimé !");
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || "Erreur lors de la suppression");
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Open delete confirmation
+  const handleDeleteClick = (article, e) => {
+    e.stopPropagation();
+    setSelectedArticle(article);
+    setShowDeleteDialog(true);
+  };
+
+  // Reset form when closing dialogs
+  const resetForm = () => {
+    setNewArticle({
+      title: "",
+      description: "",
+      content: "",
+      category: "Fondamentaux",
+      duration: "",
+      points: 5,
+      is_premium: false,
+      is_published: true,
+      banner_type: "image",
+      banner_url: "",
+      video_url: "",
+      youtube_url: "",
+      tags: ""
+    });
+    setSelectedArticle(null);
+  };
+
   const completedIds = progress?.completed_articles || [];
   const allCategories = ["Tous", ...DEFAULT_CATEGORIES];
 
