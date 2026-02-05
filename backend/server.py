@@ -931,11 +931,28 @@ async def reset_password(data: ResetPasswordRequest):
     return {"message": "Mot de passe modifié avec succès ! Vous pouvez maintenant vous connecter."}
 
 @api_router.post("/auth/register")
-async def register_user(data: RegisterRequest, response: Response):
+@limiter.limit(RATE_LIMITS["auth_register"])
+async def register_user(request: Request, data: RegisterRequest, response: Response):
     """Register a new user with email and password"""
+    # Input sanitization
+    data.name = sanitize_input(data.name)
+    data.email = sanitize_input(data.email.lower())
+    
+    # Validate input lengths
+    if not validate_length(data.name, "name"):
+        raise HTTPException(status_code=400, detail=f"Le nom ne peut pas dépasser {MAX_LENGTHS['name']} caractères")
+    if not validate_length(data.email, "email"):
+        raise HTTPException(status_code=400, detail="Email invalide")
+    
+    # Validate password strength
+    is_valid, error_msg = validate_password_strength(data.password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    
     # Check if user already exists
     existing_user = await db.users.find_one({"email": data.email}, {"_id": 0})
     if existing_user:
+        log_auth_attempt(request, data.email, False, "email_exists")
         raise HTTPException(status_code=400, detail="Un compte existe déjà avec cet email")
     
     # Hash password
@@ -956,6 +973,10 @@ async def register_user(data: RegisterRequest, response: Response):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
+    
+    # Log successful registration
+    log_auth_attempt(request, data.email, True, "registration")
+    log_security_event("USER_REGISTERED", request, f"user_id={user_id}")
     
     # Handle affiliate referral if ref_code provided
     if data.ref_code:
@@ -1012,7 +1033,7 @@ async def register_user(data: RegisterRequest, response: Response):
             logging.error(f"[AFFILIATE] Error processing referral: {e}")
     
     # Create session
-    session_token = f"sess_{uuid.uuid4().hex}"
+    session_token = generate_secure_token(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
     
     await db.user_sessions.update_one(
