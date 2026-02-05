@@ -829,56 +829,67 @@ async def send_password_reset_email(email: str, name: str, reset_token: str):
     )
 
 @api_router.post("/auth/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest):
+@limiter.limit(RATE_LIMITS["auth_forgot_password"])
+async def forgot_password(request: Request, data: ForgotPasswordRequest):
     """Request password reset email"""
-    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    email = sanitize_input(data.email.lower())
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     
     # Always return success (security: don't reveal if email exists)
     if not user:
-        print(f"[AUTH] Password reset requested for non-existent email: {data.email}")
+        log_security_event("PASSWORD_RESET_UNKNOWN_EMAIL", request, f"email={email[:3]}***")
         return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
     
     # Check if user has password (Google-only users can't reset)
     if not user.get("password"):
-        print(f"[AUTH] Password reset requested for Google-only user: {data.email}")
+        log_security_event("PASSWORD_RESET_GOOGLE_ONLY", request, f"email={email[:3]}***")
         return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
     
-    # Generate reset token
-    reset_token = f"reset_{uuid.uuid4().hex}"
+    # Invalidate any existing reset tokens for this email
+    await db.password_resets.delete_many({"email": email})
+    
+    # Generate secure reset token
+    reset_token = generate_secure_token(48)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     
     # Store reset token in database
-    await db.password_resets.update_one(
-        {"email": data.email},
-        {"$set": {
-            "email": data.email,
-            "token": reset_token,
-            "expires_at": expires_at.isoformat(),
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
-    )
+    await db.password_resets.insert_one({
+        "email": email,
+        "token": reset_token,
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "used": False
+    })
     
     # Send reset email
-    await send_password_reset_email(data.email, user.get("name", ""), reset_token)
-    print(f"[AUTH] Password reset email sent to: {data.email}")
+    await send_password_reset_email(email, user.get("name", ""), reset_token)
+    log_security_event("PASSWORD_RESET_REQUESTED", request, f"email={email[:3]}***")
     
     return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
 
 @api_router.post("/auth/reset-password")
-async def reset_password(data: ResetPasswordRequest):
+@limiter.limit(RATE_LIMITS["auth_reset_password"])
+async def reset_password(request: Request, data: ResetPasswordRequest):
     """Reset password with token"""
     # Find reset token
-    reset_doc = await db.password_resets.find_one({"token": data.token}, {"_id": 0})
+    reset_doc = await db.password_resets.find_one({"token": data.token, "used": False}, {"_id": 0})
     
     if not reset_doc:
+        log_security_event("PASSWORD_RESET_INVALID_TOKEN", request)
         raise HTTPException(status_code=400, detail="Lien invalide ou expiré")
     
     # Check expiration
     expires_at = datetime.fromisoformat(reset_doc["expires_at"].replace("Z", "+00:00"))
     if datetime.now(timezone.utc) > expires_at:
         await db.password_resets.delete_one({"token": data.token})
+        log_security_event("PASSWORD_RESET_EXPIRED_TOKEN", request)
         raise HTTPException(status_code=400, detail="Ce lien a expiré. Veuillez faire une nouvelle demande.")
+    
+    # Validate new password strength
+    is_valid, error_msg = validate_password_strength(data.new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
     
     # Hash new password
     hashed_password = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -892,11 +903,17 @@ async def reset_password(data: ResetPasswordRequest):
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
-    # Delete used token
+    # Mark token as used and delete it
     await db.password_resets.delete_one({"token": data.token})
     
+    # Invalidate all existing sessions for this user (force re-login)
+    user = await db.users.find_one({"email": reset_doc["email"]}, {"_id": 0})
+    if user:
+        await db.user_sessions.delete_many({"user_id": user["user_id"]})
+    
+    log_security_event("PASSWORD_RESET_SUCCESS", request, f"email={reset_doc['email'][:3]}***")
+    
     # Send confirmation email
-    user = await db.users.find_one({"email": reset_doc["email"]}, {"_id": 0, "name": 1})
     await send_email(
         to=reset_doc["email"],
         subject="✅ Mot de passe modifié",
@@ -927,7 +944,6 @@ async def reset_password(data: ResetPasswordRequest):
         """
     )
     
-    print(f"[AUTH] Password successfully reset for: {reset_doc['email']}")
     return {"message": "Mot de passe modifié avec succès ! Vous pouvez maintenant vous connecter."}
 
 @api_router.post("/auth/register")
