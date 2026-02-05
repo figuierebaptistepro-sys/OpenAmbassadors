@@ -110,6 +110,7 @@ const BrowseCreators = ({ user }) => {
     search: "",
     city: "",
     contentTypes: [],
+    niches: [],
     experienceLevel: "",
     available: false,
     premiumOnly: false,
@@ -120,6 +121,7 @@ const BrowseCreators = ({ user }) => {
   const activeFiltersCount = [
     filters.city,
     filters.contentTypes.length > 0,
+    filters.niches.length > 0,
     filters.experienceLevel,
     filters.available,
     filters.premiumOnly,
