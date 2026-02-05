@@ -154,7 +154,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </div>
                     
                     <div style="text-align: center; margin: 25px 0;">
-                        <a href="https://influence-match-4.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                        <a href="https://review-system-14.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
                             Se connecter maintenant →
                         </a>
                     </div>
@@ -186,7 +186,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://influence-match-4.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <a href="https://review-system-14.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                         Accéder à mon compte
                     </a>
                 </div>
@@ -219,7 +219,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://influence-match-4.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://review-system-14.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -274,7 +274,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://influence-match-4.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://review-system-14.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -323,7 +323,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://influence-match-4.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://review-system-14.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
@@ -759,7 +759,7 @@ class ResetPasswordRequest(BaseModel):
 
 async def send_password_reset_email(email: str, name: str, reset_token: str):
     """Send password reset email"""
-    reset_url = f"https://influence-match-4.preview.emergentagent.com/reset-password?token={reset_token}"
+    reset_url = f"https://review-system-14.preview.emergentagent.com/reset-password?token={reset_token}"
     await send_email(
         to=email,
         subject="🔐 Réinitialisation de votre mot de passe",
@@ -877,7 +877,7 @@ async def reset_password(data: ResetPasswordRequest):
                 Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://influence-match-4.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="https://review-system-14.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
                     Se connecter
                 </a>
             </div>
