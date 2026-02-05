@@ -260,6 +260,7 @@ const LearnPage = ({ user }) => {
   const handleEditClick = (article, e) => {
     e.stopPropagation();
     setSelectedArticle(article);
+    setImageInputMode(article.banner_url ? "url" : "upload");
     setNewArticle({
       title: article.title,
       description: article.description,
@@ -301,10 +302,20 @@ const LearnPage = ({ user }) => {
       });
 
       if (res.ok) {
-        const updated = await res.json();
+        let updated = await res.json();
+        
+        // If there's a new file to upload
+        if (selectedFile && newArticle.banner_type === "image") {
+          const uploadedUrl = await uploadFile(selectedArticle.article_id);
+          if (uploadedUrl) {
+            updated.banner_url = uploadedUrl;
+          }
+        }
+        
         setArticles(prev => prev.map(a => a.article_id === updated.article_id ? updated : a));
         setShowEditDialog(false);
         setSelectedArticle(null);
+        clearFile();
         toast.success("Article modifié avec succès !");
       } else {
         const error = await res.json();
