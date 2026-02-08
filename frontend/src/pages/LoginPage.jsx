@@ -395,7 +395,15 @@ const LoginPage = () => {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          En continuant, vous acceptez nos conditions d'utilisation
+          En continuant, vous acceptez nos{" "}
+          <a 
+            href="https://openambassadors.com/conditions" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            conditions d'utilisation
+          </a>
         </p>
       </motion.div>
     </div>
