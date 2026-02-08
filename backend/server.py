@@ -43,6 +43,9 @@ from security import (
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+# Google OAuth imports
+from google_oauth import oauth, GOOGLE_CLIENT_ID
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
