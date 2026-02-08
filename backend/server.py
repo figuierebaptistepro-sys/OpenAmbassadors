@@ -1,8 +1,9 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, UploadFile, File
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -41,6 +42,9 @@ from security import (
 )
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+
+# Google OAuth imports
+from google_oauth import oauth, GOOGLE_CLIENT_ID
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -127,6 +131,10 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# Add SessionMiddleware for OAuth state management
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+
 # Add rate limiter state to app
 app.state.limiter = limiter
 
@@ -188,7 +196,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </div>
                     
                     <div style="text-align: center; margin: 25px 0;">
-                        <a href="https://content-admin-17.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                        <a href="https://turnstile-auth.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
                             Se connecter maintenant →
                         </a>
                     </div>
@@ -220,7 +228,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://content-admin-17.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <a href="https://turnstile-auth.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                         Accéder à mon compte
                     </a>
                 </div>
@@ -253,7 +261,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://content-admin-17.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://turnstile-auth.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -308,7 +316,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://content-admin-17.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://turnstile-auth.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -357,7 +365,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://content-admin-17.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://turnstile-auth.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
@@ -806,7 +814,7 @@ class ResetPasswordRequest(BaseModel):
 
 async def send_password_reset_email(email: str, name: str, reset_token: str):
     """Send password reset email"""
-    reset_url = f"https://content-admin-17.preview.emergentagent.com/reset-password?token={reset_token}"
+    reset_url = f"https://turnstile-auth.preview.emergentagent.com/reset-password?token={reset_token}"
     await send_email(
         to=email,
         subject="🔐 Réinitialisation de votre mot de passe",
@@ -941,7 +949,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
                 Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://content-admin-17.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="https://turnstile-auth.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
                     Se connecter
                 </a>
             </div>
@@ -1418,6 +1426,135 @@ async def process_session(request: Request, response: Response):
         "user_type": user_type,
         "is_new_user": is_new
     }
+
+# ==================== CUSTOM GOOGLE OAUTH ROUTES ====================
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+
+@api_router.get("/auth/google/login")
+async def google_login(request: Request):
+    """Initiate Google OAuth login - redirects to Google consent screen"""
+    # Build redirect URI dynamically from the current request origin
+    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    redirect_uri = str(request.url_for('google_callback')).replace('http://', 'https://')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@api_router.get("/auth/google/callback", name="google_callback")
+async def google_callback(request: Request, response: Response):
+    """Handle Google OAuth callback after user consent"""
+    try:
+        # Get the access token and user info from Google
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        
+        if not user_info:
+            # Fallback: get user info from id_token
+            user_info = await oauth.google.parse_id_token(token, nonce=None)
+        
+        email = user_info.get('email')
+        name = user_info.get('name')
+        picture = user_info.get('picture')
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if existing_user:
+            user_id = existing_user["user_id"]
+            user_type = existing_user.get("user_type")
+            is_new = False
+            
+            # Only update name, DON'T overwrite custom picture if user has one
+            update_data = {"name": name}
+            
+            # Only set Google picture if user doesn't have a custom one
+            current_picture = existing_user.get("picture")
+            is_custom_picture = current_picture and (
+                "r2.dev" in current_picture or
+                "/api/uploads/" in current_picture or
+                "cloudflare" in current_picture.lower()
+            )
+            
+            if not is_custom_picture:
+                update_data["picture"] = picture
+            
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$set": update_data}
+            )
+            
+            user_picture = current_picture if is_custom_picture else picture
+        else:
+            # New user
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            user_type = None
+            is_new = True
+            user_picture = picture
+            user_doc = {
+                "user_id": user_id,
+                "email": email,
+                "name": name,
+                "picture": picture,
+                "user_type": None,
+                "is_premium": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.users.insert_one(user_doc)
+            log_security_event("USER_CREATED_VIA_GOOGLE", request, f"user_id={user_id}")
+        
+        log_auth_attempt(request, email, True, "google_oauth")
+        
+        # Create session
+        session_token = generate_secure_token(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        
+        await db.user_sessions.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "session_token": session_token,
+                "expires_at": expires_at.isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }},
+            upsert=True
+        )
+        
+        # Build redirect URL based on user state
+        # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        
+        if is_new or not user_type:
+            redirect_url = f"{frontend_base}/select-type"
+        elif user_type == "creator":
+            redirect_url = f"{frontend_base}/dashboard"
+        else:
+            redirect_url = f"{frontend_base}/business"
+        
+        # Create response with redirect
+        redirect_response = RedirectResponse(url=redirect_url, status_code=302)
+        redirect_response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/",
+            max_age=7 * 24 * 3600
+        )
+        
+        return redirect_response
+        
+    except Exception as e:
+        logging.error(f"Google OAuth error: {e}")
+        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        return RedirectResponse(url=f"{frontend_base}/login?error=google_auth_failed", status_code=302)
+
+@api_router.get("/auth/google/client-id")
+async def get_google_client_id():
+    """Return Google Client ID for frontend"""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+    return {"client_id": GOOGLE_CLIENT_ID}
 
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
@@ -3845,7 +3982,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 cors_origins = os.environ.get('CORS_ORIGINS', '')
 if not cors_origins:
     logging.warning("CORS_ORIGINS not set - using restrictive default")
-    cors_origins = "https://content-admin-17.preview.emergentagent.com"
+    cors_origins = "https://turnstile-auth.preview.emergentagent.com"
 
 app.add_middleware(
     CORSMiddleware,

@@ -5,6 +5,7 @@ import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const LOGO_URL = "/logo-sun.png";
@@ -31,6 +32,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState(null);
+  const [googleClientId, setGoogleClientId] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -38,6 +40,20 @@ const LoginPage = () => {
     password: "",
     confirmPassword: ""
   });
+
+  // Fetch Google Client ID from backend
+  useEffect(() => {
+    fetch(`${API_URL}/api/auth/google/client-id`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.client_id) {
+          setGoogleClientId(data.client_id);
+        }
+      })
+      .catch(() => {
+        console.log("Google OAuth not configured");
+      });
+  }, []);
 
   // Capture referral code from URL or cookie (60 days)
   useEffect(() => {
@@ -178,9 +194,46 @@ const LoginPage = () => {
     }
   };
 
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   const handleGoogleLogin = () => {
-    const redirectUrl = window.location.origin + "/dashboard";
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    // Redirect to our own backend Google OAuth endpoint
+    // The backend will handle the redirect to Google and the callback
+    window.location.href = `${API_URL}/api/auth/google/login`;
+  };
+
+  // Handle Google One-Tap / Button success (credential response)
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    try {
+      // Send the credential to backend for verification
+      const response = await fetch(`${API_URL}/api/auth/google/verify-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential: credentialResponse.credential })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || "Erreur de connexion Google");
+      }
+      
+      toast.success("Connexion réussie !");
+      
+      if (!data.user_type) {
+        navigate("/select-type", { state: { user: data } });
+      } else if (data.user_type === "creator") {
+        navigate("/dashboard", { state: { user: data } });
+      } else {
+        navigate("/business", { state: { user: data } });
+      }
+    } catch (error) {
+      // Fallback: use redirect flow if token verification fails
+      handleGoogleLogin();
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = () => {
@@ -249,9 +302,11 @@ const LoginPage = () => {
               transition={{ duration: 0.2 }}
               className="p-6"
             >
-              {/* Google Button */}
+              {/* Google Button - Uses redirect flow for reliability */}
+              {/* REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH */}
               <Button
                 onClick={handleGoogleLogin}
+                disabled={loading}
                 className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-200 rounded-xl transition-all hover:shadow-md mb-5"
                 data-testid="google-login-btn"
               >
