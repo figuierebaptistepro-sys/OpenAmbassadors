@@ -194,9 +194,46 @@ const LoginPage = () => {
     }
   };
 
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   const handleGoogleLogin = () => {
-    const redirectUrl = window.location.origin + "/dashboard";
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    // Redirect to our own backend Google OAuth endpoint
+    // The backend will handle the redirect to Google and the callback
+    window.location.href = `${API_URL}/api/auth/google/login`;
+  };
+
+  // Handle Google One-Tap / Button success (credential response)
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    try {
+      // Send the credential to backend for verification
+      const response = await fetch(`${API_URL}/api/auth/google/verify-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential: credentialResponse.credential })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || "Erreur de connexion Google");
+      }
+      
+      toast.success("Connexion réussie !");
+      
+      if (!data.user_type) {
+        navigate("/select-type", { state: { user: data } });
+      } else if (data.user_type === "creator") {
+        navigate("/dashboard", { state: { user: data } });
+      } else {
+        navigate("/business", { state: { user: data } });
+      }
+    } catch (error) {
+      // Fallback: use redirect flow if token verification fails
+      handleGoogleLogin();
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = () => {
