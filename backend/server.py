@@ -131,6 +131,10 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# Add SessionMiddleware for OAuth state management
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+
 # Add rate limiter state to app
 app.state.limiter = limiter
 
