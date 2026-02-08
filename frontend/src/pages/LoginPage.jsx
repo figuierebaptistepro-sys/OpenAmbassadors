@@ -302,9 +302,11 @@ const LoginPage = () => {
               transition={{ duration: 0.2 }}
               className="p-6"
             >
-              {/* Google Button */}
+              {/* Google Button - Uses redirect flow for reliability */}
+              {/* REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH */}
               <Button
                 onClick={handleGoogleLogin}
+                disabled={loading}
                 className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-200 rounded-xl transition-all hover:shadow-md mb-5"
                 data-testid="google-login-btn"
               >
