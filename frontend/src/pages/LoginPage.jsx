@@ -330,7 +330,7 @@ const LoginPage = () => {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-sm text-pink-500 hover:text-pink-600 hover:underline"
+                      className="text-sm text-primary hover:text-primary-hover hover:underline"
                       data-testid="forgot-password-btn"
                     >
                       Mot de passe oublié ?
@@ -376,14 +376,14 @@ const LoginPage = () => {
                 {mode === "login" ? (
                   <>
                     Pas encore de compte ?{" "}
-                    <button onClick={switchMode} className="text-pink-600 hover:text-pink-700 font-medium">
+                    <button onClick={switchMode} className="text-primary hover:text-primary-hover font-medium hover:underline">
                       Créer un compte
                     </button>
                   </>
                 ) : (
                   <>
                     Déjà un compte ?{" "}
-                    <button onClick={switchMode} className="text-pink-600 hover:text-pink-700 font-medium">
+                    <button onClick={switchMode} className="text-primary hover:text-primary-hover font-medium hover:underline">
                       Se connecter
                     </button>
                   </>
