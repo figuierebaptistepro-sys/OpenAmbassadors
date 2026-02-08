@@ -330,7 +330,7 @@ const LoginPage = () => {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-sm text-pink-500 hover:text-pink-600 hover:underline"
+                      className="text-sm text-primary hover:text-primary-hover hover:underline"
                       data-testid="forgot-password-btn"
                     >
                       Mot de passe oublié ?
