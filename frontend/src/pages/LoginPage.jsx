@@ -32,6 +32,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState(null);
+  const [googleClientId, setGoogleClientId] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -39,6 +40,20 @@ const LoginPage = () => {
     password: "",
     confirmPassword: ""
   });
+
+  // Fetch Google Client ID from backend
+  useEffect(() => {
+    fetch(`${API_URL}/api/auth/google/client-id`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.client_id) {
+          setGoogleClientId(data.client_id);
+        }
+      })
+      .catch(() => {
+        console.log("Google OAuth not configured");
+      });
+  }, []);
 
   // Capture referral code from URL or cookie (60 days)
   useEffect(() => {
