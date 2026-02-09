@@ -1,196 +1,160 @@
-<analysis>**original_problem_statement:**
-The user's initial goal was to build OpenAmbassadors, a premium SaaS platform. The scope evolved to include an affiliate/referral system and an advanced admin panel.
+<analysis>Analyse and provide a useful summary for the next agent to work on it without hinderance.
 
-In the current session, the user requested a complete overhaul of the static  page. The requirements were:
-1.  Make the page dynamic, pulling content from a database.
-2.  Admins should be able to perform full CRUD (Create, Read, Update, Delete) operations on articles.
-3.  Articles must support either a banner image or an embedded YouTube video with a preview.
-4.  The banner image can be provided via an external URL or uploaded directly from the user's device.
-5.  Create a detail page for viewing individual articles.
+**original_problem_statement:**
+The user initially requested to integrate their own Google account for the login/authentication process.
 
-PRODUCT REQUIREMENTS:
--   A new backend module to manage articles.
--   A dynamic  page displaying a grid of articles.
--   A detail page  to display a single article with its content, banner/video.
--   Admin-only controls on the  page to Create, Edit, and Delete articles.
--   A creation/edition form (as a dialog/modal) that allows setting:
-    -   Title, description, content (markdown).
-    -   Tags, points, premium status.
-    -   Media type: Image URL, Local Image Upload, or YouTube URL.
-    -   Live preview for YouTube links within the form.
-    -   File input for local image uploads with a preview.
--   The system should handle file uploads and store them.
+Later, the user provided a detailed feature request for a Creator Card.
 
-**User's preferred language**: The user's primary language is **French**. The next agent MUST respond in French.
+**PRODUCT REQUIREMENTS (Creator Card):**
+- **Category:** Core Feature – Public Business Profile.
+- **Objective:** Provide creators with a shareable, public, business-oriented link in bio style page.
+- **URL Structure:** . The username must be selectable and unique (slugified).
+- **Hero Section:**
+    - Profile Photo, Name, Short Bio, Niche.
+    - OpenAmbassadors Score, Badges.
+- **Main CTA Button: Proposer une collaboration**
+    - **Behavior:** This button should not open a public form.
+    - If user is not logged in -> Redirect to login page.
+    - If logged in as a non-subscribed business -> Redirect to the business subscription page.
+    - If logged in as a subscribed business -> Redirect to .
+- **Offers Section:**
+    - Max 1 offer for the free version.
+    - Fields: Title, short description, price (optional), external link.
+- **Links Section:**
+    - Max 3 links for the free version.
+- **Footer:** Powered by OpenAmbassadors mention.
+- **Constraints:**
+    - Mobile-first design.
+    - Professional, minimal, brand-focused design.
+    - No direct contact info (email) visible. All interactions must go through the platform.
+- **Strategic Goal:** Use each Creator Card as an acquisition channel for businesses while providing value to creators.
+
+**User's preferred language**:
+The user's primary language is **French (fr)**. The next agent MUST respond in French.
 
 **what currently exists?**
-A full-stack React/FastAPI application with user authentication, project management, real-time messaging, an affiliate system, and an advanced admin panel.
-
-The latest addition is a complete Learn section. This includes:
--   A backend module () with full CRUD API endpoints for managing articles.
--   A dynamic  page () that fetches and displays articles in a grid. It includes admin controls for creating, editing, and deleting articles via modals.
--   An article detail page () that displays the full content, including embedded YouTube videos if applicable.
--   The article creation/editing form supports three media types: an external image URL, a direct image upload from the user's gallery, and a YouTube video link with a live preview in the form.
+The application is a React frontend with a FastAPI backend. A custom Google OAuth2 flow has been implemented to replace the default Emergent authentication. A new Creator Card feature has been scaffolded, with a public-facing page that can display a creator's basic information. The backend has been updated with an endpoint to serve this public data and a new  field on the user model.
 
 **Last working item**:
--   **Last item agent was working:** Implementing the frontend UI to allow an admin to upload an image from their local machine (depuis ma galerie) instead of providing a URL when creating or editing an article. This involved adding a file input, upload progress state, and modifying the form submission logic to handle .
--   **Status:** USER VERIFICATION PENDING
--   **Agent Testing Done:** Y (Verified via screenshot that the new UI elements for file upload are present in the modal.)
--   **Which testing method agent to use?** Manual user testing. The user needs to try creating/editing an article by uploading an image from their computer.
--   **User Testing Done:** N
+- **Last item agent was working:** The agent was implementing the Creator Card public page feature. The agent successfully created the backend endpoint (), the frontend page component (), and the necessary routing (). The page correctly fetches and displays data for a test creator. The agent was in the process of confirming the implementation and updating documentation.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** Y
+- **Which testing method agent to use?** Frontend testing agent to build out and test the management UI, and Backend testing agent to test the new CRUD endpoints for offers/links.
+- **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1 (P0): Forgot Password Email Not Received**
--   **Issue 2 (P1): Incomplete & Buggy Responsive Implementation**
--   **Issue 3 (P2): Incorrect Password for Test Creator Account**
--   **Issue 4 (P2): Flaky automated login in tests**
+- **Issue 1: Potential  behind production proxy (P0)**
+  - The user reported an  on their production server, which is behind a proxy. The agent implemented a fix by adding  and setting the  cookie policy to  and  in .
+  - **Status:** USER VERIFICATION PENDING
+  - **Why fix this issue and what will be achieved with the fix?** This is critical. If the fix is not correct, the primary login method (Google OAuth) will be broken on the user's live production environment.
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Backend (The user needs to test on their production environment after pulling the code).
+  - **Next debug checklist:** If the issue persists, the agent needs to ask the user for logs from their production backend and inspect the  headers being sent in the  response on their live domain.
 
-**Issues Detail:**
--   **Issue 1: Forgot Password Email Not Received**
-    -   **Attempted fixes:** Identified Resend's sandbox mode as the cause.
-    -   **Next debug checklist:** Instruct the user to add and verify their domain in their Resend account and update the  in .
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical, broken authentication feature for all non-admin users.
-    -   **Status:** BLOCKED (on user action: Resend domain verification).
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on other issue:** None.
-
--   **Issue 2: Incomplete & Buggy Responsive Implementation**
-    -   **Attempted fixes:** None in this session. A full, systematic audit of all pages has not been performed.
-    -   **Next debug checklist:** Perform a systematic audit of all key pages on mobile/tablet viewports, identify layout breaks with the  tool, and apply fixes.
-    -   **Why fix this issue and what will be achieved with the fix?** A consistent source of user frustration. A polished UI is key to platform credibility.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on other issue:** None.
-
--   **Issue 3: Incorrect Password for Test Creator Account**
-    -   **Attempted fixes:** None. Login with  and password  failed.
-    -   **Next debug checklist:** Create a new backend endpoint or a one-off script for an admin to reset a user's password. Use it to set a known password for .
-    -   **Why fix this issue and what will be achieved with the fix?** A reliable test creator account is essential for debugging and verifying creator-specific features.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Backend (for the fix), Frontend (for testing).
-    -   **Blocked on other issue:** None.
-
--   **Issue 4: Flaky automated login in tests**
-    -   **Attempted fixes:** The agent observed this issue firsthand when the  tool repeatedly failed to log in, even with correct selectors. The agent had to switch to  to get a session token and inject it as a cookie for  tests, which is the recommended fix.
-    -   **Next debug checklist:** Adopt a standard practice of using  to get a session token and then inject it as a cookie for  tests on protected pages.
-    -   **Why fix this issue and what will be achieved with the fix?** This will significantly speed up the agent's development and verification cycle.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** N/A.
-    -   **Blocked on other issue:** None.
+- **Issue 2: Mobile UI overscroll glitch (P1)**
+  - The user reported a pink bar appearing on mobile when scrolling beyond the page content. The agent added  to .
+  - **Status:** USER VERIFICATION PENDING
+  - **Why fix this issue and what will be achieved with the fix?** This is a minor UI polishing task to improve the mobile user experience.
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Frontend (User needs to test on mobile on their production site).
 
 **In progress Task List**:
--   **Task 1: Complete Learn Page Feature**
-    -   **Where to resume:** The feature is fully implemented. The agent needs to present the final piece (local image upload) to the user and ask for verification of the entire feature set (CRUD, YouTube support, image upload).
-    -   **What will be achieved with this?** Final validation and closure on a major feature requested by the user.
-    -   **Status:** USER VERIFICATION PENDING
-    -   **Should Test frontend/backend/both after fix?** N/A (User testing needed).
-    -   **Blocked on something:** Waiting for final user approval.
+- **Task 1: Complete Creator Card Management UI (P0)**
+  - The basic public page is visible, but the creator has no way to manage their card's content.
+  - **Where to resume:** The component  is currently a placeholder. It needs to be fully implemented.
+  - **What will be achieved with this?** Creators will be able to set their unique , add/edit/remove their Offers, and add/edit/remove their Links as specified in the PRD.
+  - **Sub-tasks:**
+    1.  Implement the UI for setting/updating the , including an API call to a new backend endpoint to check for username availability in real-time.
+    2.  Implement the UI for CRUD operations on Offers.
+    3.  Implement the UI for CRUD operations on Links.
+    4.  Create the necessary backend endpoints in  to support these CRUD operations.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Both.
 
 **Upcoming and Future Tasks**
-*   **Upcoming Tasks:**
-    *   **P0 - Stripe Integration:** To enable paid subscriptions and calculate affiliate commissions.
-    *   **P1 - Set up User's Own Google OAuth:** To replace the Emergent-managed Google Auth.
-    *   **P2 - WYSIWYG Editor:** An enhancement suggested by the agent to improve the article writing experience, moving from markdown to a rich-text editor.
-*   **Future Tasks:**
-    *   **P2 - Public SEO-Friendly Creator Profile Page:** Create pages like .
-    *   **P3 - Embeddable Review Widget:** Allow creators to embed their rating on their own websites.
-    *   **P4 - Gamification & Badges:** Implement dynamic badges like Top Rated.
-    *   **P5 - VPS Deployment Guidance:** Assist the user in deploying the application to a private server.
+- **Upcoming Tasks:**
+  - **P0: Implement Creator Card CTA Logic:** The Proposer une collaboration button on  needs to implement the conditional logic defined in the PRD (redirect to login, subscription, or new proposal form based on the viewer's status).
+  - **P1: Populate All Creator Card Data:** The public page should display all the required data from the PRD: Niche, Score, Badges, etc. This may require adding more fields to the backend models and endpoints.
+  - **P1: PWA Conversion:** The agent offered to convert the web app into a Progressive Web App (PWA) as a free alternative to a native mobile app. The user seemed interested in the mobile aspect but chose to explore the native app route first. This can be re-proposed as a value-add.
 
 **Completed work in this session**
--   **Full Learn Page Rework:** Transformed the static  into a fully dynamic, feature-rich module.
-    -   **Backend:** Created  with FastAPI endpoints for full article CRUD, including handling file uploads. Integrated it into .
-    -   **Frontend List View:** Rebuilt  to display a grid of articles, with admin-only buttons for Nouvel article, Modifier, and Supprimer. Implemented creation/edit/delete functionality within modals.
-    -   **Frontend Detail View:** Created  to display individual articles, including embedded YouTube players.
-    -   **Media Support:** Implemented logic to handle three media types for articles: external image URL, direct image upload, and YouTube video URL.
-    -   **Admin UI:** Added menus and dialogs for admins to manage all aspects of articles directly from the frontend.
+- **Recently completed:**
+  - Custom Google OAuth integration implemented, replacing the default Emergent auth.
+  - Several rounds of debugging for the OAuth flow, addressing dependency issues, environment variable loading, CSP headers, and proxy-related session errors.
+  - Edit icons (pencil) added to the creator dashboard for the profile picture and banner, and made permanently visible per user request.
+  - Mobile overscroll bug fixed by adding global CSS.
+  - Scaffolding for the Creator Card feature, including the backend model updates, a new API endpoint, a new public-facing frontend page, and routing.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Potential Truncated Token in Review Emails**
-    -   **Debug checklist:** The Invalid Link error for external reviews was noted to be due to a truncated token. The agent asked the user if they should fix it, but the user pivoted. The fix was never implemented.
-    -   **Why to solve this issue and what will be achieved with this?** This breaks the external review flow, a key part of the Hybrid Rating System.
-    -   **Should Test frontend/backend/both after fix:** Backend (email generation).
-    -   **Is recurring issue?** N
+- None. The agent addressed all issues raised by the user during the session.
 
 **Known issue recurrence from previous fork**
--   **Incomplete & Buggy Responsive Implementation:** Recurrence count: 3. Status: IN PROGRESS.
--   **Flaky automated login in tests:** Recurrence count: 3. Status: NOT STARTED. This was highly visible during this session's  attempts.
+- No previous fork summary was provided.
 
 **Code Architecture**
-
+username
 
 **Key Technical Concepts**
--   **Frontend:** React, TailwindCSS, Shadcn UI, 
--   **Backend:** FastAPI, Pydantic, MongoDB ()
--   **File Upload:** Using  on the frontend to send files, and  on the backend to receive and save them.
--   **Component-Based State Management:** Extensive use of  and  in  to manage articles, modals, forms, and API states.
+- **Backend:** FastAPI, MongoDB (via ), Pydantic, Authlib (for Google OAuth), JWT sessions.
+- **Frontend:** React, , , .
+- **Authentication:** Custom server-side Google OAuth 2.0 flow with session cookies (, , ).
+- **Deployment:** The user runs the application on a VPS behind a proxy (Nginx Proxy Manager), with frontend and backend on different subdomains ( and ).
 
 **key DB schema**
--   ** (New)**: 
+- **users**: 
+- **(New models to be created):**
+  - **offers**: 
+  - **links**: 
 
 **All files of reference**
--   : **New file** containing all backend logic for the articles feature.
--   : **Heavily modified**, now a large component (~1200 lines) handling the article list, modals for creation, editing, and deletion, and file upload logic.
--   : **New file** for displaying a single article.
--   : Modified to add the router from .
--   : Modified to add the new route for .
-
-**Areas that need refactoring**:
--   **:** Still a monolith. The new  is a good step, but other routes (auth, projects, admin) could also be split out.
--   **:** This file has become very large and complex. It manages multiple states for modals, forms, and API calls. It should be broken down into smaller, more manageable components (e.g., , , ).
-
-**key api endpoints**
--   : Create a new article (handles file upload).
--   : Get a list of all articles.
--   : Get a single article's details.
--   : Update an article (handles file upload).
--   : Delete an article.
--   : Mark an article as completed by a user.
+- : Main server file. Modified to add Google OAuth middleware (, ), routes, and include the new  router.
+- : **New file**. Contains all the logic for the custom Google OAuth flow using .
+- : **New file**. Contains the endpoint and models for fetching public creator card data. Will be expanded for CRUD operations.
+- : Modified to add the optional  field to the  model.
+- : Modified to add  and . **Important:** The agent only modified the local , the user must update their production  manually.
+- : Modified to change the Google Login button to a simple link redirecting to the backend login route ().
+- : Modified to add always-visible edit icons on the banner and profile picture and to include the new (placeholder)  component.
+- : **New file**. The public-facing page that displays a creator's card.
+- : **New file**. A placeholder component in the creator dashboard for managing the Creator Card content.
+- : Modified to add the public route  (for the ) and a redirect from the user's desired .
+- : Modified to add  to fix a mobile UI glitch.
+- : Updated with the detailed requirements for the Creator Card feature.
 
 **Critical Info for New Agent**
--   **Vous devez répondre en français.**
--   Your first action should be to confirm with the user that the entire Learn Page feature, including the latest addition of image uploads, is working as they expect.
--   Once the user approves, you should propose a plan to tackle the next high-priority items from the backlog, starting with **Stripe Integration (P0)**.
+- **User is technically proficient:** The user understands concepts like CSP, proxy servers, and session state (). Be prepared for precise technical feedback.
+- **Production Environment:** The live app runs behind a proxy with  for the frontend and  for the backend. This setup has caused OAuth session/cookie problems. A fix using  has been pushed but is **unverified by the user on their production setup**. This is the highest priority item to confirm.
+- **Manual  Management:** The user is aware that they must manually add secrets (, ) to their production  file, as it's not in source control.
+- **Creator Card URL:** The public URL for creator cards is  due to routing issues with the  symbol. A redirect from  is in place to preserve the desired URL format for sharing.
 
 **documents and test reports created in this job**
--   : Updated to reflect the new Learn Page requirements.
--   : Test report from the testing agent for the initial article functionality.
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** mais comment je créer met et aoujte les articles si cest une video youtube avce un lien faut mettre preview (How do I create/add articles if it's a YouTube video with a link, you need a preview). **Status: COMPLETED**.
-2.  **User:** je peux supprimer ou modifier les articles existant ? (Can I delete or modify existing articles?). **Status: COMPLETED**.
-3.  **User:** je dois pouvoir ajouter une photo de ma galerie (I must be able to add a photo from my gallery). **Status: COMPLETED** (implementation is done, pending user verification).
-The previous 7 messages are from the agent, summarizing progress and showing screenshots.
+1.  **User:** Requests a Creator Card feature with detailed specs.
+2.  **User:** Provides clarification on the CTA button logic and username management for the Creator Card.
+3.  **Agent:** Starts implementing the feature.
+4.  **User:** continue ce que tu faisais (continue what you were doing) - User confirming the agent should proceed after fixing a routing bug with the Creator Card page.
+5.  **Agent:** Completes the basic creator card page and tests it.
+6.  **User:** sur le dashboard principal createur ou ambassadeur met un stylo sur le logo et la banniere ppur pouvoir changer (on the main creator/ambassador dashboard, put a pen on the logo and banner to be able to change them).
+7.  **Agent:** Implements the edit icons.
+8.  **User:** mais le stylo doit toujours etre visible pourquon comprenne (but the pen must always be visible so that we understand).
+9.  **Agent:** Fixes the icons to be always visible.
+10. **User:** tu peux transformer mon saas en application mobile android et apple store ?? (can you transform my saas into an android and apple store mobile application??) - This led to a discussion about mobile options. The user then returned to the web project.
 
 **Project Health Check:**
--   **Broken:**
-    -   The Forgot Password email flow remains non-functional for general users due to Resend sandbox limitations.
--   **Mocked:**
-    -   User subscription status ().
-    -   Affiliate commission calculations and payouts.
+- **Broken:** The Google OAuth flow on the user's production server is potentially broken. A fix has been provided but is unverified.
+- **Mocked:** The UI for managing the Creator Card () is a placeholder with no functionality.
 
 **3rd Party Integrations**
--   **Emergent-managed Google Auth:** In use, user wants to replace it.
--   **MongoDB Atlas:** In use.
--   **Cloudflare R2:** In use for file uploads.
--   **Resend:** Integrated, but limited by sandbox mode.
--   **FFmpeg.wasm:** Integrated for client-side video compression.
--   **Leaflet / react-leaflet:** In use for map view.
--   **Stripe:** Not implemented, but is the next high-priority task.
+- **Google OAuth:** Used for user authentication. Requires user-provided API keys ( and ) which must be set in the  file.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, for the initial implementation of the article system.
--   **Troubleshoot agent used after agent stuck in loop:** NO.
--   **Test files created:** None.
--   **Known regressions:** The flaky login with the  tool remains a persistent issue.
+- **Testing agent used after significant changes:** NO
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None.
+- **Known regressions:** The Google OAuth flow, which was previously working, broke due to CSP and proxy issues. A fix is pending user verification.
 
 **Credentials to test flow:**
--   **Business/Admin User:**  (Password: )
--   **Creator User (created for testing):**  (Password: unknown, see Issue #3)
-
-**What agent forgot to execute**
--   The agent correctly followed all user requests in this session. All pending work is tracked in the issue list and upcoming tasks.</analysis>
+- **Email:** 
+- **Password:** 
+- **Note:** This user was created and assigned the  type. Their username was set to  directly in the database. Their public Creator Card can be viewed at .</analysis>
