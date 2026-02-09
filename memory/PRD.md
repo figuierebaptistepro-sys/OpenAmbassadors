@@ -302,9 +302,10 @@ GOOGLE_CLIENT_SECRET=GOCSPX-xxx
 ```
 
 ### 📋 Upcoming (P0-P1)
-1. **P0 - Custom Google OAuth** - User wants to use their own credentials
-2. **P1 - Stripe Integration** - Replace mocked `is_subscribed` with real payments
+1. **P0 - CAPTCHA** - Cloudflare Turnstile sur création compte et mot de passe oublié
+2. **P1 - Stripe Integration** - Remplacer `is_subscribed` mocké par paiements réels
    - Connecter les webhooks au système d'affiliation
+3. **P1 - Page Proposals** - `/dashboard/proposals/new?creator={username}` pour soumettre collaborations
 
 ### 📦 Future (P2+)
 1. VPS deployment guidance
