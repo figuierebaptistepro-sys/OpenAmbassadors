@@ -120,7 +120,23 @@ const CreatorCardPublicWrapper = () => {
 // Redirect from /@username to /c/username
 const CreatorCardRedirect = () => {
   const { username } = useParams();
-  return <Navigate to={`/c/${username}`} replace />;
+  // Remove @ prefix if present (for URLs like /@username)
+  const cleanUsername = username?.startsWith('@') ? username.slice(1) : username;
+  return <Navigate to={`/c/${cleanUsername}`} replace />;
+};
+
+// Conditional route for /:username - checks if it starts with @
+const CreatorCardConditionalRoute = () => {
+  const { username } = useParams();
+  
+  // If the username starts with @, redirect to creator card
+  if (username?.startsWith('@')) {
+    const cleanUsername = username.slice(1);
+    return <Navigate to={`/c/${cleanUsername}`} replace />;
+  }
+  
+  // Otherwise, this is an unknown route - redirect to login
+  return <Navigate to="/login" replace />;
 };
 
 // Protected Route Component
@@ -195,9 +211,8 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
       
-      {/* Public Creator Card - /c/:username and /@:username (redirect) */}
+      {/* Public Creator Card - /c/:username */}
       <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
-      <Route path="/@:username" element={<CreatorCardRedirect />} />
       
       {/* Type selection */}
       <Route
@@ -363,6 +378,8 @@ function AppRouter() {
       
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Handle @username URLs for creator cards - must be before catch-all */}
+      <Route path="/:username" element={<CreatorCardConditionalRoute />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
