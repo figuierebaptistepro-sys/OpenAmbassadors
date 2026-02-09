@@ -1100,7 +1100,7 @@ async def register_user(request: Request, data: RegisterRequest, response: Respo
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1172,7 +1172,7 @@ async def login_user(request: Request, data: LoginRequest, response: Response):
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1327,7 +1327,7 @@ async def verify_otp(request: Request, data: OTPVerify, response: Response):
         value=token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=JWT_EXPIRATION_HOURS * 3600
     )
@@ -1426,7 +1426,7 @@ async def process_session(request: Request, response: Response):
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1572,7 +1572,7 @@ async def google_callback(request: Request, response: Response):
             value=session_token,
             httponly=True,
             secure=True,
-            samesite="none",
+            samesite="lax",
             path="/",
             max_age=7 * 24 * 3600
         )
