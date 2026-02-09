@@ -683,6 +683,15 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </Card>
             </motion.div>
 
+            {/* Creator Card Manager */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <CreatorCardManager user={user} />
+            </motion.div>
+
             {/* Portfolio */}
             <Card className="border-0 shadow-sm">
               <CardHeader className="px-4 pb-2">
