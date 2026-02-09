@@ -47,6 +47,9 @@ from slowapi.errors import RateLimitExceeded
 # Google OAuth imports
 from google_oauth import oauth, GOOGLE_CLIENT_ID
 
+# Creator Card imports
+from creator_card import create_creator_card_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -4008,6 +4011,10 @@ setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL)
 # Setup article/learn content routes
 from articles import setup_articles_routes
 setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAILS)
+
+# Setup Creator Card routes
+creator_card_router = create_creator_card_routes(db, get_current_user)
+app.include_router(creator_card_router)
 
 # Include router
 app.include_router(api_router)

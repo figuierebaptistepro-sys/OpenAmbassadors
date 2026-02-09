@@ -223,10 +223,89 @@
 - Méthodes HTTP spécifiques
 - Headers autorisés spécifiques
 
+#### 🆕 Creator Card - Profil Public Partageable (Feb 2026)
+**URL publique:** `openambassadors.com/c/{username}`
+
+**Backend** (`/app/backend/creator_card.py`):
+- Système de username unique avec validation:
+  - 3-30 caractères, alphanumériques + underscore/tiret
+  - Liste de slugs réservés (admin, api, login, etc.)
+  - Vérification disponibilité en temps réel
+- Gestion des offres (services):
+  - Titre, description, prix optionnel, lien externe
+  - Limite: 1 offre (gratuit) / illimité (premium)
+- Gestion des liens (type linktree):
+  - Titre, URL, icône optionnelle
+  - Limite: 3 liens (gratuit) / illimité (premium)
+- Score de profil calculé automatiquement
+- Badges dynamiques (Premium, Vérifié, Top Rated, Expérimenté)
+
+**API Endpoints**:
+- `GET /api/username/check/{username}` - Vérifier disponibilité
+- `POST /api/creators/me/username` - Définir/modifier username
+- `GET /api/creators/me/card` - Données de sa Creator Card
+- `POST /api/creators/me/offers` - Ajouter une offre
+- `PUT /api/creators/me/offers/{id}` - Modifier une offre
+- `DELETE /api/creators/me/offers/{id}` - Supprimer une offre
+- `POST /api/creators/me/links` - Ajouter un lien
+- `PUT /api/creators/me/links/{id}` - Modifier un lien
+- `DELETE /api/creators/me/links/{id}` - Supprimer un lien
+- `GET /api/c/{username}` - Page publique (sans auth)
+
+**Frontend**:
+- `CreatorCardPage.jsx` - Page publique `/c/{username}`
+  - Hero: photo, nom, bio, niche, score, badges
+  - CTA "Proposer une collaboration" avec logique de redirection
+  - Section offres (cartes)
+  - Section liens (style linktree)
+  - Footer "Powered by OpenAmbassadors"
+  - Design mobile-first, minimal et professionnel
+- `CreatorCardManager.jsx` - Gestion dans le dashboard créateur
+  - Configuration username
+  - CRUD offres et liens
+  - Preview et partage
+
+**Comportement bouton CTA:**
+- Non connecté → `/login`
+- Connecté non-entreprise → `/select-type`
+- Entreprise non abonnée → `/business/subscribe`
+- Entreprise abonnée → `/dashboard/proposals/new?creator={username}`
+
+**Collection MongoDB:** `creator_cards`
+```json
+{
+  "user_id": "string",
+  "username": "string (unique)",
+  "offers": [{ "offer_id", "title", "description", "price", "external_link", "order" }],
+  "links": [{ "link_id", "title", "url", "icon", "order" }],
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+#### Google OAuth Personnel (Feb 2026)
+**Backend** (`/app/backend/google_oauth.py`):
+- Configuration Authlib pour OAuth 2.0
+- Support ProxyHeadersMiddleware pour reverse proxy (NPM, nginx)
+- SessionMiddleware avec same_site="lax", https_only=True
+- Gestion automatique des nouveaux utilisateurs vs existants
+
+**API Endpoints**:
+- `GET /api/auth/google/login` - Initier le flux OAuth
+- `GET /api/auth/google/callback` - Callback après consentement Google
+- `GET /api/auth/google/client-id` - Retourner Client ID pour frontend
+
+**Configuration requise (.env)**:
+```
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxx
+```
+
 ### 📋 Upcoming (P0-P1)
-1. **P0 - Custom Google OAuth** - User wants to use their own credentials
-2. **P1 - Stripe Integration** - Replace mocked `is_subscribed` with real payments
+1. **P0 - CAPTCHA** - Cloudflare Turnstile sur création compte et mot de passe oublié
+2. **P1 - Stripe Integration** - Remplacer `is_subscribed` mocké par paiements réels
    - Connecter les webhooks au système d'affiliation
+3. **P1 - Page Proposals** - `/dashboard/proposals/new?creator={username}` pour soumettre collaborations
 
 ### 📦 Future (P2+)
 1. VPS deployment guidance

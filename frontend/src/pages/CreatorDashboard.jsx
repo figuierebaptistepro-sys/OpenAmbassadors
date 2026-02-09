@@ -19,6 +19,7 @@ import { Progress } from "../components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
 import { toast } from "sonner";
+import CreatorCardManager from "../components/CreatorCardManager";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -680,6 +681,15 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                   </div>
                 </CardContent>
               </Card>
+            </motion.div>
+
+            {/* Creator Card Manager */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <CreatorCardManager user={user} />
             </motion.div>
 
             {/* Portfolio */}

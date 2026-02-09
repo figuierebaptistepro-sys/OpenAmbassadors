@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useParams } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import "@fontsource/plus-jakarta-sans/400.css";
 import "@fontsource/plus-jakarta-sans/500.css";
@@ -33,6 +33,7 @@ import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
 import { InboxPage, ConversationPage } from "./pages/MessagesPage";
 import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
+import CreatorCardPage from "./pages/CreatorCardPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -90,6 +91,36 @@ const AuthCallback = () => {
       </div>
     </div>
   );
+};
+
+// Public wrapper for Creator Card - fetches user optionally without blocking
+const CreatorCardPublicWrapper = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        // Not logged in, that's fine
+      }
+    };
+    checkUser();
+  }, []);
+
+  return <CreatorCardPage user={user} />;
+};
+
+// Redirect from /@username to /c/username
+const CreatorCardRedirect = () => {
+  const { username } = useParams();
+  return <Navigate to={`/c/${username}`} replace />;
 };
 
 // Protected Route Component
@@ -163,6 +194,10 @@ function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
+      
+      {/* Public Creator Card - /c/:username and /@:username (redirect) */}
+      <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
+      <Route path="/@:username" element={<CreatorCardRedirect />} />
       
       {/* Type selection */}
       <Route
