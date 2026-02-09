@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -131,9 +132,21 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# Add ProxyHeadersMiddleware FIRST to handle X-Forwarded-* headers from reverse proxy (NPM, nginx, etc.)
+# This ensures request.url uses the correct scheme (https) and host
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
 # Add SessionMiddleware for OAuth state management
+# Configure for production behind proxy: https_only=True, same_site="lax"
 # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=JWT_SECRET,
+    session_cookie="oauth_session",
+    max_age=1800,  # 30 minutes for OAuth flow
+    same_site="lax",  # Required for OAuth redirects
+    https_only=True,  # Production uses HTTPS
+)
 
 # Add rate limiter state to app
 app.state.limiter = limiter
@@ -1087,7 +1100,7 @@ async def register_user(request: Request, data: RegisterRequest, response: Respo
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1159,7 +1172,7 @@ async def login_user(request: Request, data: LoginRequest, response: Response):
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1314,7 +1327,7 @@ async def verify_otp(request: Request, data: OTPVerify, response: Response):
         value=token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=JWT_EXPIRATION_HOURS * 3600
     )
@@ -1413,7 +1426,7 @@ async def process_session(request: Request, response: Response):
         value=session_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
         max_age=7 * 24 * 3600
     )
@@ -1458,13 +1471,8 @@ async def google_login(request: Request):
 async def google_callback(request: Request, response: Response):
     """Handle Google OAuth callback after user consent"""
     # Get frontend base URL from headers or env
-    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
-    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
-    
-    if forwarded_host:
-        frontend_base = f"{forwarded_proto}://{forwarded_host}"
-    else:
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+    # Use FRONTEND_URL from environment - this is the production frontend domain
+    frontend_base = os.environ.get("FRONTEND_URL", "https://app.openambassadors.com").rstrip("/")
     
     try:
         # Get the access token and user info from Google
@@ -1564,7 +1572,7 @@ async def google_callback(request: Request, response: Response):
             value=session_token,
             httponly=True,
             secure=True,
-            samesite="none",
+            samesite="lax",
             path="/",
             max_age=7 * 24 * 3600
         )
