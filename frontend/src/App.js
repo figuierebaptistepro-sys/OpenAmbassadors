@@ -193,8 +193,9 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
       
-      {/* Public Creator Card - /c/:username */}
+      {/* Public Creator Card - /c/:username and /@:username (redirect) */}
       <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
+      <Route path="/@:username" element={<CreatorCardRedirect />} />
       
       {/* Type selection */}
       <Route
