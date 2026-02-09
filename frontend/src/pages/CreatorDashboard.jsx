@@ -75,6 +75,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
   const videoInputRef = useRef(null);
   const pictureInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -86,6 +87,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState(""); // "compressing", "uploading"
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const ffmpegRef = useRef(null);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
@@ -126,6 +128,36 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       toast.error("Erreur");
     } finally {
       setUploadingPicture(false);
+    }
+  };
+
+  // Upload bannière
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+
+    setUploadingBanner(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_URL}/api/upload/banner`, { 
+        method: "POST", 
+        credentials: "include", 
+        body: formData 
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Bannière mise à jour !");
+        onUserUpdate?.({ ...user, banner: data.banner_url });
+      } else {
+        toast.error("Erreur lors de l'upload");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
