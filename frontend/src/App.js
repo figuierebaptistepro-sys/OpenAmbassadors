@@ -211,10 +211,8 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
       
-      {/* Public Creator Card - /c/:username and /@username (redirect) */}
+      {/* Public Creator Card - /c/:username */}
       <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
-      {/* Handle @username URLs - the @ is part of the path, not a route param prefix */}
-      <Route path="/:username" element={<CreatorCardConditionalRoute />} />
       
       {/* Type selection */}
       <Route
