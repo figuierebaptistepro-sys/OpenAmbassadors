@@ -106,15 +106,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
         # Content Security Policy (adjust based on your needs)
-        # Using a relaxed policy for development, tighten for production
+        # Updated to support Google OAuth properly
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.gstatic.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data: https: blob:; "
             "connect-src 'self' https: wss:; "
-            "frame-src https://accounts.google.com https://www.youtube.com; "
+            "frame-src https://accounts.google.com https://www.youtube.com https://*.google.com; "
             "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp
