@@ -125,6 +125,20 @@ const CreatorCardRedirect = () => {
   return <Navigate to={`/c/${cleanUsername}`} replace />;
 };
 
+// Conditional route for /:username - checks if it starts with @
+const CreatorCardConditionalRoute = () => {
+  const { username } = useParams();
+  
+  // If the username starts with @, redirect to creator card
+  if (username?.startsWith('@')) {
+    const cleanUsername = username.slice(1);
+    return <Navigate to={`/c/${cleanUsername}`} replace />;
+  }
+  
+  // Otherwise, this is an unknown route - redirect to login
+  return <Navigate to="/login" replace />;
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children, requireType = false }) => {
   const navigate = useNavigate();
