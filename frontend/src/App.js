@@ -378,6 +378,8 @@ function AppRouter() {
       
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Handle @username URLs for creator cards - must be before catch-all */}
+      <Route path="/:username" element={<CreatorCardConditionalRoute />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
