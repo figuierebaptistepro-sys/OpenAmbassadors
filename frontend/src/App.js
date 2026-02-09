@@ -120,7 +120,9 @@ const CreatorCardPublicWrapper = () => {
 // Redirect from /@username to /c/username
 const CreatorCardRedirect = () => {
   const { username } = useParams();
-  return <Navigate to={`/c/${username}`} replace />;
+  // Remove @ prefix if present (for URLs like /@username)
+  const cleanUsername = username?.startsWith('@') ? username.slice(1) : username;
+  return <Navigate to={`/c/${cleanUsername}`} replace />;
 };
 
 // Protected Route Component
