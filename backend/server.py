@@ -47,6 +47,9 @@ from slowapi.errors import RateLimitExceeded
 # Google OAuth imports
 from google_oauth import oauth, GOOGLE_CLIENT_ID
 
+# Creator Card imports
+from creator_card import create_creator_card_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
