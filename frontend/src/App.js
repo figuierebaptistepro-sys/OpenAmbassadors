@@ -93,6 +93,34 @@ const AuthCallback = () => {
   );
 };
 
+// Public wrapper for Creator Card - fetches user optionally without blocking
+const CreatorCardPublicWrapper = () => {
+  const [user, setUser] = useState(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        // Not logged in, that's fine
+      } finally {
+        setChecked(true);
+      }
+    };
+    checkUser();
+  }, []);
+
+  // Don't wait for auth check - render immediately
+  return <CreatorCardPage user={user} />;
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children, requireType = false }) => {
   const navigate = useNavigate();
