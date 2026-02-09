@@ -1433,14 +1433,39 @@ async def process_session(request: Request, response: Response):
 @api_router.get("/auth/google/login")
 async def google_login(request: Request):
     """Initiate Google OAuth login - redirects to Google consent screen"""
-    # Build redirect URI dynamically from the current request origin
+    # Build redirect URI dynamically from the request headers
     # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    redirect_uri = str(request.url_for('google_callback')).replace('http://', 'https://')
+    
+    # Get the origin from various headers (handles proxies correctly)
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
+    
+    if forwarded_host:
+        # Use the forwarded host (this is the actual domain the user sees)
+        base_url = f"{forwarded_proto}://{forwarded_host}"
+    else:
+        # Fallback to request URL
+        base_url = str(request.base_url).rstrip('/')
+        if base_url.startswith('http://'):
+            base_url = base_url.replace('http://', 'https://')
+    
+    redirect_uri = f"{base_url}/api/auth/google/callback"
+    logging.info(f"Google OAuth login - redirect_uri: {redirect_uri}")
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @api_router.get("/auth/google/callback", name="google_callback")
 async def google_callback(request: Request, response: Response):
     """Handle Google OAuth callback after user consent"""
+    # Get frontend base URL from headers or env
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
+    
+    if forwarded_host:
+        frontend_base = f"{forwarded_proto}://{forwarded_host}"
+    else:
+        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+    
     try:
         # Get the access token and user info from Google
         token = await oauth.google.authorize_access_token(request)
@@ -1455,7 +1480,8 @@ async def google_callback(request: Request, response: Response):
         picture = user_info.get('picture')
         
         if not email:
-            raise HTTPException(status_code=400, detail="Email not provided by Google")
+            logging.error("Google OAuth: Email not provided")
+            return RedirectResponse(url=f"{frontend_base}/login?error=no_email", status_code=302)
         
         # Check if user exists
         existing_user = await db.users.find_one({"email": email}, {"_id": 0})
@@ -1520,8 +1546,7 @@ async def google_callback(request: Request, response: Response):
         )
         
         # Build redirect URL based on user state
-        # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        # frontend_base is already set at the beginning of the function from request headers
         
         if is_new or not user_type:
             redirect_url = f"{frontend_base}/select-type"
@@ -1529,6 +1554,8 @@ async def google_callback(request: Request, response: Response):
             redirect_url = f"{frontend_base}/dashboard"
         else:
             redirect_url = f"{frontend_base}/business"
+        
+        logging.info(f"Google OAuth success - redirecting to: {redirect_url}")
         
         # Create response with redirect
         redirect_response = RedirectResponse(url=redirect_url, status_code=302)
@@ -1546,7 +1573,9 @@ async def google_callback(request: Request, response: Response):
         
     except Exception as e:
         logging.error(f"Google OAuth error: {e}")
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        import traceback
+        logging.error(f"Google OAuth traceback: {traceback.format_exc()}")
+        # frontend_base is already defined at the start of the function
         return RedirectResponse(url=f"{frontend_base}/login?error=google_auth_failed", status_code=302)
 
 @api_router.get("/auth/google/client-id")
