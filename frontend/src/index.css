@@ -33,6 +33,10 @@
   * {
     @apply border-border;
   }
+  html, body {
+    overscroll-behavior: none;
+    background-color: #F6F7FB;
+  }
   body {
     @apply bg-background text-foreground font-body antialiased;
   }
