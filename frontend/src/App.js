@@ -96,7 +96,6 @@ const AuthCallback = () => {
 // Public wrapper for Creator Card - fetches user optionally without blocking
 const CreatorCardPublicWrapper = () => {
   const [user, setUser] = useState(null);
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -110,15 +109,18 @@ const CreatorCardPublicWrapper = () => {
         }
       } catch (error) {
         // Not logged in, that's fine
-      } finally {
-        setChecked(true);
       }
     };
     checkUser();
   }, []);
 
-  // Don't wait for auth check - render immediately
   return <CreatorCardPage user={user} />;
+};
+
+// Redirect from /@username to /c/username
+const CreatorCardRedirect = () => {
+  const { username } = useParams();
+  return <Navigate to={`/c/${username}`} replace />;
 };
 
 // Protected Route Component
