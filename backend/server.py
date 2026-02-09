@@ -1457,6 +1457,15 @@ async def google_login(request: Request):
 @api_router.get("/auth/google/callback", name="google_callback")
 async def google_callback(request: Request, response: Response):
     """Handle Google OAuth callback after user consent"""
+    # Get frontend base URL from headers or env
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
+    
+    if forwarded_host:
+        frontend_base = f"{forwarded_proto}://{forwarded_host}"
+    else:
+        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+    
     try:
         # Get the access token and user info from Google
         token = await oauth.google.authorize_access_token(request)
@@ -1471,7 +1480,8 @@ async def google_callback(request: Request, response: Response):
         picture = user_info.get('picture')
         
         if not email:
-            raise HTTPException(status_code=400, detail="Email not provided by Google")
+            logging.error("Google OAuth: Email not provided")
+            return RedirectResponse(url=f"{frontend_base}/login?error=no_email", status_code=302)
         
         # Check if user exists
         existing_user = await db.users.find_one({"email": email}, {"_id": 0})
