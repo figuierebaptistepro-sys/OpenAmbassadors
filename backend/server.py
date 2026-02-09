@@ -1573,7 +1573,9 @@ async def google_callback(request: Request, response: Response):
         
     except Exception as e:
         logging.error(f"Google OAuth error: {e}")
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        import traceback
+        logging.error(f"Google OAuth traceback: {traceback.format_exc()}")
+        # frontend_base is already defined at the start of the function
         return RedirectResponse(url=f"{frontend_base}/login?error=google_auth_failed", status_code=302)
 
 @api_router.get("/auth/google/client-id")
