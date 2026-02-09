@@ -1471,13 +1471,8 @@ async def google_login(request: Request):
 async def google_callback(request: Request, response: Response):
     """Handle Google OAuth callback after user consent"""
     # Get frontend base URL from headers or env
-    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
-    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
-    
-    if forwarded_host:
-        frontend_base = f"{forwarded_proto}://{forwarded_host}"
-    else:
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+    # Use FRONTEND_URL from environment - this is the production frontend domain
+    frontend_base = os.environ.get("FRONTEND_URL", "https://app.openambassadors.com").rstrip("/")
     
     try:
         # Get the access token and user info from Google
