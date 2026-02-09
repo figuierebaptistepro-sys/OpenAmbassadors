@@ -19,6 +19,7 @@ import { Progress } from "../components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
 import { toast } from "sonner";
+import CreatorCardManager from "../components/CreatorCardManager";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
