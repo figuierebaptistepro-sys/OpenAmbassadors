@@ -193,8 +193,8 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
       
-      {/* Public Creator Card - /@username - Must be public, no auth required */}
-      <Route path="/@:username" element={<CreatorCardPublicWrapper />} />
+      {/* Public Creator Card - /c/:username */}
+      <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
       
       {/* Type selection */}
       <Route
