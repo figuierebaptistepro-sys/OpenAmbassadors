@@ -477,14 +477,15 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">
                 {/* Banner with edit button */}
-                <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 relative group">
+                <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 relative">
                   {user?.banner && <img src={getImageUrl(user.banner)} alt="" className="w-full h-full object-cover" />}
-                  {/* Banner edit button */}
+                  {/* Banner edit button - always visible */}
                   <button
                     onClick={() => bannerInputRef.current?.click()}
                     disabled={uploadingBanner}
-                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow-md transition-colors"
                     data-testid="edit-banner-btn"
+                    title="Modifier la bannière"
                   >
                     {uploadingBanner ? (
                       <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
@@ -503,7 +504,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 <CardContent className="p-4 -mt-10 sm:-mt-12">
                   <div className="flex items-end gap-3">
                     {/* Profile picture with edit button */}
-                    <div className="relative group/avatar">
+                    <div className="relative">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-white shadow-lg border-2 border-white overflow-hidden flex-shrink-0">
                         {user?.picture ? (
                           <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
@@ -513,12 +514,13 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                           </div>
                         )}
                       </div>
-                      {/* Profile picture edit button */}
+                      {/* Profile picture edit button - always visible */}
                       <button
                         onClick={() => pictureInputRef.current?.click()}
                         disabled={uploadingPicture}
-                        className="absolute -bottom-1 -right-1 p-1.5 bg-white hover:bg-gray-50 rounded-full shadow-md border border-gray-200 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200"
+                        className="absolute -bottom-1 -right-1 p-1.5 bg-white hover:bg-gray-50 rounded-full shadow-md border border-gray-200 transition-colors"
                         data-testid="edit-picture-btn"
+                        title="Modifier la photo"
                       >
                         {uploadingPicture ? (
                           <Loader2 className="w-3 h-3 text-gray-600 animate-spin" />
