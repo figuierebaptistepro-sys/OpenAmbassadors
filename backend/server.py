@@ -1546,8 +1546,7 @@ async def google_callback(request: Request, response: Response):
         )
         
         # Build redirect URL based on user state
-        # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-        frontend_base = os.environ.get('FRONTEND_URL', 'https://turnstile-auth.preview.emergentagent.com')
+        # frontend_base is already set at the beginning of the function from request headers
         
         if is_new or not user_type:
             redirect_url = f"{frontend_base}/select-type"
@@ -1555,6 +1554,8 @@ async def google_callback(request: Request, response: Response):
             redirect_url = f"{frontend_base}/dashboard"
         else:
             redirect_url = f"{frontend_base}/business"
+        
+        logging.info(f"Google OAuth success - redirecting to: {redirect_url}")
         
         # Create response with redirect
         redirect_response = RedirectResponse(url=redirect_url, status_code=302)
