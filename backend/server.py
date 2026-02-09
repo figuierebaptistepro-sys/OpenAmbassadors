@@ -1433,9 +1433,25 @@ async def process_session(request: Request, response: Response):
 @api_router.get("/auth/google/login")
 async def google_login(request: Request):
     """Initiate Google OAuth login - redirects to Google consent screen"""
-    # Build redirect URI dynamically from the current request origin
+    # Build redirect URI dynamically from the request headers
     # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    redirect_uri = str(request.url_for('google_callback')).replace('http://', 'https://')
+    
+    # Get the origin from various headers (handles proxies correctly)
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
+    
+    if forwarded_host:
+        # Use the forwarded host (this is the actual domain the user sees)
+        base_url = f"{forwarded_proto}://{forwarded_host}"
+    else:
+        # Fallback to request URL
+        base_url = str(request.base_url).rstrip('/')
+        if base_url.startswith('http://'):
+            base_url = base_url.replace('http://', 'https://')
+    
+    redirect_uri = f"{base_url}/api/auth/google/callback"
+    logging.info(f"Google OAuth login - redirect_uri: {redirect_uri}")
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @api_router.get("/auth/google/callback", name="google_callback")
