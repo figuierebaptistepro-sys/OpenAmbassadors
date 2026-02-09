@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Video, MapPin, Edit, Plus, CheckCircle, Star, Trophy, TrendingUp, 
   BookOpen, Briefcase, ChevronRight, Award, Crown, Check, Globe, Camera, Wallet, ShieldCheck,
-  Upload, Link as LinkIcon, X, Play, Trash2, Loader2
+  Upload, Link as LinkIcon, X, Play, Trash2, Loader2, Pencil
 } from "lucide-react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
@@ -75,6 +75,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
   const videoInputRef = useRef(null);
   const pictureInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -86,6 +87,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState(""); // "compressing", "uploading"
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const ffmpegRef = useRef(null);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
@@ -126,6 +128,36 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       toast.error("Erreur");
     } finally {
       setUploadingPicture(false);
+    }
+  };
+
+  // Upload bannière
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+
+    setUploadingBanner(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_URL}/api/upload/banner`, { 
+        method: "POST", 
+        credentials: "include", 
+        body: formData 
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Bannière mise à jour !");
+        onUserUpdate?.({ ...user, banner: data.banner_url });
+      } else {
+        toast.error("Erreur lors de l'upload");
+      }
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -444,19 +476,56 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
             {/* Profile Card */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
+                {/* Banner with edit button */}
+                <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 relative group">
                   {user?.banner && <img src={getImageUrl(user.banner)} alt="" className="w-full h-full object-cover" />}
+                  {/* Banner edit button */}
+                  <button
+                    onClick={() => bannerInputRef.current?.click()}
+                    disabled={uploadingBanner}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    data-testid="edit-banner-btn"
+                  >
+                    {uploadingBanner ? (
+                      <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+                    ) : (
+                      <Pencil className="w-4 h-4 text-gray-600" />
+                    )}
+                  </button>
+                  <input
+                    ref={bannerInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                    className="hidden"
+                  />
                 </div>
                 <CardContent className="p-4 -mt-10 sm:-mt-12">
                   <div className="flex items-end gap-3">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-white shadow-lg border-2 border-white overflow-hidden flex-shrink-0">
-                      {user?.picture ? (
-                        <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-primary">{(profile?.name || "C")[0]}</span>
-                        </div>
-                      )}
+                    {/* Profile picture with edit button */}
+                    <div className="relative group/avatar">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-white shadow-lg border-2 border-white overflow-hidden flex-shrink-0">
+                        {user?.picture ? (
+                          <img src={getImageUrl(user.picture)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <span className="text-2xl font-bold text-primary">{(profile?.name || "C")[0]}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Profile picture edit button */}
+                      <button
+                        onClick={() => pictureInputRef.current?.click()}
+                        disabled={uploadingPicture}
+                        className="absolute -bottom-1 -right-1 p-1.5 bg-white hover:bg-gray-50 rounded-full shadow-md border border-gray-200 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200"
+                        data-testid="edit-picture-btn"
+                      >
+                        {uploadingPicture ? (
+                          <Loader2 className="w-3 h-3 text-gray-600 animate-spin" />
+                        ) : (
+                          <Pencil className="w-3 h-3 text-gray-600" />
+                        )}
+                      </button>
                     </div>
                     <div className="pb-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
