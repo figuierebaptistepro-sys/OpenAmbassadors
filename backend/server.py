@@ -132,9 +132,21 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# Add ProxyHeadersMiddleware FIRST to handle X-Forwarded-* headers from reverse proxy (NPM, nginx, etc.)
+# This ensures request.url uses the correct scheme (https) and host
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
 # Add SessionMiddleware for OAuth state management
+# Configure for production behind proxy: https_only=True, same_site="lax"
 # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=JWT_SECRET,
+    session_cookie="oauth_session",
+    max_age=1800,  # 30 minutes for OAuth flow
+    same_site="lax",  # Required for OAuth redirects
+    https_only=True,  # Production uses HTTPS
+)
 
 # Add rate limiter state to app
 app.state.limiter = limiter
