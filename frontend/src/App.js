@@ -153,25 +153,6 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 // App Router
 function AppRouter() {
   const location = useLocation();
-  const [publicUser, setPublicUser] = useState(null);
-
-  // Try to get user for public pages (non-blocking)
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: "include",
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setPublicUser(userData);
-        }
-      } catch (error) {
-        // User not logged in, that's fine for public pages
-      }
-    };
-    checkUser();
-  }, []);
 
   if (location.hash?.includes("session_id=")) {
     return <AuthCallback />;
@@ -184,8 +165,8 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
       
-      {/* Public Creator Card - /@username */}
-      <Route path="/@:username" element={<CreatorCardPage user={publicUser} />} />
+      {/* Public Creator Card - /@username - Must be public, no auth required */}
+      <Route path="/@:username" element={<CreatorCardPublicWrapper />} />
       
       {/* Type selection */}
       <Route
