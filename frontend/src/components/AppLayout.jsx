@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
@@ -58,6 +58,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
@@ -197,7 +198,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : item.highlight
+                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">
@@ -284,7 +287,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : item.highlight
+                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">

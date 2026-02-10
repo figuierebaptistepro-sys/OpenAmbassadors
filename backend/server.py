@@ -215,7 +215,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </div>
                     
                     <div style="text-align: center; margin: 25px 0;">
-                        <a href="https://creator-profile-hub-4.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                        <a href="https://modern-creator-card.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
                             Se connecter maintenant →
                         </a>
                     </div>
@@ -247,7 +247,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://creator-profile-hub-4.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <a href="https://modern-creator-card.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                         Accéder à mon compte
                     </a>
                 </div>
@@ -280,7 +280,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-profile-hub-4.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://modern-creator-card.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -335,7 +335,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-profile-hub-4.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://modern-creator-card.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -384,7 +384,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-profile-hub-4.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://modern-creator-card.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
@@ -833,7 +833,7 @@ class ResetPasswordRequest(BaseModel):
 
 async def send_password_reset_email(email: str, name: str, reset_token: str):
     """Send password reset email"""
-    reset_url = f"https://creator-profile-hub-4.preview.emergentagent.com/reset-password?token={reset_token}"
+    reset_url = f"https://modern-creator-card.preview.emergentagent.com/reset-password?token={reset_token}"
     await send_email(
         to=email,
         subject="🔐 Réinitialisation de votre mot de passe",
@@ -968,7 +968,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
                 Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://creator-profile-hub-4.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="https://modern-creator-card.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
                     Se connecter
                 </a>
             </div>
@@ -4020,9 +4020,31 @@ setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAI
 creator_card_router = create_creator_card_routes(db, get_current_user)
 app.include_router(creator_card_router)
 
-# Setup Payment routes
-payment_router = create_payment_routes(db, get_current_user)
-app.include_router(payment_router)
+# ==================== STRIPE PAYMENT ROUTES ====================
+import stripe_payments
+
+@api_router.post("/stripe/create-checkout")
+async def create_stripe_checkout(request: Request, checkout_request: stripe_payments.CreateCheckoutRequest, current_user: dict = Depends(get_current_user)):
+    """Create Stripe checkout session for premium subscription"""
+    return await stripe_payments.create_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email")
+    )
+
+@api_router.get("/stripe/status/{session_id}")
+async def get_stripe_status(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Check payment status"""
+    return await stripe_payments.check_payment_status(
+        session_id=session_id,
+        user_id=current_user.get("user_id")
+    )
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    return await stripe_payments.handle_stripe_webhook(request)
 
 # Include router
 app.include_router(api_router)
@@ -4034,7 +4056,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 cors_origins = os.environ.get('CORS_ORIGINS', '')
 if not cors_origins:
     logging.warning("CORS_ORIGINS not set - using restrictive default")
-    cors_origins = "https://creator-profile-hub-4.preview.emergentagent.com"
+    cors_origins = "https://modern-creator-card.preview.emergentagent.com"
 
 app.add_middleware(
     CORSMiddleware,

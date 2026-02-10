@@ -84,6 +84,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState(""); // "compressing", "uploading"
@@ -101,6 +102,41 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [newVideoUrl, setNewVideoUrl] = useState("");
 
   useEffect(() => { fetchData(); }, []);
+
+  // Handle Premium subscription
+  const handleSubscribe = async (packageId = "creator_premium_monthly") => {
+    setSubscribing(true);
+    try {
+      const response = await fetch(`${API_URL}/api/stripe/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          package_id: packageId,
+          origin_url: window.location.origin
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Erreur lors de la création du paiement");
+      }
+      
+      const data = await response.json();
+      
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("URL de paiement non reçue");
+      }
+    } catch (error) {
+      console.error("Subscription error:", error);
+      toast.error(error.message || "Erreur lors de l'abonnement");
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   // Upload photo de profil
   const handlePictureUpload = async (e) => {
@@ -1151,7 +1187,17 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 </li>
               ))}
             </ul>
-            <Button className="w-full bg-primary hover:bg-primary-hover">S&apos;abonner</Button>
+            <Button 
+              onClick={() => handleSubscribe("creator_premium_monthly")} 
+              disabled={subscribing}
+              className="w-full bg-primary hover:bg-primary-hover"
+              data-testid="subscribe-btn"
+            >
+              {subscribing ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              {subscribing ? "Redirection..." : "S'abonner"}
+            </Button>
             <p className="text-gray-400 text-xs text-center mt-2">Annulable à tout moment</p>
           </div>
         </DialogContent>
