@@ -198,9 +198,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : item.highlight
-                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">
