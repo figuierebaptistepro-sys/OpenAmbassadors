@@ -50,6 +50,9 @@ from google_oauth import oauth, GOOGLE_CLIENT_ID
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
+# Payments imports
+from payments import create_payment_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
