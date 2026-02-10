@@ -41,6 +41,19 @@ def get_db():
     return db
 
 
+def get_stripe_checkout(api_key: str, webhook_url: str = ""):
+    """Get Stripe checkout instance with proper error handling"""
+    try:
+        from emergentintegrations.payments.stripe.checkout import StripeCheckout
+        return StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    except ImportError as e:
+        logging.error(f"Failed to import Stripe integration: {e}")
+        raise HTTPException(status_code=500, detail="Module de paiement non disponible. Contactez le support.")
+    except Exception as e:
+        logging.error(f"Failed to initialize Stripe: {e}")
+        raise HTTPException(status_code=500, detail="Erreur d'initialisation du paiement")
+
+
 async def create_checkout_session(
     request: Request,
     checkout_request: CreateCheckoutRequest,
@@ -132,25 +145,6 @@ async def create_checkout_session(
     except Exception as e:
         logging.error(f"Stripe checkout error: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la session de paiement: {str(e)}")
-            "user_email": user_email,
-            "package_id": checkout_request.package_id,
-            "package_name": package["name"],
-            "amount": package["amount"],
-            "currency": package["currency"],
-            "payment_status": "pending",
-            "status": "initiated",
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc)
-        }
-        await db.payment_transactions.insert_one(transaction)
-        
-        return {
-            "url": session.url,
-            "session_id": session.session_id
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la session: {str(e)}")
 
 
 async def check_payment_status(session_id: str, user_id: str):
@@ -160,9 +154,14 @@ async def check_payment_status(session_id: str, user_id: str):
     if not api_key:
         raise HTTPException(status_code=500, detail="Configuration Stripe manquante")
     
-    stripe_checkout = StripeCheckout(api_key=api_key, webhook_url="")
+    try:
+        from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutStatusResponse
+    except ImportError:
+        raise HTTPException(status_code=500, detail="Module de paiement non disponible")
     
     try:
+        stripe_checkout = StripeCheckout(api_key=api_key, webhook_url="")
+        
         # Get checkout status from Stripe
         status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
         
@@ -199,22 +198,11 @@ async def check_payment_status(session_id: str, user_id: str):
         
         # If payment successful, upgrade user to premium
         if status.payment_status == "paid":
-            await db.users.update_one(
-                {"_id": transaction.get("user_id")},
-                {
-                    "$set": {
-                        "is_premium": True,
-                        "premium_since": datetime.now(timezone.utc),
-                        "premium_package": transaction.get("package_id")
-                    }
-                }
-            )
-            
-            # Also try updating by user_id string (in case ObjectId conversion needed)
             from bson import ObjectId
             try:
-                await db.users.update_one(
-                    {"_id": ObjectId(transaction.get("user_id"))},
+                # Try with string user_id first
+                result = await db.users.update_one(
+                    {"user_id": transaction.get("user_id")},
                     {
                         "$set": {
                             "is_premium": True,
@@ -223,8 +211,24 @@ async def check_payment_status(session_id: str, user_id: str):
                         }
                     }
                 )
-            except:
-                pass
+                
+                # If no match, try with ObjectId
+                if result.modified_count == 0:
+                    try:
+                        await db.users.update_one(
+                            {"_id": ObjectId(transaction.get("user_id"))},
+                            {
+                                "$set": {
+                                    "is_premium": True,
+                                    "premium_since": datetime.now(timezone.utc),
+                                    "premium_package": transaction.get("package_id")
+                                }
+                            }
+                        )
+                    except:
+                        pass
+            except Exception as e:
+                logging.error(f"Error updating user premium status: {e}")
         
         return {
             "status": new_status,
@@ -236,6 +240,7 @@ async def check_payment_status(session_id: str, user_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logging.error(f"Payment status check error: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la vérification: {str(e)}")
 
 
@@ -244,13 +249,18 @@ async def handle_stripe_webhook(request: Request):
     
     api_key = os.environ.get("STRIPE_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="Configuration Stripe manquante")
-    
-    host_url = str(request.base_url).rstrip("/")
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    stripe_checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+        return {"status": "error", "message": "Configuration Stripe manquante"}
     
     try:
+        from emergentintegrations.payments.stripe.checkout import StripeCheckout
+    except ImportError:
+        return {"status": "error", "message": "Module de paiement non disponible"}
+    
+    try:
+        host_url = str(request.base_url).rstrip("/")
+        webhook_url = f"{host_url}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+        
         body = await request.body()
         signature = request.headers.get("Stripe-Signature", "")
         
@@ -282,7 +292,7 @@ async def handle_stripe_webhook(request: Request):
                     from bson import ObjectId
                     try:
                         await db.users.update_one(
-                            {"_id": ObjectId(transaction.get("user_id"))},
+                            {"user_id": transaction.get("user_id")},
                             {
                                 "$set": {
                                     "is_premium": True,
@@ -297,5 +307,5 @@ async def handle_stripe_webhook(request: Request):
         return {"status": "received"}
         
     except Exception as e:
-        print(f"Webhook error: {str(e)}")
+        logging.error(f"Webhook error: {str(e)}")
         return {"status": "error", "message": str(e)}
