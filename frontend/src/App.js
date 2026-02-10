@@ -386,6 +386,32 @@ function AppRouter() {
         }
       />
       
+      {/* Pricing & Payment Routes */}
+      <Route
+        path="/pricing"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PricingPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/success"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentSuccessPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/cancel"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentCancelPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       {/* Handle @username URLs for creator cards - must be before catch-all */}
