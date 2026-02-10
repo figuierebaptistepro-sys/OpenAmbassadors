@@ -4017,6 +4017,32 @@ setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAI
 creator_card_router = create_creator_card_routes(db, get_current_user)
 app.include_router(creator_card_router)
 
+# ==================== STRIPE PAYMENT ROUTES ====================
+import stripe_payments
+
+@api_router.post("/stripe/create-checkout")
+async def create_stripe_checkout(request: Request, checkout_request: stripe_payments.CreateCheckoutRequest, current_user: dict = Depends(get_current_user)):
+    """Create Stripe checkout session for premium subscription"""
+    return await stripe_payments.create_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email")
+    )
+
+@api_router.get("/stripe/status/{session_id}")
+async def get_stripe_status(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Check payment status"""
+    return await stripe_payments.check_payment_status(
+        session_id=session_id,
+        user_id=current_user.get("user_id")
+    )
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    return await stripe_payments.handle_stripe_webhook(request)
+
 # Include router
 app.include_router(api_router)
 
