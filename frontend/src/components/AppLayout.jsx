@@ -58,8 +58,8 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: CreditCard, label: "Creator Card", path: "/creator-card" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
