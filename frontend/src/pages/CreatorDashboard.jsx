@@ -117,12 +117,11 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         })
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Erreur lors de la création du paiement");
-      }
-      
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || "Erreur lors de la création du paiement");
+      }
       
       // Redirect to Stripe Checkout
       if (data.url) {
