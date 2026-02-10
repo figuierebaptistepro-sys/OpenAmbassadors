@@ -4020,6 +4020,10 @@ setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAI
 creator_card_router = create_creator_card_routes(db, get_current_user)
 app.include_router(creator_card_router)
 
+# Setup Payment routes
+payment_router = create_payment_routes(db, get_current_user)
+app.include_router(payment_router)
+
 # Include router
 app.include_router(api_router)
 
