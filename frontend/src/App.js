@@ -35,6 +35,7 @@ import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
 import CreatorCardManagePage from "./pages/CreatorCardManagePage";
+import PricingPage, { PaymentSuccessPage, PaymentCancelPage } from "./pages/PricingPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
