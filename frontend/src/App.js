@@ -235,6 +235,14 @@ function AppRouter() {
         }
       />
       <Route
+        path="/creator-card"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <CreatorCardManagePage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/projects"
         element={
           <ProtectedRoute requireType>
