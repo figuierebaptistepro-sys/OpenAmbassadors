@@ -35,6 +35,7 @@ import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
 import CreatorCardManagePage from "./pages/CreatorCardManagePage";
+import PricingPage, { PaymentSuccessPage, PaymentCancelPage } from "./pages/PricingPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -381,6 +382,32 @@ function AppRouter() {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <AffiliatePage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Pricing & Payment Routes */}
+      <Route
+        path="/pricing"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PricingPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/success"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentSuccessPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/cancel"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentCancelPage user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />
