@@ -107,7 +107,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const handleSubscribe = async (packageId = "creator_premium_monthly") => {
     setSubscribing(true);
     try {
-      const response = await fetch(`${API_URL}/api/stripe/create-checkout`, {
+      const res = await fetch(`${API_URL}/api/stripe/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -117,21 +117,16 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         })
       });
       
-      // Clone response to avoid "body already read" error
-      const responseText = await response.text();
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("Failed to parse response:", responseText);
-        throw new Error("Réponse invalide du serveur");
+      // Clone before reading to avoid stream issues
+      const resClone = res.clone();
+      
+      if (!res.ok) {
+        const errorData = await resClone.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Erreur lors de la création du paiement");
       }
       
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || "Erreur lors de la création du paiement");
-      }
+      const data = await res.json();
       
-      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -140,7 +135,6 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     } catch (error) {
       console.error("Subscription error:", error);
       toast.error(error.message || "Erreur lors de l'abonnement");
-    } finally {
       setSubscribing(false);
     }
   };
