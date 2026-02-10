@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { Check, Crown, Download, ExternalLink, FileText, MessageCircle } from "lucide-react";
+import { Check, Crown, Download, ExternalLink, FileText, MessageCircle, Loader2 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -17,10 +17,75 @@ const BillingPage = ({ user }) => {
   const [stats, setStats] = useState(null);
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [checkingPayment, setCheckingPayment] = useState(false);
   
   // Check if user came from contact attempt
   const contactReason = location.state?.reason === "contact_creator";
   const creatorName = location.state?.creatorName;
+
+  // Check payment status from Stripe redirect
+  const checkPaymentStatus = useCallback(async (sessionId) => {
+    setCheckingPayment(true);
+    let attempts = 0;
+    const maxAttempts = 5;
+    const pollInterval = 2000;
+
+    const poll = async () => {
+      if (attempts >= maxAttempts) {
+        setCheckingPayment(false);
+        toast.info("Vérification du paiement en cours. Veuillez rafraîchir la page.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/stripe/status/${sessionId}`, {
+          credentials: "include"
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.payment_status === "paid") {
+            setCheckingPayment(false);
+            toast.success("🎉 Paiement réussi ! Vous êtes maintenant Premium !");
+            // Clear URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Refresh page to update premium status
+            window.location.reload();
+            return;
+          } else if (data.status === "expired") {
+            setCheckingPayment(false);
+            toast.error("Session de paiement expirée. Veuillez réessayer.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+        }
+        
+        // Continue polling
+        attempts++;
+        setTimeout(poll, pollInterval);
+      } catch (error) {
+        console.error("Payment status check error:", error);
+        attempts++;
+        setTimeout(poll, pollInterval);
+      }
+    };
+
+    poll();
+  }, []);
+
+  useEffect(() => {
+    // Check if returning from Stripe
+    const sessionId = searchParams.get("session_id");
+    const status = searchParams.get("status");
+    
+    if (sessionId && status === "success") {
+      checkPaymentStatus(sessionId);
+    } else if (status === "cancelled") {
+      toast.info("Paiement annulé");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, checkPaymentStatus]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -61,6 +126,21 @@ const BillingPage = ({ user }) => {
     { id: "INV-001", date: "15 Jan 2025", amount: 299, plan: "Local Impact" },
     { id: "INV-002", date: "15 Déc 2024", amount: 299, plan: "Local Impact" },
   ];
+
+  // Show loading state while checking payment
+  if (checkingPayment) {
+    return (
+      <AppLayout user={user} currentPlan={currentPack?.name}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">Vérification du paiement en cours...</p>
+            <p className="text-gray-400 text-sm mt-2">Veuillez patienter quelques instants</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout user={user} currentPlan={currentPack?.name}>
