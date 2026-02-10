@@ -3,16 +3,11 @@ Stripe Payment Integration for OpenAmbassadors
 Handles Premium subscriptions for creators
 """
 import os
+import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout, 
-    CheckoutSessionResponse, 
-    CheckoutStatusResponse, 
-    CheckoutSessionRequest
-)
 
 router = APIRouter()
 
@@ -63,7 +58,19 @@ async def create_checkout_session(
     # Get Stripe API key
     api_key = os.environ.get("STRIPE_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="Configuration Stripe manquante")
+        logging.error("STRIPE_API_KEY not found in environment")
+        raise HTTPException(status_code=500, detail="Configuration Stripe manquante. Veuillez contacter le support.")
+    
+    # Import Stripe integration
+    try:
+        from emergentintegrations.payments.stripe.checkout import (
+            StripeCheckout, 
+            CheckoutSessionResponse, 
+            CheckoutSessionRequest
+        )
+    except ImportError as e:
+        logging.error(f"Failed to import Stripe integration: {e}")
+        raise HTTPException(status_code=500, detail="Module de paiement non disponible")
     
     # Build URLs from provided origin
     origin_url = checkout_request.origin_url.rstrip("/")
@@ -73,7 +80,12 @@ async def create_checkout_session(
     # Initialize Stripe checkout
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}/api/webhook/stripe"
-    stripe_checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    
+    try:
+        stripe_checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    except Exception as e:
+        logging.error(f"Failed to initialize Stripe: {e}")
+        raise HTTPException(status_code=500, detail="Erreur d'initialisation du paiement")
     
     # Create checkout session request
     checkout_req = CheckoutSessionRequest(
@@ -98,6 +110,28 @@ async def create_checkout_session(
         transaction = {
             "session_id": session.session_id,
             "user_id": user_id,
+            "user_email": user_email,
+            "package_id": checkout_request.package_id,
+            "package_name": package["name"],
+            "amount": package["amount"],
+            "currency": package["currency"],
+            "payment_status": "pending",
+            "status": "initiated",
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        return {
+            "url": session.url,
+            "session_id": session.session_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Stripe checkout error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la session de paiement: {str(e)}")
             "user_email": user_email,
             "package_id": checkout_request.package_id,
             "package_name": package["name"],
