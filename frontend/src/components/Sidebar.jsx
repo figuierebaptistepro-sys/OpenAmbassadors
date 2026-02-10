@@ -33,6 +33,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
