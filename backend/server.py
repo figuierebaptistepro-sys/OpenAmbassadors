@@ -1135,6 +1135,7 @@ async def login_user(request: Request, data: LoginRequest, response: Response):
         )
     
     user = await db.users.find_one({"email": email}, {"_id": 0})
+    logging.info(f"Login attempt for {email}: user found = {user is not None}")
     
     if not user:
         record_failed_attempt(email)
