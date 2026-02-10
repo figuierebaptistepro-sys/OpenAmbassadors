@@ -1187,7 +1187,17 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 </li>
               ))}
             </ul>
-            <Button className="w-full bg-primary hover:bg-primary-hover">S&apos;abonner</Button>
+            <Button 
+              onClick={() => handleSubscribe("creator_premium_monthly")} 
+              disabled={subscribing}
+              className="w-full bg-primary hover:bg-primary-hover"
+              data-testid="subscribe-btn"
+            >
+              {subscribing ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              {subscribing ? "Redirection..." : "S'abonner"}
+            </Button>
             <p className="text-gray-400 text-xs text-center mt-2">Annulable à tout moment</p>
           </div>
         </DialogContent>
