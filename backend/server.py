@@ -50,6 +50,9 @@ from google_oauth import oauth, GOOGLE_CLIENT_ID
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
+# Payments imports
+from payments import create_payment_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -4016,6 +4019,10 @@ setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAI
 # Setup Creator Card routes
 creator_card_router = create_creator_card_routes(db, get_current_user)
 app.include_router(creator_card_router)
+
+# Setup Payment routes
+payment_router = create_payment_routes(db, get_current_user)
+app.include_router(payment_router)
 
 # Include router
 app.include_router(api_router)
