@@ -58,8 +58,8 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: CreditCard, label: "Creator Card", path: "/creator-card" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
@@ -198,9 +198,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : item.highlight
-                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">
@@ -287,9 +285,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : item.highlight
-                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">
