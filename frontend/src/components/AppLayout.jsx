@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
