@@ -1,20 +1,15 @@
 """
 Stripe Payments Integration for OpenAmbassadors
-Handles subscriptions for Creator Premium and Business plans
+Uses official Stripe SDK - No emergentintegrations dependency
 """
 import os
 import logging
+import stripe
 from datetime import datetime, timezone
-from typing import Optional, Dict
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout, 
-    CheckoutSessionResponse, 
-    CheckoutStatusResponse, 
-    CheckoutSessionRequest
-)
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
@@ -72,9 +67,14 @@ class PackageInfo(BaseModel):
 def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
     """Create payment routes with database dependency"""
     
-    stripe_api_key = os.environ.get("STRIPE_API_KEY")
-    if not stripe_api_key:
-        logging.warning("STRIPE_API_KEY not configured - payments disabled")
+    stripe_api_key = os.environ.get("STRIPE_SECRET_KEY")
+    stripe_webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    
+    if stripe_api_key:
+        stripe.api_key = stripe_api_key
+        logging.info("Stripe API configured")
+    else:
+        logging.warning("STRIPE_SECRET_KEY not configured - payments disabled")
     
     @router.get("/packages")
     async def get_packages():
@@ -102,11 +102,11 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
     ):
         """Create a Stripe checkout session for a package"""
         if not stripe_api_key:
-            raise HTTPException(status_code=503, detail="Payments not configured")
+            raise HTTPException(status_code=503, detail="Paiements non configurés")
         
         # Validate package exists
         if data.package_id not in PACKAGES:
-            raise HTTPException(status_code=400, detail="Invalid package")
+            raise HTTPException(status_code=400, detail="Forfait invalide")
         
         package = PACKAGES[data.package_id]
         
@@ -132,18 +132,25 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
         success_url = f"{data.origin_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
         cancel_url = f"{data.origin_url}/payment/cancel"
         
-        # Initialize Stripe
-        host_url = str(request.base_url).rstrip("/")
-        webhook_url = f"{host_url}/api/payments/webhook"
-        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-        
-        # Create checkout session
         try:
-            checkout_request = CheckoutSessionRequest(
-                amount=float(package["amount"]),
-                currency=package["currency"],
+            # Create Stripe Checkout Session
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=[{
+                    "price_data": {
+                        "currency": package["currency"],
+                        "product_data": {
+                            "name": package["name"],
+                            "description": ", ".join(package["features"][:3]),
+                        },
+                        "unit_amount": int(package["amount"] * 100),  # Stripe uses cents
+                    },
+                    "quantity": 1,
+                }],
+                mode="payment",
                 success_url=success_url,
                 cancel_url=cancel_url,
+                customer_email=user.get("email"),
                 metadata={
                     "user_id": user["user_id"],
                     "user_email": user.get("email", ""),
@@ -152,11 +159,9 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
                 }
             )
             
-            session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
-            
             # Create payment transaction record BEFORE redirect
             await db.payment_transactions.insert_one({
-                "session_id": session.session_id,
+                "session_id": checkout_session.id,
                 "user_id": user["user_id"],
                 "email": user.get("email"),
                 "package_id": data.package_id,
@@ -169,15 +174,18 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
                 "updated_at": datetime.now(timezone.utc).isoformat()
             })
             
-            logging.info(f"Checkout session created: {session.session_id} for user {user['user_id']}")
+            logging.info(f"Checkout session created: {checkout_session.id} for user {user['user_id']}")
             
             return CheckoutResponse(
-                checkout_url=session.url,
-                session_id=session.session_id
+                checkout_url=checkout_session.url,
+                session_id=checkout_session.id
             )
             
+        except stripe.error.StripeError as e:
+            logging.error(f"Stripe error: {e}")
+            raise HTTPException(status_code=500, detail="Erreur lors de la création du paiement")
         except Exception as e:
-            logging.error(f"Stripe checkout error: {e}")
+            logging.error(f"Checkout error: {e}")
             raise HTTPException(status_code=500, detail="Erreur lors de la création du paiement")
     
     @router.get("/status/{session_id}", response_model=PaymentStatusResponse)
@@ -188,16 +196,16 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
     ):
         """Get payment status and update database"""
         if not stripe_api_key:
-            raise HTTPException(status_code=503, detail="Payments not configured")
+            raise HTTPException(status_code=503, detail="Paiements non configurés")
         
         # Find transaction
         transaction = await db.payment_transactions.find_one({"session_id": session_id})
         if not transaction:
-            raise HTTPException(status_code=404, detail="Transaction not found")
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
         
         # Verify ownership
         if transaction["user_id"] != user["user_id"]:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail="Accès refusé")
         
         # If already processed successfully, return cached status
         if transaction.get("payment_status") == "paid":
@@ -209,18 +217,17 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
                 currency=transaction.get("currency")
             )
         
-        # Initialize Stripe and check status
-        host_url = str(request.base_url).rstrip("/")
-        webhook_url = f"{host_url}/api/payments/webhook"
-        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-        
         try:
-            status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+            # Retrieve session from Stripe
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            
+            payment_status = checkout_session.payment_status  # 'paid', 'unpaid', 'no_payment_required'
+            status = checkout_session.status  # 'open', 'complete', 'expired'
             
             # Update transaction status
             update_data = {
-                "status": status.status,
-                "payment_status": status.payment_status,
+                "status": status,
+                "payment_status": payment_status,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
             
@@ -230,17 +237,20 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
             )
             
             # If payment successful, activate subscription (only once)
-            if status.payment_status == "paid" and not transaction.get("subscription_activated"):
+            if payment_status == "paid" and not transaction.get("subscription_activated"):
                 await activate_subscription(db, transaction)
             
             return PaymentStatusResponse(
-                status=status.status,
-                payment_status=status.payment_status,
+                status=status,
+                payment_status=payment_status,
                 package_id=transaction.get("package_id"),
                 amount=transaction.get("amount"),
                 currency=transaction.get("currency")
             )
             
+        except stripe.error.StripeError as e:
+            logging.error(f"Stripe error checking status: {e}")
+            raise HTTPException(status_code=500, detail="Erreur lors de la vérification du paiement")
         except Exception as e:
             logging.error(f"Error checking payment status: {e}")
             raise HTTPException(status_code=500, detail="Erreur lors de la vérification du paiement")
@@ -249,20 +259,28 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
     async def stripe_webhook(request: Request):
         """Handle Stripe webhooks"""
         if not stripe_api_key:
-            raise HTTPException(status_code=503, detail="Payments not configured")
+            raise HTTPException(status_code=503, detail="Paiements non configurés")
+        
+        payload = await request.body()
+        sig_header = request.headers.get("Stripe-Signature")
         
         try:
-            body = await request.body()
-            signature = request.headers.get("Stripe-Signature")
+            # Verify webhook signature if secret is configured
+            if stripe_webhook_secret:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, stripe_webhook_secret
+                )
+            else:
+                # Without webhook secret, parse the event directly (less secure)
+                import json
+                event = stripe.Event.construct_from(
+                    json.loads(payload), stripe.api_key
+                )
             
-            host_url = str(request.base_url).rstrip("/")
-            webhook_url = f"{host_url}/api/payments/webhook"
-            stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-            
-            webhook_response = await stripe_checkout.handle_webhook(body, signature)
-            
-            if webhook_response.payment_status == "paid":
-                session_id = webhook_response.session_id
+            # Handle the event
+            if event["type"] == "checkout.session.completed":
+                session = event["data"]["object"]
+                session_id = session["id"]
                 
                 # Find and update transaction
                 transaction = await db.payment_transactions.find_one({"session_id": session_id})
@@ -276,9 +294,13 @@ def create_payment_routes(db: AsyncIOMotorDatabase, get_current_user):
                         }}
                     )
                     await activate_subscription(db, transaction)
+                    logging.info(f"Webhook: Subscription activated for session {session_id}")
             
             return {"status": "ok"}
             
+        except stripe.error.SignatureVerificationError as e:
+            logging.error(f"Webhook signature verification failed: {e}")
+            raise HTTPException(status_code=400, detail="Invalid signature")
         except Exception as e:
             logging.error(f"Webhook error: {e}")
             return {"status": "error", "message": str(e)}
