@@ -117,10 +117,18 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         })
       });
       
-      const data = await response.json();
+      // Clone response to avoid "body already read" error
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Failed to parse response:", responseText);
+        throw new Error("Réponse invalide du serveur");
+      }
       
       if (!response.ok) {
-        throw new Error(data.detail || "Erreur lors de la création du paiement");
+        throw new Error(data.detail || data.message || "Erreur lors de la création du paiement");
       }
       
       // Redirect to Stripe Checkout
