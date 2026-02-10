@@ -34,6 +34,7 @@ import { InboxPage, ConversationPage } from "./pages/MessagesPage";
 import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
+import CreatorCardManagePage from "./pages/CreatorCardManagePage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -230,6 +231,14 @@ function AppRouter() {
         element={
           <ProtectedRoute requireType>
             {({ user, onUserUpdate }) => <CreatorDashboard user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/creator-card"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <CreatorCardManagePage user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />
