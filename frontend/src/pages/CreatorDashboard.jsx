@@ -107,7 +107,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const handleSubscribe = async (packageId = "creator_premium_monthly") => {
     setSubscribing(true);
     try {
-      const response = await fetch(`${API_URL}/api/stripe/create-checkout`, {
+      const res = await fetch(`${API_URL}/api/stripe/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -117,13 +117,13 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         })
       });
       
-      const data = await response.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
       
-      if (!response.ok) {
-        throw new Error(data.detail || "Erreur lors de la création du paiement");
+      if (!res.ok) {
+        throw new Error(data.detail || data.message || "Erreur lors de la création du paiement");
       }
       
-      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -132,7 +132,6 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
     } catch (error) {
       console.error("Subscription error:", error);
       toast.error(error.message || "Erreur lors de l'abonnement");
-    } finally {
       setSubscribing(false);
     }
   };
