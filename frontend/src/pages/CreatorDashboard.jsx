@@ -117,15 +117,12 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
         })
       });
       
-      // Clone before reading to avoid stream issues
-      const resClone = res.clone();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
       
       if (!res.ok) {
-        const errorData = await resClone.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Erreur lors de la création du paiement");
+        throw new Error(data.detail || data.message || "Erreur lors de la création du paiement");
       }
-      
-      const data = await res.json();
       
       if (data.url) {
         window.location.href = data.url;
