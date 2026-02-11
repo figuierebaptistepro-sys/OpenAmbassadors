@@ -398,9 +398,30 @@ function AppRouter() {
 }
 
 function App() {
+  const [globalUser, setGlobalUser] = useState(null);
+
+  // Check auth on app load for HelpCrunch
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setGlobalUser(userData);
+        }
+      } catch (error) {
+        setGlobalUser(null);
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
     <BrowserRouter>
-      <AppRouter />
+      <HelpCrunchIntegration user={globalUser} />
+      <AppRouter onUserChange={setGlobalUser} />
       <Toaster position="top-right" richColors />
     </BrowserRouter>
   );
