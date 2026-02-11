@@ -10,19 +10,25 @@ const HelpCrunchIntegration = ({ user }) => {
 
   // Initialize and show HelpCrunch widget on every route change
   useEffect(() => {
-    const initHelpCrunch = () => {
-      if (window.HelpCrunch) {
-        // Show the widget (in case it was hidden)
-        window.HelpCrunch('showWidget');
+    const showWidget = () => {
+      // Check if HelpCrunch is fully loaded and ready
+      if (typeof window.HelpCrunch === 'function') {
+        // Use the correct API method: showChatWidget
+        window.HelpCrunch('showChatWidget');
       }
     };
 
-    // Try immediately
-    initHelpCrunch();
+    // Wait for HelpCrunch to be ready before calling methods
+    // The widget might not be immediately available on SPA route changes
+    const checkAndShow = () => {
+      if (typeof window.HelpCrunch === 'function') {
+        showWidget();
+      }
+    };
 
-    // Also try after delays in case HelpCrunch loads later
-    const timeout1 = setTimeout(initHelpCrunch, 1000);
-    const timeout2 = setTimeout(initHelpCrunch, 3000);
+    // Try after short delays to ensure HelpCrunch is loaded
+    const timeout1 = setTimeout(checkAndShow, 500);
+    const timeout2 = setTimeout(checkAndShow, 2000);
 
     return () => {
       clearTimeout(timeout1);
@@ -33,7 +39,7 @@ const HelpCrunchIntegration = ({ user }) => {
   // Sync user data with HelpCrunch
   useEffect(() => {
     const updateHelpCrunchUser = () => {
-      if (window.HelpCrunch && user) {
+      if (typeof window.HelpCrunch === 'function' && user) {
         window.HelpCrunch('updateUser', {
           email: user.email,
           name: user.name,
@@ -46,10 +52,12 @@ const HelpCrunchIntegration = ({ user }) => {
       }
     };
 
-    // Try immediately
-    updateHelpCrunchUser();
+    // Try immediately if HelpCrunch is ready
+    if (typeof window.HelpCrunch === 'function') {
+      updateHelpCrunchUser();
+    }
 
-    // Also try after a short delay in case HelpCrunch loads later
+    // Also try after a delay in case HelpCrunch loads later
     const timeout = setTimeout(updateHelpCrunchUser, 2000);
 
     return () => clearTimeout(timeout);
@@ -57,7 +65,7 @@ const HelpCrunchIntegration = ({ user }) => {
 
   // Reset user on logout
   useEffect(() => {
-    if (!user && window.HelpCrunch) {
+    if (!user && typeof window.HelpCrunch === 'function') {
       window.HelpCrunch('logout');
     }
   }, [user]);
