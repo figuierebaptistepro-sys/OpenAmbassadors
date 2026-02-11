@@ -11,6 +11,9 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 
+// Components
+import HelpCrunchIntegration from "./components/HelpCrunchIntegration";
+
 // Pages
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
