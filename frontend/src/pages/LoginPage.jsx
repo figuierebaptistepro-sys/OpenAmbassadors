@@ -152,7 +152,8 @@ const LoginPage = () => {
         body: JSON.stringify({ email: formData.email }),
       });
 
-      const data = await response.json();
+      // Read as text to avoid body stream issues
+      await response.text();
       toast.success("📧 Si un compte existe, vous recevrez un email de réinitialisation.");
     } catch (error) {
       toast.error("Erreur lors de l'envoi");
