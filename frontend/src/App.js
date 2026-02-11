@@ -11,6 +11,9 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 
+// Components
+import HelpCrunchIntegration from "./components/HelpCrunchIntegration";
+
 // Pages
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -199,7 +202,7 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 };
 
 // App Router
-function AppRouter() {
+function AppRouter({ onUserChange }) {
   const location = useLocation();
 
   if (location.hash?.includes("session_id=")) {
@@ -422,9 +425,30 @@ function AppRouter() {
 }
 
 function App() {
+  const [globalUser, setGlobalUser] = useState(null);
+
+  // Check auth on app load for HelpCrunch
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setGlobalUser(userData);
+        }
+      } catch (error) {
+        setGlobalUser(null);
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
     <BrowserRouter>
-      <AppRouter />
+      <HelpCrunchIntegration user={globalUser} />
+      <AppRouter onUserChange={setGlobalUser} />
       <Toaster position="top-right" richColors />
     </BrowserRouter>
   );
