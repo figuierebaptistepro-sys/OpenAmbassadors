@@ -201,7 +201,7 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 };
 
 // App Router
-function AppRouter() {
+function AppRouter({ onUserChange }) {
   const location = useLocation();
 
   if (location.hash?.includes("session_id=")) {
