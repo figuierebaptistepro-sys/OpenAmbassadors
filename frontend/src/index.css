@@ -106,3 +106,15 @@
   color: #FF2E63;
   font-weight: 600;
 }
+
+/* HelpCrunch widget styling - ensure it's always visible */
+#helpcrunch-container,
+.helpcrunch-widget,
+[id^="helpcrunch"] {
+  z-index: 99999 !important;
+}
+
+/* Adjust Emergent badge to not overlap with HelpCrunch */
+#emergent-badge {
+  bottom: 70px !important;
+}
