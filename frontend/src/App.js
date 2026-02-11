@@ -12,7 +12,7 @@ import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 
 // Components
-import HelpCrunchIntegration from "./components/HelpCrunchIntegration";
+// HelpCrunch is now handled directly in index.html - no React component needed
 
 // Pages
 import LoginPage from "./pages/LoginPage";
