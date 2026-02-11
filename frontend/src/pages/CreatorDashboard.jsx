@@ -103,38 +103,16 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Handle Premium subscription
-  const handleSubscribe = async (packageId = "creator_premium_monthly") => {
-    setSubscribing(true);
-    try {
-      const res = await fetch(`${API_URL}/api/stripe/create-checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          package_id: packageId,
-          origin_url: window.location.origin
-        })
-      });
-      
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
-      
-      if (!res.ok) {
-        throw new Error(data.detail || data.message || "Erreur lors de la création du paiement");
-      }
-      
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("URL de paiement non reçue");
-      }
-    } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error(error.message || "Erreur lors de l'abonnement");
-      setSubscribing(false);
-    }
-  };
+  
+// Handle Premium subscription (redirect - no fetch)
+const handleSubscribe = (packageId = "creator_premium_monthly") => {
+  setSubscribing(true);
+
+  const origin = encodeURIComponent(window.location.origin);
+  const pkg = encodeURIComponent(packageId);
+
+  window.location.href = `${API_URL}/api/stripe/redirect-checkout?package_id=${pkg}&origin_url=${origin}`;
+};
 
   // Upload photo de profil
   const handlePictureUpload = async (e) => {

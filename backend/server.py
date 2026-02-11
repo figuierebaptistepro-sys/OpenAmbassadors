@@ -50,6 +50,9 @@ from google_oauth import oauth, GOOGLE_CLIENT_ID
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
+# Payments imports
+from payments import create_payment_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -4042,6 +4045,27 @@ async def get_stripe_status(session_id: str, current_user: dict = Depends(get_cu
 async def stripe_webhook(request: Request):
     """Handle Stripe webhooks"""
     return await stripe_payments.handle_stripe_webhook(request)
+
+@api_router.get("/stripe/redirect-checkout")
+async def redirect_stripe_checkout(
+    request: Request,
+    package_id: str = "creator_premium_monthly",
+    origin_url: str = "",
+    current_user: dict = Depends(get_current_user),
+):
+    checkout_request = stripe_payments.CreateCheckoutRequest(
+        package_id=package_id,
+        origin_url=origin_url or str(request.base_url).rstrip("/"),
+    )
+
+    result = await stripe_payments.create_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email"),
+    )
+
+    return RedirectResponse(url=result["url"], status_code=303)
 
 # Include router
 app.include_router(api_router)
