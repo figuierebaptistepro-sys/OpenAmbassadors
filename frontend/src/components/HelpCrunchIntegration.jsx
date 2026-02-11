@@ -1,12 +1,37 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 /**
  * HelpCrunch Chat Integration Component
- * Syncs logged-in user data with HelpCrunch for better support
+ * Ensures the widget loads on all pages and syncs logged-in user data
  */
 const HelpCrunchIntegration = ({ user }) => {
+  const location = useLocation();
+
+  // Initialize and show HelpCrunch widget on every route change
   useEffect(() => {
-    // Wait for HelpCrunch to be available
+    const initHelpCrunch = () => {
+      if (window.HelpCrunch) {
+        // Show the widget (in case it was hidden)
+        window.HelpCrunch('showWidget');
+      }
+    };
+
+    // Try immediately
+    initHelpCrunch();
+
+    // Also try after delays in case HelpCrunch loads later
+    const timeout1 = setTimeout(initHelpCrunch, 1000);
+    const timeout2 = setTimeout(initHelpCrunch, 3000);
+
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
+  }, [location.pathname]); // Re-run on route change
+
+  // Sync user data with HelpCrunch
+  useEffect(() => {
     const updateHelpCrunchUser = () => {
       if (window.HelpCrunch && user) {
         window.HelpCrunch('updateUser', {
