@@ -139,8 +139,8 @@ const ArenaPage = ({ user }) => {
     <AppLayout user={user}>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
-        <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Arena</h1>
-        <p className="text-gray-500 text-xs sm:text-sm">{filteredPools.length} pools disponibles</p>
+        <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Pool</h1>
+        <p className="text-gray-500 text-xs sm:text-sm">{filteredPools.length} campagnes disponibles</p>
       </div>
 
       <div className="p-4 sm:p-6 lg:p-8">
@@ -149,7 +149,7 @@ const ArenaPage = ({ user }) => {
           <Card className="border-0 shadow-sm">
             <CardContent className="p-3 text-center">
               <div className="text-xl font-bold text-gray-900">{pools.length}</div>
-              <div className="text-xs text-gray-500">Pools actifs</div>
+              <div className="text-xs text-gray-500">Campagnes</div>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
@@ -185,7 +185,7 @@ const ArenaPage = ({ user }) => {
               onClick={() => setActiveTab("my-pools")}
               className={activeTab === "my-pools" ? "bg-primary hover:bg-primary-hover" : "border-gray-200"}
             >
-              Mes Pools ({myParticipations.length})
+              Mes campagnes ({myParticipations.length})
             </Button>
           </div>
           <div className="relative flex-1">
