@@ -70,6 +70,7 @@ class SubmissionStatus(str, Enum):
 class BrandInfo(BaseModel):
     name: str
     industry: str
+    logo_url: Optional[str] = None  # Brand logo URL
     website: Optional[str] = None
     social_handles: List[str] = []
 
