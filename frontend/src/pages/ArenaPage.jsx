@@ -218,31 +218,20 @@ const ArenaPage = ({ user }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
+                    className="h-full"
                   >
-                    <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full overflow-hidden">
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full overflow-hidden flex flex-col">
                       {/* Pool Banner */}
-                      <div className="relative h-32 bg-gray-100">
+                      <div className="relative h-36 bg-gray-100 flex-shrink-0">
                         {pool.brief?.banner_url ? (
                           <img 
                             src={pool.brief.banner_url} 
                             alt={pool.brand?.name}
                             className="w-full h-full object-cover"
                           />
-                        ) : pool.brand?.logo_url ? (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                            <img 
-                              src={pool.brand.logo_url} 
-                              alt={pool.brand?.name}
-                              className="max-h-20 max-w-[80%] object-contain"
-                            />
-                          </div>
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                              <span className="text-2xl font-bold text-gray-400">
-                                {(pool.brand?.name || "P")[0].toUpperCase()}
-                              </span>
-                            </div>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                            <Briefcase className="w-12 h-12 text-gray-300" />
                           </div>
                         )}
                         {isJoined(pool.pool_id) && (
@@ -255,18 +244,18 @@ const ArenaPage = ({ user }) => {
                         </Badge>
                       </div>
 
-                      <CardContent className="p-4">
+                      <CardContent className="p-4 flex flex-col flex-1">
                         {/* Brand Info */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-1">
                             {pool.brand?.logo_url ? (
                               <img 
                                 src={pool.brand.logo_url} 
-                                alt="" 
-                                className="w-full h-full object-cover" 
+                                alt={pool.brand?.name}
+                                className="w-full h-full object-contain"
                               />
                             ) : (
-                              <span className="text-xs font-bold text-gray-400">
+                              <span className="text-sm font-bold text-gray-400">
                                 {(pool.brand?.name || "P")[0].toUpperCase()}
                               </span>
                             )}
@@ -280,7 +269,7 @@ const ArenaPage = ({ user }) => {
                         </div>
 
                         {/* Key Message */}
-                        <p className="text-gray-500 text-xs line-clamp-2 mb-3">
+                        <p className="text-gray-500 text-xs line-clamp-2 mb-3 flex-1">
                           {pool.brief?.key_message}
                         </p>
 
@@ -293,7 +282,7 @@ const ArenaPage = ({ user }) => {
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="w-3 h-3" />
-                              {pool.total_participants} participant{pool.total_participants !== 1 ? "s" : ""}
+                              {pool.total_participants}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
@@ -312,8 +301,8 @@ const ArenaPage = ({ user }) => {
                           </div>
                         </div>
 
-                        {/* Max Gain */}
-                        {pool.has_max_payout && pool.max_payout_per_creator && (
+                        {/* Max Gain - only if enabled */}
+                        {pool.has_max_payout && pool.max_payout_per_creator ? (
                           <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg mb-3">
                             <span className="text-xs text-gray-600 flex items-center gap-1">
                               <Award className="w-3 h-3 text-green-600" />
@@ -323,21 +312,21 @@ const ArenaPage = ({ user }) => {
                               {pool.max_payout_per_creator}€
                             </span>
                           </div>
-                        )}
+                        ) : null}
 
                         <Button
                           onClick={() => {
                             if (isJoined(pool.pool_id)) {
-                              navigate(`/arena/${pool.pool_id}`);
+                              navigate(`/pool/${pool.pool_id}`);
                             } else {
                               handleJoinPool(pool.pool_id);
                             }
                           }}
                           size="sm"
-                          className="w-full bg-primary hover:bg-primary-hover text-xs"
+                          className="w-full bg-primary hover:bg-primary-hover text-xs mt-auto"
                         >
                           {isJoined(pool.pool_id) ? (
-                            <>Voir le pool <ChevronRight className="w-3 h-3 ml-1" /></>
+                            <>Voir la campagne <ChevronRight className="w-3 h-3 ml-1" /></>
                           ) : (
                             "Participer"
                           )}
