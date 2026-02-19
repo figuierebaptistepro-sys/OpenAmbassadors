@@ -207,7 +207,7 @@ const ArenaPage = ({ user }) => {
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Trophy className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="font-heading font-bold text-gray-900 mb-2">Aucun pool disponible</h3>
+                <h3 className="font-heading font-bold text-gray-900 mb-2">Aucune campagne disponible</h3>
                 <p className="text-gray-500 text-sm">Reviens bientôt pour découvrir de nouvelles campagnes</p>
               </div>
             ) : (
@@ -358,9 +358,9 @@ const ArenaPage = ({ user }) => {
                   <Target className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="font-heading font-bold text-gray-900 mb-2">Aucune participation</h3>
-                <p className="text-gray-500 text-sm mb-4">Tu n'as pas encore rejoint de pool</p>
+                <p className="text-gray-500 text-sm mb-4">Tu n'as pas encore rejoint de campagne</p>
                 <Button onClick={() => setActiveTab("discover")} size="sm" className="bg-primary hover:bg-primary-hover">
-                  Découvrir les pools
+                  Découvrir les campagnes
                 </Button>
               </div>
             ) : (
