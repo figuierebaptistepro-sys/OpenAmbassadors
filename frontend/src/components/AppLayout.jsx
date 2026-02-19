@@ -203,7 +203,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                   : item.highlight
                     ? "bg-gradient-to-r from-primary/10 to-orange-500/10 text-primary hover:from-primary/20 hover:to-orange-500/20"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+              } ${item.soon ? "opacity-60" : ""}`}
             >
               <div className="relative">
                 <item.icon className={`w-5 h-5 flex-shrink-0 ${item.highlight && !isActive(item.path) ? "text-primary" : ""}`} />
@@ -214,6 +214,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 )}
               </div>
               <span className="text-sm">{item.label}</span>
+              {item.soon && (
+                <span className="ml-auto text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              )}
             </button>
           ))}
 
