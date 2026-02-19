@@ -222,11 +222,17 @@ const ArenaPage = ({ user }) => {
                     <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full overflow-hidden">
                       {/* Pool Banner */}
                       <div className="relative h-32 bg-gray-100">
-                        {pool.brand?.logo_url ? (
+                        {pool.brief?.banner_url ? (
+                          <img 
+                            src={pool.brief.banner_url} 
+                            alt={pool.brand?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : pool.brand?.logo_url ? (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
                             <img 
                               src={pool.brand.logo_url} 
-                              alt={pool.brand.name}
+                              alt={pool.brand?.name}
                               className="max-h-20 max-w-[80%] object-contain"
                             />
                           </div>
