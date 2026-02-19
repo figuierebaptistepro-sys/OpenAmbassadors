@@ -347,6 +347,14 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
+        path="/business/pools/success"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <PoolPaymentSuccessPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/business/pools/:poolId"
         element={
           <ProtectedRoute requireType>
