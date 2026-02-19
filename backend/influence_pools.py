@@ -11,52 +11,37 @@ import uuid
 
 # ==================== CONSTANTS ====================
 
-# Package configurations
+# Package configurations - simplified
 PACKAGES = {
     5000: {
         "budget_total": 5000,
-        "max_payout_per_creator": 100,
-        "pool_size_estimation": "petit à moyen",
-        "publication_estimation": "50 à 200",
-        "estimated_creators_min": 50,
-        "estimated_creators_max": 200
+        "name": "Starter",
+        "power": "Petit pool",
+        "description": "Idéal pour démarrer"
     },
     15000: {
         "budget_total": 15000,
-        "max_payout_per_creator": 250,
-        "pool_size_estimation": "moyen à élevé",
-        "publication_estimation": "200 à 800",
-        "estimated_creators_min": 60,
-        "estimated_creators_max": 800
+        "name": "Growth", 
+        "power": "Pool moyen",
+        "description": "Visibilité significative"
     },
     25000: {
         "budget_total": 25000,
-        "max_payout_per_creator": 400,
-        "pool_size_estimation": "élevé à massif",
-        "publication_estimation": "500 à 2000",
-        "estimated_creators_min": 62,
-        "estimated_creators_max": 2000
+        "name": "Scale",
+        "power": "Grand pool",
+        "description": "Impact maximal"
     }
 }
 
-# CPM rates by platform and country (internal only)
-CPM_RATES = {
-    "FR": {
-        "TIKTOK": 2.50,
-        "INSTAGRAM_REELS": 3.00,
-        "YOUTUBE_SHORTS": 2.80
-    },
-    "US": {
-        "TIKTOK": 3.50,
-        "INSTAGRAM_REELS": 4.00,
-        "YOUTUBE_SHORTS": 3.80
-    },
-    "DEFAULT": {
-        "TIKTOK": 2.00,
-        "INSTAGRAM_REELS": 2.50,
-        "YOUTUBE_SHORTS": 2.30
-    }
+# Default CPM suggestions by platform
+CPM_SUGGESTIONS = {
+    "TIKTOK": 2.50,
+    "INSTAGRAM_REELS": 3.00,
+    "YOUTUBE_SHORTS": 2.80
 }
+
+# Max payout suggestions
+MAX_PAYOUT_SUGGESTIONS = [50, 100, 150, 200, 250, 300, 400, 500]
 
 # ==================== MODELS ====================
 
@@ -103,10 +88,17 @@ class BriefInfo(BaseModel):
 class CreatePoolRequest(BaseModel):
     package: Literal[5000, 15000, 25000]
     mode: PoolMode
+    # CPM settings (only for CPM mode)
+    cpm_rate: Optional[float] = None  # Brand chooses their CPM
+    # Max payout settings
+    has_max_payout: bool = False
+    max_payout_per_creator: Optional[float] = None
+    # Platforms & targeting
     platforms: List[Platform]
     country: str = "FR"
     language: str = "fr"
     duration_days: int = Field(ge=7, le=90)
+    # Brand & Brief
     brand: BrandInfo
     brief: BriefInfo
 
@@ -131,34 +123,41 @@ def generate_pool_id():
 def generate_submission_id():
     return f"sub_{uuid.uuid4().hex[:12]}"
 
-def get_cpm_rate(platform: str, country: str) -> float:
-    """Get CPM rate for platform and country (internal use only)"""
-    country_rates = CPM_RATES.get(country, CPM_RATES["DEFAULT"])
-    return country_rates.get(platform, 2.0)
-
 def get_package_config(package: int) -> dict:
     """Get package configuration"""
     return PACKAGES.get(package, PACKAGES[5000])
 
-def calculate_cpm_payout(views: int, platform: str, country: str, max_payout: float, budget_remaining: float) -> float:
+def calculate_cpm_payout(views: int, cpm_rate: float, max_payout: float = None, budget_remaining: float = None) -> float:
     """
     Calculate payout in CPM mode
-    Formula: payout = min((eligible_views / 1000) * cpm_platform, max_payout_per_creator, budget_remaining)
+    Formula: payout = (views / 1000) * cpm_rate
+    Capped by max_payout (if set) and budget_remaining
     """
-    cpm = get_cpm_rate(platform, country)
-    raw_payout = (views / 1000) * cpm
-    return min(raw_payout, max_payout, budget_remaining)
+    raw_payout = (views / 1000) * cpm_rate
+    
+    if max_payout and max_payout > 0:
+        raw_payout = min(raw_payout, max_payout)
+    
+    if budget_remaining is not None:
+        raw_payout = min(raw_payout, budget_remaining)
+    
+    return round(raw_payout, 2)
 
-def calculate_pool_payout(creator_views: int, total_views: int, budget_total: float, max_payout: float) -> float:
+def calculate_pool_payout(creator_views: int, total_views: int, budget_total: float, max_payout: float = None) -> float:
     """
     Calculate payout in POOL mode
-    Formula: payout_raw = (creator_views / total_campaign_views) * budget_total
-             payout_final = min(payout_raw, max_payout_per_creator)
+    Formula: payout = (creator_views / total_views) * budget_total
+    Capped by max_payout if set
     """
     if total_views == 0:
         return 0
+    
     raw_payout = (creator_views / total_views) * budget_total
-    return min(raw_payout, max_payout)
+    
+    if max_payout and max_payout > 0:
+        raw_payout = min(raw_payout, max_payout)
+    
+    return round(raw_payout, 2)
 
 # ==================== DATABASE OPERATIONS ====================
 
@@ -182,9 +181,11 @@ async def create_pool(db, business_user: dict, pool_data: CreatePoolRequest) -> 
         "budget_spent": 0,
         "budget_remaining": package_config["budget_total"],
         
-        # Mode & Rules
+        # Mode & Payment Rules
         "mode": pool_data.mode.value,
-        "max_payout_per_creator": package_config["max_payout_per_creator"],
+        "cpm_rate": pool_data.cpm_rate if pool_data.mode == PoolMode.CPM else None,
+        "has_max_payout": pool_data.has_max_payout,
+        "max_payout_per_creator": pool_data.max_payout_per_creator if pool_data.has_max_payout else None,
         
         # Platforms & Targeting
         "platforms": [p.value for p in pool_data.platforms],
@@ -207,9 +208,9 @@ async def create_pool(db, business_user: dict, pool_data: CreatePoolRequest) -> 
         "total_submissions": 0,
         "total_views": 0,
         
-        # Estimations (for UI)
-        "pool_size_estimation": package_config["pool_size_estimation"],
-        "publication_estimation": package_config["publication_estimation"],
+        # Package info for display
+        "package_name": package_config["name"],
+        "package_power": package_config["power"],
         
         # Metadata
         "created_at": now.isoformat(),
@@ -334,7 +335,7 @@ async def submit_content(db, creator_user: dict, submission_data: SubmitContentR
         "platform": submission_data.platform.value,
         "content_url": submission_data.content_url,
         "description": submission_data.description,
-        "status": SubmissionStatus.APPROVED.value,  # Auto-approved as per requirements
+        "status": SubmissionStatus.APPROVED.value,  # Auto-approved
         "views": 0,
         "estimated_payout": 0,
         "submitted_at": now.isoformat(),
@@ -379,7 +380,7 @@ async def get_creator_submissions(db, creator_id: str, pool_id: str = None) -> l
     return submissions
 
 async def update_submission_views(db, submission_id: str, views: int) -> dict:
-    """Update views for a submission (for future API integration)"""
+    """Update views for a submission"""
     submission = await db.pool_submissions.find_one({"submission_id": submission_id})
     if not submission:
         raise ValueError("Submission not found")
@@ -392,18 +393,14 @@ async def update_submission_views(db, submission_id: str, views: int) -> dict:
     views_diff = views - old_views
     
     # Calculate estimated payout based on mode
-    if pool["mode"] == PoolMode.CPM.value:
+    estimated_payout = 0
+    if pool["mode"] == PoolMode.CPM.value and pool.get("cpm_rate"):
         estimated_payout = calculate_cpm_payout(
             views=views,
-            platform=submission["platform"],
-            country=pool["country"],
-            max_payout=pool["max_payout_per_creator"],
+            cpm_rate=pool["cpm_rate"],
+            max_payout=pool.get("max_payout_per_creator"),
             budget_remaining=pool["budget_remaining"]
         )
-    else:
-        # For POOL mode, we need total views to calculate
-        # This will be recalculated when needed
-        estimated_payout = 0
     
     now = datetime.now(timezone.utc)
     
@@ -445,7 +442,7 @@ async def calculate_pool_payouts(db, pool_id: str) -> list:
     
     total_views = pool.get("total_views", 0)
     budget_total = pool["budget_total"]
-    max_payout = pool["max_payout_per_creator"]
+    max_payout = pool.get("max_payout_per_creator") if pool.get("has_max_payout") else None
     
     results = []
     
@@ -459,25 +456,21 @@ async def calculate_pool_payouts(db, pool_id: str) -> list:
                 budget_total=budget_total,
                 max_payout=max_payout
             )
-        else:  # CPM mode - sum up all submissions
-            submissions = await get_creator_submissions(db, p["creator_id"], pool_id)
-            payout = 0
-            for sub in submissions:
-                payout += calculate_cpm_payout(
-                    views=sub.get("views", 0),
-                    platform=sub["platform"],
-                    country=pool["country"],
-                    max_payout=max_payout,
-                    budget_remaining=budget_total - pool.get("budget_spent", 0)
-                )
-            payout = min(payout, max_payout)
+        else:  # CPM mode
+            cpm_rate = pool.get("cpm_rate", 2.5)
+            payout = calculate_cpm_payout(
+                views=creator_views,
+                cpm_rate=cpm_rate,
+                max_payout=max_payout,
+                budget_remaining=budget_total - pool.get("budget_spent", 0)
+            )
         
         results.append({
             "creator_id": p["creator_id"],
             "creator_name": p["creator_name"],
             "total_views": creator_views,
             "total_submissions": p.get("total_submissions", 0),
-            "estimated_payout": round(payout, 2)
+            "estimated_payout": payout
         })
     
     # Sort by payout descending
@@ -498,7 +491,6 @@ async def check_and_complete_pools(db):
     """Check and complete pools that have ended or exhausted budget"""
     now = datetime.now(timezone.utc)
     
-    # Find pools to complete
     pools_to_complete = await db.influence_pools.find({
         "status": PoolStatus.ACTIVE.value,
         "$or": [
@@ -519,24 +511,21 @@ async def check_and_complete_pools(db):
 
 def get_ui_business_summary(pool: dict) -> dict:
     """Generate UI summary for business dashboard"""
-    package_config = get_package_config(pool["package"])
-    
     mode_explanation = ""
     if pool["mode"] == PoolMode.CPM.value:
-        mode_explanation = "Les créateurs sont rémunérés en fonction des vues générées par leur contenu. Plus ils performent, plus ils gagnent."
+        cpm = pool.get("cpm_rate", 0)
+        mode_explanation = f"CPM de {cpm}€ - Les créateurs gagnent {cpm}€ pour 1000 vues"
     else:
-        mode_explanation = "Le budget total est réparti entre les créateurs selon leur performance relative. Plus un créateur génère de vues, plus sa part est importante."
+        mode_explanation = "Le budget est réparti selon les vues de chaque créateur"
     
     return {
         "budget": pool["budget_total"],
         "budget_spent": pool.get("budget_spent", 0),
         "budget_remaining": pool.get("budget_remaining", pool["budget_total"]),
         "duration": pool["duration_days"],
-        "estimated_creator_participation": package_config["pool_size_estimation"],
-        "estimated_publications": package_config["publication_estimation"],
-        "max_gain_per_creator": pool["max_payout_per_creator"],
-        "how_it_works_simple": f"Lancez votre campagne et laissez les créateurs produire du contenu pour vous. Budget maîtrisé, résultats mesurables.",
         "mode_explanation": mode_explanation,
+        "has_max_payout": pool.get("has_max_payout", False),
+        "max_payout": pool.get("max_payout_per_creator"),
         "total_participants": pool.get("total_participants", 0),
         "total_submissions": pool.get("total_submissions", 0),
         "total_views": pool.get("total_views", 0)
@@ -550,9 +539,10 @@ def get_ui_creator_arena(pool: dict, participation: dict = None) -> dict:
     
     mode_explanation = ""
     if pool["mode"] == PoolMode.CPM.value:
-        mode_explanation = "Tu es payé en fonction du nombre de vues que ton contenu génère. Plus tu performes, plus tu gagnes !"
+        cpm = pool.get("cpm_rate", 0)
+        mode_explanation = f"Tu gagnes {cpm}€ pour 1000 vues"
     else:
-        mode_explanation = "Le budget est partagé entre tous les participants selon leur performance. Donne le meilleur de toi-même pour maximiser ta part !"
+        mode_explanation = "Le budget est partagé selon ta performance"
     
     result = {
         "pool_id": pool["pool_id"],
@@ -562,8 +552,11 @@ def get_ui_creator_arena(pool: dict, participation: dict = None) -> dict:
         "platforms": pool["platforms"],
         "budget_remaining": pool.get("budget_remaining", pool["budget_total"]),
         "time_remaining_days": time_remaining,
-        "max_possible_gain": pool["max_payout_per_creator"],
+        "mode": pool["mode"],
         "mode_explanation": mode_explanation,
+        "cpm_rate": pool.get("cpm_rate"),
+        "has_max_payout": pool.get("has_max_payout", False),
+        "max_payout": pool.get("max_payout_per_creator"),
         "total_participants": pool.get("total_participants", 0),
         "status": pool["status"]
     }
