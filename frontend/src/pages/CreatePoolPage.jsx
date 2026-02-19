@@ -179,7 +179,7 @@ const CreatePoolPage = ({ user }) => {
       };
 
       // Create Stripe checkout session for payment
-      const response = await fetch(`${API_URL}/api/stripe/pool-checkout`, {
+      const response = await fetch(`/api/stripe/pool-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
