@@ -253,18 +253,11 @@ const ArenaPage = ({ user }) => {
                                 src={pool.brand.logo_url} 
                                 alt={pool.brand?.name}
                                 className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
-                                }}
                               />
-                            ) : null}
-                            <span 
-                              className="text-sm font-bold text-gray-400"
-                              style={{ display: pool.brand?.logo_url ? 'none' : 'flex' }}
-                            >
-                              {(pool.brand?.name || "P")[0].toUpperCase()}
-                            </span>
+                            ) : (
+                              <span className="text-sm font-bold text-gray-400">
+                                {(pool.brand?.name || "P")[0].toUpperCase()}
+                              </span>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
