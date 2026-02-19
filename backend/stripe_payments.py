@@ -294,3 +294,174 @@ async def handle_stripe_webhook(request: Request):
     except Exception as e:
         logging.error(f"Webhook error: {str(e)}")
         return {"status": "error", "message": str(e)}
+
+
+async def create_pool_checkout_session(
+    request: Request,
+    checkout_request: CreatePoolCheckoutRequest,
+    user_id: str,
+    user_email: str
+):
+    """Create a Stripe checkout session for pool campaign payment"""
+    import json
+    
+    pool_data = checkout_request.pool_data
+    package_amount = pool_data.get("package")
+    
+    # Validate package exists
+    if package_amount not in POOL_PACKAGES:
+        raise HTTPException(status_code=400, detail="Package invalide")
+    
+    package = POOL_PACKAGES[package_amount]
+    
+    # Get Stripe API key
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        logging.error("STRIPE_API_KEY not found in environment")
+        raise HTTPException(status_code=500, detail="Configuration Stripe manquante")
+    
+    stripe.api_key = api_key
+    
+    # Build URLs from provided origin
+    origin_url = checkout_request.origin_url.rstrip("/")
+    success_url = f"{origin_url}/business/pools/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin_url}/business/pools/new?status=cancelled"
+    
+    try:
+        # Create Stripe checkout session
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": package["currency"],
+                    "product_data": {
+                        "name": package["name"],
+                        "description": package["description"],
+                    },
+                    "unit_amount": package["amount"],
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=user_email,
+            metadata={
+                "user_id": user_id,
+                "user_email": user_email,
+                "type": "pool_campaign",
+                "package_amount": str(package_amount),
+                "pool_data": json.dumps(pool_data)  # Store full pool data for creation after payment
+            }
+        )
+        
+        # Create payment transaction record in database
+        db = get_db()
+        transaction = {
+            "session_id": session.id,
+            "user_id": user_id,
+            "user_email": user_email,
+            "type": "pool_campaign",
+            "package_amount": package_amount,
+            "amount": package["amount"],
+            "currency": package["currency"],
+            "status": "pending",
+            "payment_status": "unpaid",
+            "pool_data": pool_data,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        logging.info(f"Pool checkout session created: {session.id} for user {user_id}")
+        
+        return {
+            "checkout_url": session.url,
+            "session_id": session.id
+        }
+        
+    except stripe.error.StripeError as e:
+        logging.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe: {str(e)}")
+    except Exception as e:
+        logging.error(f"Checkout error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+
+async def check_pool_payment_and_create(session_id: str, user_id: str):
+    """Check pool payment status and create pool if paid"""
+    import influence_pools
+    
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Configuration Stripe manquante")
+    
+    stripe.api_key = api_key
+    
+    try:
+        # Get session from Stripe
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        db = get_db()
+        
+        # Find existing transaction
+        transaction = await db.payment_transactions.find_one({"session_id": session_id})
+        
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
+        
+        # Check if already processed
+        if transaction.get("payment_status") == "paid" and transaction.get("pool_id"):
+            return {
+                "status": "success",
+                "payment_status": "paid",
+                "pool_id": transaction.get("pool_id"),
+                "message": "Pool déjà créé"
+            }
+        
+        payment_status = session.payment_status
+        status = session.status
+        
+        # Update transaction status
+        update_data = {
+            "status": status,
+            "payment_status": payment_status,
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        pool_id = None
+        
+        # If payment successful, create the pool
+        if payment_status == "paid":
+            pool_data = transaction.get("pool_data")
+            if pool_data:
+                # Create the pool
+                user = await db.users.find_one({"user_id": user_id})
+                if user:
+                    pool_request = influence_pools.CreatePoolRequest(**pool_data)
+                    pool = await influence_pools.create_pool(db, user, pool_request)
+                    pool_id = pool.get("pool_id")
+                    update_data["pool_id"] = pool_id
+                    logging.info(f"Pool {pool_id} created after payment for user {user_id}")
+        
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": update_data}
+        )
+        
+        return {
+            "status": status,
+            "payment_status": payment_status,
+            "pool_id": pool_id,
+            "amount_total": session.amount_total,
+            "currency": session.currency
+        }
+        
+    except stripe.error.StripeError as e:
+        logging.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Pool payment check error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
