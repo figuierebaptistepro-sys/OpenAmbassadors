@@ -873,13 +873,34 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </CardContent>
             </Card>
 
-            {/* Creator Card Manager - En bas */}
+            {/* Creator Card Manager - Coming Soon */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <CreatorCardManager user={user} />
+              <Card className="border-0 shadow-sm opacity-75">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <LinkIcon className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-heading font-semibold text-gray-900 text-sm">Creator Card</h3>
+                          <Badge className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5">Soon</Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">Votre page publique type lien en bio</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4 text-center">
+                    <p className="text-gray-500 text-xs">Cette fonctionnalité arrive bientôt !</p>
+                    <p className="text-gray-400 text-[10px] mt-1">Créez votre page personnalisée avec vos offres et liens</p>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           </div>
 
