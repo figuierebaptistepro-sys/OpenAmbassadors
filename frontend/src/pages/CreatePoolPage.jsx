@@ -39,7 +39,8 @@ const PACKAGES = [
     budget: "5 000€",
     power: "Petit pool",
     description: "Idéal pour démarrer",
-    color: "from-blue-500 to-cyan-500"
+    color: "from-blue-500 to-cyan-500",
+    icon: "🚀"
   },
   {
     value: 15000,
@@ -47,14 +48,16 @@ const PACKAGES = [
     power: "Pool moyen",
     description: "Visibilité significative",
     color: "from-purple-500 to-pink-500",
-    popular: true
+    popular: true,
+    icon: "⚡"
   },
   {
     value: 25000,
     budget: "25 000€",
     power: "Grand pool",
     description: "Impact maximal",
-    color: "from-orange-500 to-red-500"
+    color: "from-orange-500 to-red-500",
+    icon: "🔥"
   }
 ];
 
