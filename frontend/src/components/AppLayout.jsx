@@ -59,7 +59,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
-    { icon: Trophy, label: "Arena", path: "/arena", highlight: true },
+    { icon: Trophy, label: "Pool", path: "/pool", highlight: true },
     { icon: CreditCard, label: "Creator Card", path: "/creator-card" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
