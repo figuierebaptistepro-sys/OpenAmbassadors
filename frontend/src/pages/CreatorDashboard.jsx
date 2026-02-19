@@ -80,6 +80,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
