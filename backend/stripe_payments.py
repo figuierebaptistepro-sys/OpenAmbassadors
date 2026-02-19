@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timezone
 from fastapi import HTTPException, Request
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -137,10 +137,10 @@ async def create_checkout_session(
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={
-                "user_id": user_id,
-                "user_email": user_email,
+                "user_id": str(user_id),
+                "user_email": str(user_email)[:200],  # safe-ish
                 "type": "premium_subscription",
-                "package_id": package_id
+                "package_id": str(package_id)[:100]
             },
             allow_promotion_codes=True,
         )
@@ -162,7 +162,7 @@ async def create_checkout_session(
 
         return {
             "checkout_url": session.url,
-            "url": session.url,                 # compat RedirectResponse usage
+            "url": session.url,  # compat RedirectResponse usage
             "session_id": session.id
         }
 
@@ -268,10 +268,13 @@ async def handle_stripe_webhook(request: Request):
                         )
 
                     elif payment_type == "pool_campaign" and user_id:
-                        pool_data_str = metadata.get("pool_data")
-                        if pool_data_str:
+                        # ✅ IMPORTANT: do NOT read pool_data from Stripe metadata (limit 500 chars)
+                        # We read it from DB via payment_transactions (it was stored at checkout creation)
+                        tx = await db.payment_transactions.find_one({"session_id": session_id})
+                        if tx and tx.get("pool_data"):
                             import influence_pools
-                            pool_data = json.loads(pool_data_str)
+
+                            pool_data = tx["pool_data"]
                             user = await db.users.find_one({"user_id": user_id})
                             if user:
                                 pool_request = influence_pools.CreatePoolRequest(**pool_data)
@@ -308,6 +311,25 @@ async def create_pool_checkout_session(
     success_url = f"{origin_url}/business/pools/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{origin_url}/business/pools/new?status=cancelled"
 
+    # ✅ Build SHORT metadata (Stripe metadata values <= 500 chars)
+    brand = (pool_data.get("brand") or {})
+    platforms = pool_data.get("platforms") or []
+    try:
+        platforms_str = ",".join([str(p) for p in platforms])
+    except Exception:
+        platforms_str = ""
+
+    metadata_short = {
+        "type": "pool_campaign",
+        "user_id": str(user_id),
+        "package_amount": str(package_amount),
+        "mode": str(pool_data.get("mode", ""))[:20],
+        "country": str(pool_data.get("country", ""))[:10],
+        "duration_days": str(pool_data.get("duration_days", ""))[:10],
+        "platforms": platforms_str[:200],
+        "brand_name": str(brand.get("name", ""))[:100],
+    }
+
     try:
         session = stripe.checkout.Session.create(
             mode="payment",
@@ -325,13 +347,7 @@ async def create_pool_checkout_session(
             }],
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata={
-                "user_id": user_id,
-                "user_email": user_email,
-                "type": "pool_campaign",
-                "package_amount": str(package_amount),
-                "pool_data": json.dumps(pool_data)
-            },
+            metadata=metadata_short,  # ✅ no pool_data here
             allow_promotion_codes=True,
         )
 
@@ -346,14 +362,14 @@ async def create_pool_checkout_session(
             "currency": package["currency"],
             "status": session.status or "open",
             "payment_status": session.payment_status or "unpaid",
-            "pool_data": pool_data,
+            "pool_data": pool_data,  # ✅ stored in DB (no 500 chars limit)
             "created_at": datetime.now(timezone.utc)
         }
         await db.payment_transactions.insert_one(transaction)
 
         return {
             "checkout_url": session.url,
-            "url": session.url,                 # compat possible redirect usage
+            "url": session.url,  # compat possible redirect usage
             "session_id": session.id
         }
 
