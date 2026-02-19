@@ -38,6 +38,10 @@ import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
 import CreatorCardManagePage from "./pages/CreatorCardManagePage";
+import ArenaPage from "./pages/ArenaPage";
+import PoolDetailPage from "./pages/PoolDetailPage";
+import CreatePoolPage from "./pages/CreatePoolPage";
+import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
 import PricingPage, { PaymentSuccessPage, PaymentCancelPage } from "./pages/PricingPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -281,6 +285,27 @@ function AppRouter({ onUserChange }) {
         }
       />
       
+      {/* Pool Routes (Creators) */}
+      <Route
+        path="/pool"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ArenaPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pool/:poolId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <PoolDetailPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      {/* Legacy arena routes redirect to pool */}
+      <Route path="/arena" element={<Navigate to="/pool" replace />} />
+      <Route path="/arena/:poolId" element={<Navigate to="/pool" replace />} />
+      
       {/* Business Routes */}
       <Route
         path="/business"
@@ -311,6 +336,22 @@ function AppRouter({ onUserChange }) {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <ProjectApplicationsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/new"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <CreatePoolPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/:poolId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessPoolDetailPage user={user} />}
           </ProtectedRoute>
         }
       />
