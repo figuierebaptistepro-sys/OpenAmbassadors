@@ -42,6 +42,7 @@ import ArenaPage from "./pages/ArenaPage";
 import PoolDetailPage from "./pages/PoolDetailPage";
 import CreatePoolPage from "./pages/CreatePoolPage";
 import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
+import PricingPage, { PaymentSuccessPage, PaymentCancelPage } from "./pages/PricingPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -425,6 +426,32 @@ function AppRouter({ onUserChange }) {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <AffiliatePage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Pricing & Payment Routes */}
+      <Route
+        path="/pricing"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PricingPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/success"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentSuccessPage user={user} onUserUpdate={onUserUpdate} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/cancel"
+        element={
+          <ProtectedRoute requireType>
+            {({ user, onUserUpdate }) => <PaymentCancelPage user={user} onUserUpdate={onUserUpdate} />}
           </ProtectedRoute>
         }
       />

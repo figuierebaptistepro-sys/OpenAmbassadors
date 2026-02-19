@@ -50,6 +50,9 @@ from google_oauth import oauth, GOOGLE_CLIENT_ID
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
+# Payments imports
+from payments import create_payment_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -4043,166 +4046,26 @@ async def stripe_webhook(request: Request):
     """Handle Stripe webhooks"""
     return await stripe_payments.handle_stripe_webhook(request)
 
-# ==================== INFLUENCE POOLS ROUTES ====================
-import influence_pools
-
-@api_router.post("/pools")
-async def create_pool(pool_data: influence_pools.CreatePoolRequest, user: dict = Depends(get_current_user)):
-    """Create a new influence pool campaign (Business only)"""
-    if user.get("user_type") != "business":
-        raise HTTPException(status_code=403, detail="Only businesses can create pools")
-    
-    try:
-        pool = await influence_pools.create_pool(db, user, pool_data)
-        return pool
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@api_router.get("/pools")
-async def list_pools(user: dict = Depends(get_current_user)):
-    """List pools - Active pools for creators, Own pools for businesses"""
-    if user.get("user_type") == "business":
-        pools = await influence_pools.get_business_pools(db, user["user_id"])
-    else:
-        pools = await influence_pools.get_active_pools(db)
-    return pools
-
-@api_router.get("/pools/active")
-async def list_active_pools(limit: int = 50):
-    """List all active pools (public endpoint for arena)"""
-    pools = await influence_pools.get_active_pools(db, limit)
-    return pools
-
-@api_router.get("/pools/{pool_id}")
-async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
-    """Get pool details"""
-    pool = await influence_pools.get_pool_by_id(db, pool_id)
-    if not pool:
-        raise HTTPException(status_code=404, detail="Pool not found")
-    
-    # Get participation status for creators
-    participation = None
-    if user.get("user_type") == "creator":
-        participation = await db.pool_participations.find_one(
-            {"pool_id": pool_id, "creator_id": user["user_id"]},
-            {"_id": 0}
-        )
-    
-    # Return UI-formatted data based on user type
-    if user.get("user_type") == "business":
-        return {
-            **pool,
-            "ui_summary": influence_pools.get_ui_business_summary(pool)
-        }
-    else:
-        return {
-            **pool,
-            "ui_arena": influence_pools.get_ui_creator_arena(pool, participation),
-            "participation": participation
-        }
-
-@api_router.get("/pools/{pool_id}/leaderboard")
-async def get_pool_leaderboard(pool_id: str, limit: int = 20):
-    """Get pool leaderboard"""
-    leaderboard = await influence_pools.get_pool_leaderboard(db, pool_id, limit)
-    return leaderboard
-
-@api_router.get("/pools/{pool_id}/submissions")
-async def get_pool_submissions(pool_id: str, user: dict = Depends(get_current_user)):
-    """Get all submissions for a pool (Business owner only)"""
-    pool = await influence_pools.get_pool_by_id(db, pool_id)
-    if not pool:
-        raise HTTPException(status_code=404, detail="Pool not found")
-    
-    if user.get("user_type") == "business" and pool["business_id"] != user["user_id"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    submissions = await influence_pools.get_pool_submissions(db, pool_id)
-    return submissions
-
-@api_router.get("/pools/{pool_id}/payouts")
-async def get_pool_payouts(pool_id: str, user: dict = Depends(get_current_user)):
-    """Calculate and get payouts for all participants (Business owner only)"""
-    pool = await influence_pools.get_pool_by_id(db, pool_id)
-    if not pool:
-        raise HTTPException(status_code=404, detail="Pool not found")
-    
-    if user.get("user_type") == "business" and pool["business_id"] != user["user_id"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    payouts = await influence_pools.calculate_pool_payouts(db, pool_id)
-    return payouts
-
-@api_router.post("/pools/{pool_id}/join")
-async def join_pool(pool_id: str, user: dict = Depends(get_current_user)):
-    """Creator joins a pool"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can join pools")
-    
-    try:
-        participation = await influence_pools.join_pool(db, user, pool_id)
-        return participation
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@api_router.post("/pools/{pool_id}/submit")
-async def submit_content(pool_id: str, submission: influence_pools.SubmitContentRequest, user: dict = Depends(get_current_user)):
-    """Creator submits content for a pool"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can submit content")
-    
-    # Ensure pool_id matches
-    submission.pool_id = pool_id
-    
-    try:
-        result = await influence_pools.submit_content(db, user, submission)
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@api_router.get("/pools/my/participations")
-async def get_my_participations(user: dict = Depends(get_current_user)):
-    """Get all pools the creator has joined"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can view participations")
-    
-    participations = await influence_pools.get_creator_participations(db, user["user_id"])
-    return participations
-
-@api_router.get("/pools/my/submissions")
-async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
-    """Get all submissions by the creator"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can view submissions")
-    
-    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
-    return submissions
-
-@api_router.put("/pools/{pool_id}/status")
-async def update_pool_status(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
-    """Update pool status (Business owner or admin)"""
-    pool = await influence_pools.get_pool_by_id(db, pool_id)
-    if not pool:
-        raise HTTPException(status_code=404, detail="Pool not found")
-    
-    is_admin = user.get("email") in ADMIN_EMAILS
-    is_owner = user.get("user_type") == "business" and pool["business_id"] == user["user_id"]
-    
-    if not is_admin and not is_owner:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    body = await request.json()
-    new_status = body.get("status")
-    
-    if new_status not in [s.value for s in influence_pools.PoolStatus]:
-        raise HTTPException(status_code=400, detail="Invalid status")
-    
-    await db.influence_pools.update_one(
-        {"pool_id": pool_id},
-        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+@api_router.get("/stripe/redirect-checkout")
+async def redirect_stripe_checkout(
+    request: Request,
+    package_id: str = "creator_premium_monthly",
+    origin_url: str = "",
+    current_user: dict = Depends(get_current_user),
+):
+    checkout_request = stripe_payments.CreateCheckoutRequest(
+        package_id=package_id,
+        origin_url=origin_url or str(request.base_url).rstrip("/"),
     )
-    
-    return {"message": "Status updated", "status": new_status}
+
+    result = await stripe_payments.create_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email"),
+    )
+
+    return RedirectResponse(url=result["url"], status_code=303)
 
 # Include router
 app.include_router(api_router)
