@@ -199,10 +199,11 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
   const fetchData = async () => {
     try {
-      const [profileRes, statsRes, walletRes] = await Promise.all([
+      const [profileRes, statsRes, walletRes, poolsRes] = await Promise.all([
         fetch(`${API_URL}/api/creators/me/profile`, { credentials: "include" }),
         fetch(`${API_URL}/api/stats/creator`, { credentials: "include" }),
         fetch(`${API_URL}/api/wallet`, { credentials: "include" }),
+        fetch(`${API_URL}/api/pools/active`, { credentials: "include" }),
       ]);
       if (profileRes.ok) {
         const data = await profileRes.json();
@@ -223,6 +224,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       }
       if (statsRes.ok) setStats(await statsRes.json());
       if (walletRes.ok) setWallet(await walletRes.json());
+      if (poolsRes.ok) setPools(await poolsRes.json());
     } catch (error) {
       console.error("Error:", error);
     } finally {
