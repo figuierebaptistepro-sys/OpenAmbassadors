@@ -179,32 +179,16 @@ const CreatePoolPage = ({ user }) => {
         max_payout_per_creator: formData.has_max_payout ? parseFloat(formData.max_payout_per_creator) : null
       };
 
-      // Use XMLHttpRequest to avoid fetch interceptor issues
-      const result = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${API_URL}/api/stripe/pool-checkout`, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.withCredentials = true;
-        
-        xhr.onload = function() {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            resolve({ ok: xhr.status >= 200 && xhr.status < 300, data });
-          } catch (e) {
-            console.error("Parse error:", xhr.responseText);
-            reject(new Error("Réponse invalide du serveur"));
-          }
-        };
-        
-        xhr.onerror = function() {
-          reject(new Error("Erreur réseau"));
-        };
-        
-        xhr.send(JSON.stringify({
-          pool_data: payload,
-          origin_url: window.location.origin
-        }));
+      // Use the safe API helper to avoid body stream issues
+      const result = await apiPost("/api/stripe/pool-checkout", {
+        pool_data: payload,
+        origin_url: window.location.origin
       });
+
+      if (result.isHtml) {
+        toast.error("Erreur: HTML reçu au lieu de JSON (proxy /api mal configuré)");
+        return;
+      }
 
       if (result.ok && result.data.checkout_url) {
         window.location.href = result.data.checkout_url;
