@@ -872,6 +872,15 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Creator Card Manager - En bas */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <CreatorCardManager user={user} />
+            </motion.div>
           </div>
 
           {/* Sidebar */}
