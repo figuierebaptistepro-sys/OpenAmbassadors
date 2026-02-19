@@ -263,7 +263,7 @@ const CreatePoolPage = ({ user }) => {
                   )}
                   <CardContent className="p-6 text-center">
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mx-auto mb-4`}>
-                      <Euro className="w-6 h-6 text-white" />
+                      <span className="text-2xl">{pkg.icon}</span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900 mb-1">{pkg.budget}</div>
                     <div className="text-primary font-semibold mb-1">{pkg.power}</div>
