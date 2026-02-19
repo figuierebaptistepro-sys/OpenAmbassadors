@@ -178,22 +178,27 @@ const CreatePoolPage = ({ user }) => {
         max_payout_per_creator: formData.has_max_payout ? parseFloat(formData.max_payout_per_creator) : null
       };
 
-      const response = await fetch(`${API_URL}/api/pools`, {
+      // Create Stripe checkout session for payment
+      const response = await fetch(`${API_URL}/api/stripe/pool-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          pool_data: payload,
+          origin_url: window.location.origin
+        })
       });
 
       if (response.ok) {
-        const pool = await response.json();
-        toast.success("Campagne créée avec succès !");
-        navigate(`/business/pools/${pool.pool_id}`);
+        const { checkout_url } = await response.json();
+        // Redirect to Stripe checkout
+        window.location.href = checkout_url;
       } else {
         const error = await response.json();
         toast.error(error.detail || "Erreur lors de la création");
       }
     } catch (error) {
+      console.error("Error:", error);
       toast.error("Erreur de connexion");
     } finally {
       setLoading(false);
