@@ -189,31 +189,23 @@ const CreatePoolPage = ({ user }) => {
         })
       });
 
-      // Clone response before reading to avoid "body stream already read" error
-      const responseClone = response.clone();
+      // Read response as text first to avoid body stream issues
+      const responseText = await response.text();
       
-      if (response.ok) {
-        try {
-          const data = await response.json();
-          if (data.checkout_url) {
-            // Redirect to Stripe checkout
-            window.location.href = data.checkout_url;
-          } else {
-            toast.error("URL de paiement non reçue");
-          }
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError);
-          toast.error("Erreur de réponse serveur");
-        }
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Response is not JSON:", responseText);
+        toast.error("Erreur serveur inattendue");
+        return;
+      }
+
+      if (response.ok && data.checkout_url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.checkout_url;
       } else {
-        try {
-          const errorData = await responseClone.json();
-          toast.error(errorData.detail || "Erreur lors de la création");
-        } catch (parseError) {
-          const textError = await response.text();
-          console.error("Error response:", textError);
-          toast.error("Erreur serveur");
-        }
+        toast.error(data.detail || "Erreur lors de la création");
       }
     } catch (error) {
       console.error("Error:", error);
