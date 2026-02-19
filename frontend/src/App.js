@@ -284,9 +284,9 @@ function AppRouter({ onUserChange }) {
         }
       />
       
-      {/* Arena Routes (Creators) */}
+      {/* Pool Routes (Creators) */}
       <Route
-        path="/arena"
+        path="/pool"
         element={
           <ProtectedRoute requireType>
             {({ user }) => <ArenaPage user={user} />}
@@ -294,13 +294,16 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
-        path="/arena/:poolId"
+        path="/pool/:poolId"
         element={
           <ProtectedRoute requireType>
             {({ user }) => <PoolDetailPage user={user} />}
           </ProtectedRoute>
         }
       />
+      {/* Legacy arena routes redirect to pool */}
+      <Route path="/arena" element={<Navigate to="/pool" replace />} />
+      <Route path="/arena/:poolId" element={<Navigate to="/pool" replace />} />
       
       {/* Business Routes */}
       <Route
