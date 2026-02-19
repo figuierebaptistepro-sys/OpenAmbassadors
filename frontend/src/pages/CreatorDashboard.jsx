@@ -896,6 +896,42 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 ))}
               </CardContent>
             </Card>
+
+            {/* Pool Campaigns Preview */}
+            {pools.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-heading font-semibold text-gray-900 text-sm">Campagnes Pool</h3>
+                    <Link to="/pool" className="text-xs text-primary hover:underline">Voir tout</Link>
+                  </div>
+                  <div className="space-y-2">
+                    {pools.slice(0, 3).map((pool) => (
+                      <Link
+                        key={pool.pool_id}
+                        to="/pool"
+                        className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-1">
+                          {pool.brand?.logo_url ? (
+                            <img src={pool.brand.logo_url} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-400">
+                              {(pool.brand?.name || "P")[0]}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{pool.brand?.name}</p>
+                          <p className="text-xs text-gray-500">{pool.budget_remaining}€ restant</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
