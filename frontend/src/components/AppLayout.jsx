@@ -215,7 +215,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               </div>
               <span className="text-sm">{item.label}</span>
               {item.soon && (
-                <span className="ml-auto text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+                <span className="ml-auto text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Soon</span>
               )}
             </button>
           ))}
@@ -305,7 +305,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
               </div>
               <span>{item.label}</span>
               {item.soon && (
-                <span className="ml-auto text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+                <span className="ml-auto text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Soon</span>
               )}
             </Link>
           ))}

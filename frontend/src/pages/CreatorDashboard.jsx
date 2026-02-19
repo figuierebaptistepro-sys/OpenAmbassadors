@@ -888,7 +888,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-heading font-semibold text-gray-900 text-sm">Creator Card</h3>
-                          <Badge className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5">Soon</Badge>
+                          <Badge className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5">Soon</Badge>
                         </div>
                         <p className="text-xs text-gray-500">Votre page publique type lien en bio</p>
                       </div>
