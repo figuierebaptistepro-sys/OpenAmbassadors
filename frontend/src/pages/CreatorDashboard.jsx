@@ -720,14 +720,87 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </Card>
             </motion.div>
 
-            {/* Creator Card Manager */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <CreatorCardManager user={user} />
-            </motion.div>
+            {/* Campagnes Pool - Section Centrale */}
+            {pools.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+              >
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="px-4 pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-gray-900 text-sm">Campagnes Pool</CardTitle>
+                          <p className="text-xs text-gray-500">{pools.length} campagnes disponibles</p>
+                        </div>
+                      </div>
+                      <Link to="/pool">
+                        <Button variant="outline" size="sm" className="border-gray-200 text-xs">
+                          Voir tout <ChevronRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {pools.slice(0, 3).map((pool) => (
+                        <Link
+                          key={pool.pool_id}
+                          to="/pool"
+                          className="group block"
+                        >
+                          <div className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
+                            {/* Banner */}
+                            <div className="h-24 bg-gray-100 relative">
+                              {pool.brief?.banner_url ? (
+                                <img src={pool.brief.banner_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                                  <Briefcase className="w-8 h-8 text-gray-300" />
+                                </div>
+                              )}
+                              <Badge className="absolute top-2 left-2 bg-white/90 text-gray-700 text-[10px] border-0">
+                                {pool.mode === "CPM" ? `CPM ${pool.cpm_rate}€` : "Pool"}
+                              </Badge>
+                            </div>
+                            {/* Content */}
+                            <div className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-1">
+                                  {pool.brand?.logo_url ? (
+                                    <img src={pool.brand.logo_url} alt="" className="w-full h-full object-contain" />
+                                  ) : (
+                                    <span className="text-xs font-bold text-gray-400">
+                                      {(pool.brand?.name || "P")[0]}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{pool.brand?.name}</p>
+                                  <p className="text-[10px] text-gray-500">{pool.brand?.industry}</p>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 line-clamp-1 mb-2">{pool.brief?.key_message}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-500">{pool.budget_remaining}€ restant</span>
+                                {pool.has_max_payout && pool.max_payout_per_creator && (
+                                  <span className="text-xs font-semibold text-green-600">Gain max {pool.max_payout_per_creator}€</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Portfolio */}
             <Card className="border-0 shadow-sm">
