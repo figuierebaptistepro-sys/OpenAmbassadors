@@ -28,8 +28,34 @@ PREMIUM_PACKAGES = {
     }
 }
 
+# Pool campaign packages
+POOL_PACKAGES = {
+    5000: {
+        "name": "Pool Campagne 5000€",
+        "amount": 500000,  # 5000€ in cents
+        "currency": "eur",
+        "description": "Campagne Pool - Budget 5000€"
+    },
+    15000: {
+        "name": "Pool Campagne 15000€",
+        "amount": 1500000,  # 15000€ in cents
+        "currency": "eur",
+        "description": "Campagne Pool - Budget 15000€"
+    },
+    25000: {
+        "name": "Pool Campagne 25000€",
+        "amount": 2500000,  # 25000€ in cents
+        "currency": "eur",
+        "description": "Campagne Pool - Budget 25000€"
+    }
+}
+
 class CreateCheckoutRequest(BaseModel):
     package_id: str
+    origin_url: str
+
+class CreatePoolCheckoutRequest(BaseModel):
+    pool_data: dict
     origin_url: str
 
 
