@@ -59,6 +59,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: Trophy, label: "Arena", path: "/arena", highlight: true },
     { icon: CreditCard, label: "Creator Card", path: "/creator-card" },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
@@ -69,6 +70,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: Zap, label: "Créer Pool", path: "/business/pools/new", highlight: true },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
