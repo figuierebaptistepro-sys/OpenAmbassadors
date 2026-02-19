@@ -79,6 +79,7 @@ class BriefInfo(BaseModel):
     key_message: str
     cta: str
     landing_url: Optional[str] = None
+    banner_url: Optional[str] = None  # Campaign banner image
     mandatory_hashtags: List[str] = []
     mandatory_mentions: List[str] = []
     content_format: Optional[str] = None
