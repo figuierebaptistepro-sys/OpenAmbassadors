@@ -81,13 +81,13 @@ const CreatePoolPage = ({ user }) => {
     cpm_rate: "",
     has_max_payout: false,
     max_payout_per_creator: "",
-    
+
     // Step 2: Platforms & Duration
     platforms: [],
     country: "FR",
     language: "fr",
     duration_days: 30,
-    
+
     // Step 3: Brand Info
     brand: {
       name: user?.company_name || "",
@@ -95,7 +95,7 @@ const CreatePoolPage = ({ user }) => {
       website: "",
       social_handles: []
     },
-    
+
     // Step 4: Brief
     brief: {
       offer_description: "",
@@ -171,6 +171,7 @@ const CreatePoolPage = ({ user }) => {
 
   const handleSubmit = async () => {
     setLoading(true);
+
     try {
       const payload = {
         ...formData,
@@ -178,8 +179,8 @@ const CreatePoolPage = ({ user }) => {
         max_payout_per_creator: formData.has_max_payout ? parseFloat(formData.max_payout_per_creator) : null
       };
 
-      // Create Stripe checkout session for payment
-      const response = await fetch(`/api/stripe/pool-checkout`, {
+      // ✅ Always hit backend via API_URL (works in local + prod)
+      const response = await fetch(`${API_URL}/api/stripe/pool-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -189,24 +190,30 @@ const CreatePoolPage = ({ user }) => {
         })
       });
 
-      // Read response as text first to avoid body stream issues
-      const responseText = await response.text();
-      
-      let data;
+      // ✅ SINGLE body read (prevents "body stream already read")
+      const raw = await response.text();
+
+      let data = null;
       try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("Response is not JSON:", responseText);
+        data = JSON.parse(raw);
+      } catch (e) {
+        console.error("Réponse non JSON:", raw);
         toast.error("Erreur serveur inattendue");
         return;
       }
 
-      if (response.ok && data.checkout_url) {
-        // Redirect to Stripe checkout
-        window.location.href = data.checkout_url;
-      } else {
-        toast.error(data.detail || "Erreur lors de la création");
+      // ✅ Explicit auth handling
+      if (response.status === 401) {
+        toast.error("Session expirée");
+        return;
       }
+
+      if (response.ok && data?.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
+      toast.error(data?.detail || "Erreur lors de la création");
     } catch (error) {
       console.error("Error:", error);
       toast.error("Erreur de connexion");
@@ -223,7 +230,7 @@ const CreatePoolPage = ({ user }) => {
       <div className="bg-white border-b sticky top-14 lg:top-0 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <button 
+            <button
               onClick={() => step > 1 ? setStep(step - 1) : navigate("/business")}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
@@ -232,9 +239,9 @@ const CreatePoolPage = ({ user }) => {
             </button>
             <span className="text-sm text-gray-500">Étape {step}/4</span>
           </div>
-          
+
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${(step / 4) * 100}%` }}
             />
@@ -262,11 +269,11 @@ const CreatePoolPage = ({ user }) => {
             {/* Package Selection */}
             <div className="grid md:grid-cols-3 gap-4">
               {PACKAGES.map((pkg) => (
-                <Card 
+                <Card
                   key={pkg.value}
                   className={`cursor-pointer transition-all hover:shadow-lg ${
-                    formData.package === pkg.value 
-                      ? "ring-2 ring-primary shadow-lg" 
+                    formData.package === pkg.value
+                      ? "ring-2 ring-primary shadow-lg"
                       : ""
                   } ${pkg.popular ? "relative" : ""}`}
                   onClick={() => setFormData({ ...formData, package: pkg.value })}
@@ -295,10 +302,10 @@ const CreatePoolPage = ({ user }) => {
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div 
+                  <div
                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.mode === "CPM" 
-                        ? "border-primary bg-primary/5" 
+                      formData.mode === "CPM"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setFormData({ ...formData, mode: "CPM" })}
@@ -311,10 +318,10 @@ const CreatePoolPage = ({ user }) => {
                       Vous définissez le prix pour 1000 vues
                     </p>
                   </div>
-                  <div 
+                  <div
                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.mode === "POOL" 
-                        ? "border-primary bg-primary/5" 
+                      formData.mode === "POOL"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setFormData({ ...formData, mode: "POOL" })}
@@ -385,7 +392,7 @@ const CreatePoolPage = ({ user }) => {
                     <div className="flex flex-wrap gap-2">
                       <span className="text-sm text-gray-500">Suggestions :</span>
                       {MAX_PAYOUT_SUGGESTIONS.map((amount) => (
-                        <Badge 
+                        <Badge
                           key={amount}
                           variant="outline"
                           className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
@@ -426,7 +433,7 @@ const CreatePoolPage = ({ user }) => {
               <CardContent>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {PLATFORMS.map((platform) => (
-                    <div 
+                    <div
                       key={platform.value}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
                         formData.platforms.includes(platform.value)
@@ -585,7 +592,7 @@ const CreatePoolPage = ({ user }) => {
                         }
                       }}
                     />
-                    <Button 
+                    <Button
                       type="button"
                       variant="outline"
                       onClick={() => {
@@ -598,14 +605,20 @@ const CreatePoolPage = ({ user }) => {
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brand.social_handles.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brand.social_handles.map((handle, i) => (
-                        <Badge 
-                          key={i} 
+                        <Badge
+                          key={i}
                           variant="secondary"
                           className="cursor-pointer"
-                          onClick={() => updateBrand("social_handles", formData.brand.social_handles.filter((_, j) => j !== i))}
+                          onClick={() =>
+                            updateBrand(
+                              "social_handles",
+                              formData.brand.social_handles.filter((_, j) => j !== i)
+                            )
+                          }
                         >
                           {handle} ×
                         </Badge>
@@ -690,16 +703,31 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="#votrehashtag"
                       value={tempHashtag}
                       onChange={(e) => setTempHashtag(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("mandatory_hashtags", tempHashtag, setTempHashtag))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("mandatory_hashtags", tempHashtag, setTempHashtag);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("mandatory_hashtags", tempHashtag, setTempHashtag)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addToArray("mandatory_hashtags", tempHashtag, setTempHashtag)}
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.mandatory_hashtags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.mandatory_hashtags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeFromArray("mandatory_hashtags", i)}>
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("mandatory_hashtags", i)}
+                        >
                           {tag} ×
                         </Badge>
                       ))}
@@ -714,16 +742,31 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="@votrecompte"
                       value={tempMention}
                       onChange={(e) => setTempMention(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("mandatory_mentions", tempMention, setTempMention))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("mandatory_mentions", tempMention, setTempMention);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("mandatory_mentions", tempMention, setTempMention)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addToArray("mandatory_mentions", tempMention, setTempMention)}
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.mandatory_mentions.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.mandatory_mentions.map((mention, i) => (
-                        <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeFromArray("mandatory_mentions", i)}>
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("mandatory_mentions", i)}
+                        >
                           {mention} ×
                         </Badge>
                       ))}
@@ -738,16 +781,31 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="Ce que les créateurs ne doivent pas faire"
                       value={tempAvoid}
                       onChange={(e) => setTempAvoid(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("things_to_avoid", tempAvoid, setTempAvoid))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("things_to_avoid", tempAvoid, setTempAvoid);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("things_to_avoid", tempAvoid, setTempAvoid)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addToArray("things_to_avoid", tempAvoid, setTempAvoid)}
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.things_to_avoid.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.things_to_avoid.map((item, i) => (
-                        <Badge key={i} variant="destructive" className="cursor-pointer" onClick={() => removeFromArray("things_to_avoid", i)}>
+                        <Badge
+                          key={i}
+                          variant="destructive"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("things_to_avoid", i)}
+                        >
                           {item} ×
                         </Badge>
                       ))}
@@ -802,7 +860,7 @@ const CreatePoolPage = ({ user }) => {
           )}
           <div className="ml-auto">
             {step < 4 ? (
-              <Button 
+              <Button
                 onClick={() => setStep(step + 1)}
                 disabled={!canProceed()}
                 className="bg-primary hover:bg-primary-hover"
@@ -811,7 +869,7 @@ const CreatePoolPage = ({ user }) => {
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={!canProceed() || loading}
                 className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
