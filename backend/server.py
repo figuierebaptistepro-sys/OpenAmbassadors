@@ -50,6 +50,9 @@ from google_oauth import oauth, GOOGLE_CLIENT_ID
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
+# Payments imports
+from payments import create_payment_routes
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -4198,31 +4201,14 @@ async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends
     submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
     return submissions
 
-@api_router.put("/pools/{pool_id}/status")
-async def update_pool_status(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
-    """Update pool status (Business owner or admin)"""
-    pool = await influence_pools.get_pool_by_id(db, pool_id)
-    if not pool:
-        raise HTTPException(status_code=404, detail="Pool not found")
-    
-    is_admin = user.get("email") in ADMIN_EMAILS
-    is_owner = user.get("user_type") == "business" and pool["business_id"] == user["user_id"]
-    
-    if not is_admin and not is_owner:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    body = await request.json()
-    new_status = body.get("status")
-    
-    if new_status not in [s.value for s in influence_pools.PoolStatus]:
-        raise HTTPException(status_code=400, detail="Invalid status")
-    
-    await db.influence_pools.update_one(
-        {"pool_id": pool_id},
-        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    result = await stripe_payments.create_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email"),
     )
-    
-    return {"message": "Status updated", "status": new_status}
+
+    return RedirectResponse(url=result["url"], status_code=303)
 
 # Include router
 app.include_router(api_router)
