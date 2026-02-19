@@ -336,6 +336,22 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
+        path="/business/pools/new"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <CreatePoolPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/:poolId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessPoolDetailPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/creators"
         element={
           <ProtectedRoute requireType>
