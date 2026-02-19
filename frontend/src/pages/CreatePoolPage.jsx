@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toast } from "sonner";
+import { apiPost } from "../lib/api";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
@@ -179,6 +180,21 @@ const CreatePoolPage = ({ user }) => {
         max_payout_per_creator: formData.has_max_payout ? parseFloat(formData.max_payout_per_creator) : null
       };
 
+      // Use the safe API helper to avoid body stream issues
+      const result = await apiPost("/api/stripe/pool-checkout", {
+        pool_data: payload,
+        origin_url: window.location.origin
+      });
+
+      if (result.isHtml) {
+        toast.error("Erreur: HTML reçu au lieu de JSON (proxy /api mal configuré)");
+        return;
+      }
+
+      if (result.ok && result.data.checkout_url) {
+        window.location.href = result.data.checkout_url;
+      } else {
+        toast.error(result.data?.detail || "Erreur lors de la création");
       // ✅ Always hit backend via API_URL (works in local + prod)
       const response = await fetch(`${API_URL}/api/stripe/pool-checkout`, {
         method: "POST",
@@ -216,7 +232,7 @@ const CreatePoolPage = ({ user }) => {
       toast.error(data?.detail || "Erreur lors de la création");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Erreur de connexion");
+      toast.error(error.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
