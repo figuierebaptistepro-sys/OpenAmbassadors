@@ -4043,6 +4043,24 @@ async def stripe_webhook(request: Request):
     """Handle Stripe webhooks"""
     return await stripe_payments.handle_stripe_webhook(request)
 
+@api_router.post("/stripe/pool-checkout")
+async def create_pool_checkout(request: Request, checkout_request: stripe_payments.CreatePoolCheckoutRequest, current_user: dict = Depends(get_current_user)):
+    """Create Stripe checkout session for pool campaign"""
+    return await stripe_payments.create_pool_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email")
+    )
+
+@api_router.get("/stripe/pool-status/{session_id}")
+async def get_pool_payment_status(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Check pool payment status and create pool if paid"""
+    return await stripe_payments.check_pool_payment_and_create(
+        session_id=session_id,
+        user_id=current_user.get("user_id")
+    )
+
 # ==================== INFLUENCE POOLS ROUTES ====================
 import influence_pools
 
