@@ -200,11 +200,13 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  : item.highlight
+                    ? "bg-gradient-to-r from-primary/10 to-orange-500/10 text-primary hover:from-primary/20 hover:to-orange-500/20"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <div className="relative">
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <item.icon className={`w-5 h-5 flex-shrink-0 ${item.highlight && !isActive(item.path) ? "text-primary" : ""}`} />
                 {item.badge > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full text-[10px] text-white font-bold flex items-center justify-center">
                     {item.badge > 9 ? "9+" : item.badge}
