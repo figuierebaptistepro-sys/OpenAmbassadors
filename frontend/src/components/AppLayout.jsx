@@ -293,7 +293,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+              } ${item.soon ? "opacity-60" : ""}`}
             >
               <div className="relative">
                 <item.icon className="w-5 h-5" />
@@ -304,6 +304,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 )}
               </div>
               <span>{item.label}</span>
+              {item.soon && (
+                <span className="ml-auto text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              )}
             </Link>
           ))}
 
