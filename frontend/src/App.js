@@ -20,7 +20,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SelectTypePage from "./pages/SelectTypePage";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
-import CreatorProfile from "./pages/CreatorProfile";
+import CreatorProfileV2 from "./pages/CreatorProfileV2";
 import BrowseCreators from "./pages/BrowseCreators";
 import LearnPage from "./pages/LearnPage";
 import ArticlePage from "./pages/ArticlePage";
