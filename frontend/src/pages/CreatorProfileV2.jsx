@@ -214,11 +214,11 @@ const CreatorProfileV2 = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
+          {/* Main Content - 60% */}
+          <div className="flex-1 min-w-0 lg:max-w-[calc(100%-440px)]">
             
             {/* HERO SECTION - Bento Style */}
             <motion.div 
