@@ -374,6 +374,14 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
+        path="/business/favorites"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <MyFavoritesPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/creators"
         element={
           <ProtectedRoute requireType>
