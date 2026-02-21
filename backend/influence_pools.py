@@ -95,6 +95,8 @@ class CreatePoolRequest(BaseModel):
     # Max payout settings
     has_max_payout: bool = False
     max_payout_per_creator: Optional[float] = None
+    # Approval settings
+    requires_approval: bool = False  # If True, creators must be approved before joining
     # Platforms & targeting
     platforms: List[Platform]
     country: str = "FR"
@@ -106,12 +108,26 @@ class CreatePoolRequest(BaseModel):
 
 class JoinPoolRequest(BaseModel):
     pool_id: str
+    message: Optional[str] = None  # Optional message when applying
+
+class ApplyPoolRequest(BaseModel):
+    pool_id: str
+    message: Optional[str] = None  # Motivation message
+
+class ApplicationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 class SubmitContentRequest(BaseModel):
     pool_id: str
     platform: Platform
     content_url: str
     description: Optional[str] = None
+
+class SubmitMultipleContentRequest(BaseModel):
+    pool_id: str
+    submissions: List[dict]  # [{platform, content_url, description}]
 
 class UpdateViewsRequest(BaseModel):
     submission_id: str
