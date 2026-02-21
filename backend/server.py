@@ -691,6 +691,34 @@ class Review(BaseModel):
     comment: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ==================== COLLABORATION REQUEST MODELS ====================
+
+class CollaborationRequestCreate(BaseModel):
+    creator_id: str
+    content_types: List[str] = []  # UGC, Ads, etc.
+    platforms: List[str] = []  # TikTok, Instagram, YouTube
+    budget_range: Optional[str] = None  # "500-1000", "1000-2500", etc.
+    deadline: Optional[str] = None
+    brief: str  # Description du projet
+    deliverables: Optional[str] = None  # Ce qui est attendu
+    additional_info: Optional[str] = None
+
+class CollaborationRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    request_id: str = Field(default_factory=lambda: f"collab_{uuid.uuid4().hex[:12]}")
+    creator_id: str
+    business_id: str
+    business_name: Optional[str] = None
+    content_types: List[str] = []
+    platforms: List[str] = []
+    budget_range: Optional[str] = None
+    deadline: Optional[str] = None
+    brief: str
+    deliverables: Optional[str] = None
+    additional_info: Optional[str] = None
+    status: str = "pending"  # pending, accepted, declined, expired
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== HELPER FUNCTIONS ====================
 
 def generate_otp():
