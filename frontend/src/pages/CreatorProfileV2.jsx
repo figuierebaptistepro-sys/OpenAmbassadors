@@ -758,7 +758,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
 
           <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3">
             <Button variant="outline" onClick={() => setCollaborationDialogOpen(false)} className="flex-1 h-12 rounded-xl">Annuler</Button>
-            <Button onClick={handleCollaborationRequest} disabled={!collabForm.brief.trim() || submitting} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-semibold">
+            <Button onClick={handleCollaborationRequest} disabled={!collabForm.budget_range || !collabForm.brief.trim() || submitting} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-semibold">
               {submitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Envoyer la demande"}
             </Button>
           </div>
