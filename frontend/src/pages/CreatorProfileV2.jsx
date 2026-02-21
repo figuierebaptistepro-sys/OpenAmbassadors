@@ -412,6 +412,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
                     size="icon"
                     className={`h-12 w-12 rounded-xl border-2 transition-all ${isFavorite ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 hover:border-red-200 hover:bg-red-50'}`}
                     onClick={toggleFavorite}
+                    data-testid="toggle-favorite-btn"
                   >
                     <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                   </Button>
@@ -421,8 +422,10 @@ const CreatorProfileV2 = ({ currentUser }) => {
                     size="icon" 
                     className="h-12 w-12 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
                     onClick={handleShare}
+                    data-testid="share-profile-btn"
                   >
                     <Share2 className="w-5 h-5" />
+                  </Button>
                   </Button>
                 </div>
               </div>
