@@ -387,6 +387,32 @@ const CreatePoolPage = ({ user }) => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Approval Option */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold">Approbation requise</Label>
+                    <p className="text-sm text-gray-500">Les créateurs doivent postuler et être approuvés avant de participer</p>
+                  </div>
+                  <Switch
+                    checked={formData.requires_approval}
+                    onCheckedChange={(checked) => setFormData({ ...formData, requires_approval: checked })}
+                  />
+                </div>
+                {formData.requires_approval && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+                    <div className="flex items-start gap-2">
+                      <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-blue-700">
+                        Les créateurs devront envoyer une candidature. Vous pourrez approuver ou refuser chaque demande depuis votre dashboard.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 
