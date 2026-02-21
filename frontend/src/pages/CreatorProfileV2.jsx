@@ -83,6 +83,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
   useEffect(() => { 
     fetchCreator(); 
     fetchReviews();
+    checkFavorite();
   }, [userId]);
 
   useEffect(() => {
@@ -115,6 +116,73 @@ const CreatorProfileV2 = ({ currentUser }) => {
       if (response.ok) setReviews(await response.json());
     } catch (error) {
       console.error("Error fetching reviews:", error);
+    }
+  };
+
+  const checkFavorite = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/favorites/check/${userId}`, { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setIsFavorite(data.is_favorite);
+      }
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    try {
+      if (isFavorite) {
+        const response = await fetch(`${API_URL}/api/favorites/${userId}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+        if (response.ok) {
+          setIsFavorite(false);
+          toast.success("Retiré des favoris");
+        }
+      } else {
+        const response = await fetch(`${API_URL}/api/favorites/${userId}`, {
+          method: "POST",
+          credentials: "include"
+        });
+        if (response.ok) {
+          setIsFavorite(true);
+          toast.success("Ajouté aux favoris !");
+        }
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: `${creator?.name} - OpenAmbassadors`,
+      text: `Découvrez le profil de ${creator?.name} sur OpenAmbassadors`,
+      url: shareUrl
+    };
+
+    try {
+      // Try native share first (mobile)
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        toast.success("Partagé !");
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Lien copié dans le presse-papier !");
+      }
+    } catch (error) {
+      // Final fallback
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Lien copié !");
+      } catch (e) {
+        toast.error("Impossible de partager");
+      }
     }
   };
 
