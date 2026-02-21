@@ -532,26 +532,6 @@ const CreatorProfileV2 = ({ currentUser }) => {
           )}
         </section>
 
-        {/* SERVICES */}
-        {creator.content_types?.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-emerald-600" />
-              </div>
-              Types de collaborations
-            </h2>
-            
-            <div className="flex flex-wrap gap-3">
-              {creator.content_types.map((type, i) => (
-                <span key={i} className="px-5 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-semibold border border-emerald-200">
-                  {type}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* GARANTIES */}
         <section className="pt-8 border-t border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
