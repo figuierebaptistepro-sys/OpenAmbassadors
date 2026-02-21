@@ -4380,13 +4380,19 @@ async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     
-    # Get participation status for creators
+    # Get participation and application status for creators
     participation = None
+    application = None
     if user.get("user_type") == "creator":
         participation = await db.pool_participations.find_one(
             {"pool_id": pool_id, "creator_id": user["user_id"]},
             {"_id": 0}
         )
+        if not participation:
+            application = await db.pool_applications.find_one(
+                {"pool_id": pool_id, "creator_id": user["user_id"]},
+                {"_id": 0}
+            )
     
     # Return UI-formatted data based on user type
     if user.get("user_type") == "business":
@@ -4398,8 +4404,55 @@ async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
         return {
             **pool,
             "ui_arena": influence_pools.get_ui_creator_arena(pool, participation),
-            "participation": participation
+            "participation": participation,
+            "application": application
         }
+
+@api_router.get("/pools/{pool_id}/applications")
+async def get_pool_applications(pool_id: str, user: dict = Depends(get_current_user)):
+    """Get all applications for a pool (Business owner only)"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    if user.get("user_type") != "business" or pool["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    applications = await influence_pools.get_pool_applications(db, pool_id)
+    return applications
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/approve")
+async def approve_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Approve a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can approve applications")
+    
+    try:
+        result = await influence_pools.approve_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/reject")
+async def reject_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Reject a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can reject applications")
+    
+    try:
+        result = await influence_pools.reject_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/pools/my/applications")
+async def get_my_pool_applications(user: dict = Depends(get_current_user)):
+    """Get all pool applications for the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view applications")
+    
+    applications = await influence_pools.get_creator_applications(db, user["user_id"])
+    return applications
 
 @api_router.get("/pools/{pool_id}/leaderboard")
 async def get_pool_leaderboard(pool_id: str, limit: int = 20):
