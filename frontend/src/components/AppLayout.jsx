@@ -72,6 +72,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
     { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
