@@ -257,7 +257,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{creator.name || "Créateur"}</h1>
                   {creator.is_premium && (
-                    <Badge className="bg-gradient-to-r from-amber-400 to-orange-400 text-white border-0 shadow-sm">
+                    <Badge className="bg-primary text-white border-0 shadow-sm">
                       <Award className="w-3.5 h-3.5 mr-1" /> Premium
                     </Badge>
                   )}
@@ -274,6 +274,17 @@ const CreatorProfileV2 = ({ currentUser }) => {
                     <Badge className="bg-orange-100 text-orange-700 border-orange-200">Indisponible</Badge>
                   )}
                 </div>
+
+                {/* Types de collaborations - Mis en valeur */}
+                {creator.content_types?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {creator.content_types.map((type, i) => (
+                      <span key={i} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold">
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Tagline / Bio */}
                 {(creator.tagline || creator.bio) && (
