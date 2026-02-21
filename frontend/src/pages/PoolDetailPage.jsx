@@ -66,19 +66,24 @@ const PoolDetailPage = ({ user }) => {
   const navigate = useNavigate();
   const [pool, setPool] = useState(null);
   const [participation, setParticipation] = useState(null);
+  const [application, setApplication] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("brief"); // brief | submissions | leaderboard
 
-  // Form state
+  // Form state for single submission
   const [submitForm, setSubmitForm] = useState({
     platform: "",
     content_url: "",
     description: ""
   });
+  
+  // Apply form state
+  const [applyMessage, setApplyMessage] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -96,6 +101,7 @@ const PoolDetailPage = ({ user }) => {
         const data = await poolRes.json();
         setPool(data);
         setParticipation(data.participation);
+        setApplication(data.application);
       }
       if (submissionsRes.ok) {
         const data = await submissionsRes.json();
@@ -114,6 +120,13 @@ const PoolDetailPage = ({ user }) => {
   };
 
   const handleJoinPool = async () => {
+    // If pool requires approval, open apply dialog
+    if (pool?.requires_approval) {
+      setApplyDialogOpen(true);
+      return;
+    }
+    
+    // Direct join
     try {
       const response = await fetch(`${API_URL}/api/pools/${poolId}/join`, {
         method: "POST",
@@ -121,7 +134,12 @@ const PoolDetailPage = ({ user }) => {
       });
 
       if (response.ok) {
-        toast.success("🎉 Tu as rejoint le pool ! Publie du contenu pour gagner.");
+        const result = await response.json();
+        if (result.type === "application") {
+          toast.success("Candidature envoyée ! En attente de validation.");
+        } else {
+          toast.success("Tu as rejoint le pool ! Publie du contenu pour gagner.");
+        }
         fetchData();
       } else {
         const error = await response.json();
@@ -129,6 +147,32 @@ const PoolDetailPage = ({ user }) => {
       }
     } catch (error) {
       toast.error("Erreur de connexion");
+    }
+  };
+
+  const handleApplyPool = async () => {
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/pools/${poolId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: applyMessage })
+      });
+
+      if (response.ok) {
+        toast.success("Candidature envoyée ! En attente de validation par la marque.");
+        setApplyDialogOpen(false);
+        setApplyMessage("");
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de la candidature");
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion");
+    } finally {
+      setSubmitting(false);
     }
   };
 
