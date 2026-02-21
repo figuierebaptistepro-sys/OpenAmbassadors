@@ -1960,6 +1960,24 @@ async def get_creator(user_id: str):
     
     return profile
 
+@api_router.get("/creators/{user_id}/reviews")
+async def get_creator_reviews(user_id: str):
+    """Get all reviews for a specific creator"""
+    reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with business info
+    for review in reviews:
+        business = await db.users.find_one({"user_id": review.get("business_id")}, {"_id": 0, "name": 1})
+        business_profile = await db.business_profiles.find_one({"user_id": review.get("business_id")}, {"_id": 0, "company_name": 1})
+        review["business_name"] = business_profile.get("company_name") if business_profile else (business.get("name") if business else "Entreprise")
+        
+        # Get project title if available
+        if review.get("project_id"):
+            project = await db.projects.find_one({"project_id": review["project_id"]}, {"_id": 0, "title": 1})
+            review["project_title"] = project.get("title") if project else None
+    
+    return reviews
+
 @api_router.get("/creators/me/profile")
 async def get_my_creator_profile(user: dict = Depends(get_current_user)):
     profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
