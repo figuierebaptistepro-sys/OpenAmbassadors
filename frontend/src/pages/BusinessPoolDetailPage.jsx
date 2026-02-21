@@ -87,6 +87,50 @@ const BusinessPoolDetailPage = ({ user }) => {
     }
   };
 
+  const handleApproveApplication = async (applicationId) => {
+    setProcessingApp(applicationId);
+    try {
+      const response = await fetch(`${API_URL}/api/pools/${poolId}/applications/${applicationId}/approve`, {
+        method: "POST",
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        toast.success("Candidature approuvée !");
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de l'approbation");
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion");
+    } finally {
+      setProcessingApp(null);
+    }
+  };
+
+  const handleRejectApplication = async (applicationId) => {
+    setProcessingApp(applicationId);
+    try {
+      const response = await fetch(`${API_URL}/api/pools/${poolId}/applications/${applicationId}/reject`, {
+        method: "POST",
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        toast.success("Candidature refusée");
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors du refus");
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion");
+    } finally {
+      setProcessingApp(null);
+    }
+  };
+
   const handleStatusChange = async (newStatus) => {
     try {
       const response = await fetch(`${API_URL}/api/pools/${poolId}/status`, {
@@ -114,6 +158,8 @@ const BusinessPoolDetailPage = ({ user }) => {
     return days;
   };
 
+  const pendingApplications = applications.filter(a => a.status === "pending");
+
   if (loading) {
     return (
       <AppLayout user={user}>
@@ -130,8 +176,8 @@ const BusinessPoolDetailPage = ({ user }) => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900">Pool non trouvé</h2>
-            <Button className="mt-4" onClick={() => navigate("/business")}>
-              Retour au dashboard
+            <Button className="mt-4" onClick={() => navigate("/business/pools")}>
+              Retour aux pools
             </Button>
           </div>
         </div>
