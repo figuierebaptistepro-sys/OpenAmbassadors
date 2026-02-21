@@ -44,6 +44,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: BookOpen, label: "Learn", path: "/learn" },
