@@ -401,13 +401,18 @@ const CreatorProfileV2 = ({ currentUser }) => {
                   <Button 
                     variant="outline" 
                     size="icon"
-                    className={`h-12 w-12 rounded-xl border-2 ${isFavorite ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200'}`}
-                    onClick={() => setIsFavorite(!isFavorite)}
+                    className={`h-12 w-12 rounded-xl border-2 transition-all ${isFavorite ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 hover:border-red-200 hover:bg-red-50'}`}
+                    onClick={toggleFavorite}
                   >
                     <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                   </Button>
                   
-                  <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-2 border-gray-200">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-12 w-12 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
+                    onClick={handleShare}
+                  >
                     <Share2 className="w-5 h-5" />
                   </Button>
                 </div>
