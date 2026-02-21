@@ -520,6 +520,9 @@ class CreatorProfileUpdate(BaseModel):
     brands_worked: Optional[List[str]] = None
     results: Optional[str] = None
     portfolio_videos: Optional[List[dict]] = None
+    portfolio_photos: Optional[List[dict]] = None
+    tagline: Optional[str] = None
+    response_time: Optional[str] = None
     min_rate: Optional[int] = None
     max_rate: Optional[int] = None
     available: Optional[bool] = None
