@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Trophy, Users, Clock, Euro, ChevronLeft, Play, TrendingUp, 
   Eye, Award, Instagram, Youtube, ExternalLink, Pause, CheckCircle,
-  BarChart3, Download, RefreshCw
+  BarChart3, Download, RefreshCw, UserCheck, UserX, Mail, MessageSquare
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -44,9 +44,11 @@ const BusinessPoolDetailPage = ({ user }) => {
   const navigate = useNavigate();
   const [pool, setPool] = useState(null);
   const [submissions, setSubmissions] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview"); // overview | submissions | payouts
+  const [processingApp, setProcessingApp] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview"); // overview | applications | submissions | payouts
 
   useEffect(() => {
     fetchData();
@@ -54,10 +56,11 @@ const BusinessPoolDetailPage = ({ user }) => {
 
   const fetchData = async () => {
     try {
-      const [poolRes, submissionsRes, payoutsRes] = await Promise.all([
+      const [poolRes, submissionsRes, payoutsRes, applicationsRes] = await Promise.all([
         fetch(`${API_URL}/api/pools/${poolId}`, { credentials: "include" }),
         fetch(`${API_URL}/api/pools/${poolId}/submissions`, { credentials: "include" }),
-        fetch(`${API_URL}/api/pools/${poolId}/payouts`, { credentials: "include" })
+        fetch(`${API_URL}/api/pools/${poolId}/payouts`, { credentials: "include" }),
+        fetch(`${API_URL}/api/pools/${poolId}/applications`, { credentials: "include" })
       ]);
 
       if (poolRes.ok) {
@@ -71,6 +74,10 @@ const BusinessPoolDetailPage = ({ user }) => {
       if (payoutsRes.ok) {
         const data = await payoutsRes.json();
         setPayouts(data);
+      }
+      if (applicationsRes.ok) {
+        const data = await applicationsRes.json();
+        setApplications(data);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
