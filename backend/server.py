@@ -4473,15 +4473,6 @@ async def reject_pool_application(pool_id: str, application_id: str, user: dict 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@api_router.get("/pools/my/applications")
-async def get_my_pool_applications(user: dict = Depends(get_current_user)):
-    """Get all pool applications for the creator"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can view applications")
-    
-    applications = await influence_pools.get_creator_applications(db, user["user_id"])
-    return applications
-
 @api_router.get("/pools/{pool_id}/leaderboard")
 async def get_pool_leaderboard(pool_id: str, limit: int = 20):
     """Get pool leaderboard"""
