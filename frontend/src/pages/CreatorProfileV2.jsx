@@ -694,9 +694,9 @@ const CreatorProfileV2 = ({ currentUser }) => {
 
           <div className="px-6 py-5 space-y-5">
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Budget estimé</Label>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Budget estimé *</Label>
               <Select value={collabForm.budget_range} onValueChange={(v) => setCollabForm(p => ({ ...p, budget_range: v }))}>
-                <SelectTrigger className="h-12 rounded-xl border-gray-200"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger className={`h-12 rounded-xl ${!collabForm.budget_range ? 'border-red-200' : 'border-gray-200'}`}><SelectValue placeholder="Sélectionner un budget" /></SelectTrigger>
                 <SelectContent>{BUDGET_RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
