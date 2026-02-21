@@ -2143,6 +2143,74 @@ async def delete_portfolio_photo(photo_index: int, user: dict = Depends(get_curr
     
     return {"message": "Photo deleted", "deleted": deleted_photo}
 
+# ==================== FAVORITES ====================
+
+@api_router.post("/favorites/{creator_id}")
+async def add_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Add a creator to user's favorites"""
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Add to favorites (upsert)
+    await db.favorites.update_one(
+        {"user_id": user["user_id"], "creator_id": creator_id},
+        {"$set": {
+            "user_id": user["user_id"],
+            "creator_id": creator_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Ajouté aux favoris", "creator_id": creator_id}
+
+@api_router.delete("/favorites/{creator_id}")
+async def remove_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Remove a creator from user's favorites"""
+    result = await db.favorites.delete_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Favori non trouvé")
+    
+    return {"message": "Retiré des favoris", "creator_id": creator_id}
+
+@api_router.get("/favorites")
+async def get_favorites(user: dict = Depends(get_current_user)):
+    """Get user's favorite creators"""
+    favorites = await db.favorites.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Get creator details
+    creator_ids = [f["creator_id"] for f in favorites]
+    creators = []
+    
+    for cid in creator_ids:
+        creator = await db.users.find_one({"user_id": cid}, {"_id": 0, "password": 0})
+        if creator:
+            profile = await db.creator_profiles.find_one({"user_id": cid}, {"_id": 0})
+            if profile:
+                creator.update(profile)
+            creators.append(creator)
+    
+    return creators
+
+@api_router.get("/favorites/check/{creator_id}")
+async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Check if a creator is in user's favorites"""
+    favorite = await db.favorites.find_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    return {"is_favorite": favorite is not None}
+
 # ==================== COLLABORATION REQUESTS ====================
 
 @api_router.post("/collaboration-requests")
