@@ -768,6 +768,54 @@ const PoolDetailPage = ({ user }) => {
         )}
       </div>
 
+      {/* Apply to Pool Dialog */}
+      <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              Postuler à cette pool
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <p className="text-sm text-blue-700">
+                Cette pool nécessite une approbation de la marque. Une fois accepté, tu pourras soumettre tes vidéos.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Message de motivation (optionnel)</Label>
+              <Textarea
+                placeholder="Explique pourquoi tu souhaites participer à cette pool..."
+                value={applyMessage}
+                onChange={(e) => setApplyMessage(e.target.value)}
+                rows={4}
+              />
+              <p className="text-xs text-gray-500">
+                Un bon message augmente tes chances d'être accepté !
+              </p>
+            </div>
+
+            <Button 
+              className="w-full bg-primary hover:bg-primary-hover"
+              onClick={handleApplyPool}
+              disabled={submitting}
+              data-testid="submit-application-btn"
+            >
+              {submitting ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Envoyer ma candidature
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Submit Content Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="sm:max-w-md">
