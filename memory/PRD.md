@@ -301,6 +301,84 @@ GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-xxx
 ```
 
+#### 🆕 Fiche Créateur V2 - Mini Landing Page B2B (Feb 2026)
+**Objectif:** Transformer la fiche créateur en landing page B2B optimisée conversion
+
+**Frontend** (`/app/frontend/src/pages/CreatorProfileV2.jsx`):
+- **Hero Section:**
+  - Cover réduite + Avatar + Nom
+  - Badge dynamique (Nouveau créateur / Premium / Top Rated / Expérimenté)
+  - Localisation, temps de réponse, nombre de projets
+  - Tagline 1 ligne max
+  - CTA "Demander une collaboration" + Favoris
+
+- **Section Vidéos** (position 1):
+  - Titre: "Réalisations vidéo"
+  - 3-6 vidéos autoplay muted
+  - Badge vues + type contenu
+  - Hover preview
+
+- **Section Portfolio Photos** (nouveau champ `portfolio_photos`):
+  - Grille photos (produit, backstage, lifestyle, instagram)
+  - Lightbox au clic
+
+- **Section Marques** (`brands_worked`):
+  - Logos/noms des marques collaborées
+  - Masquée si vide
+
+- **Section Avis**:
+  - Note moyenne + nombre d'avis
+  - 2-3 avis visibles + "Voir tous"
+  - Message "Nouveau créateur" si vide
+
+- **Section Services**:
+  - Types de collaborations: UGC, Ads, Micro-trottoir, etc.
+  - Sans détail ni promesses fixes
+
+- **Tarification Flexible**:
+  - "À partir de XX€"
+  - Pas de packs figés
+
+- **Sidebar Sticky** (desktop):
+  - Prix, disponibilité, temps de réponse, badge
+  - Bouton "Demander collaboration"
+
+**Backend** (nouvelles routes dans `server.py`):
+- `GET /api/creators/{user_id}/reviews` - Avis enrichis
+- `POST /api/collaboration-requests` - Demande de collaboration
+- `GET /api/collaboration-requests/creator` - Liste pour créateur
+- `GET /api/collaboration-requests/business` - Liste pour entreprise
+- `PATCH /api/collaboration-requests/{id}/status` - Accepter/Refuser
+- `POST /api/creators/me/photos` - Ajouter photo portfolio
+- `DELETE /api/creators/me/photos/{index}` - Supprimer photo
+
+**Nouveaux champs CreatorProfile:**
+- `portfolio_photos: List[dict]` - [{url, caption, type}]
+- `tagline: Optional[str]` - Accroche courte
+- `response_time: Optional[str]` - "< 24h", "2-3 jours"
+
+**Collection MongoDB:** `collaboration_requests`
+```json
+{
+  "request_id": "collab_xxx",
+  "creator_id": "string",
+  "business_id": "string",
+  "business_name": "string",
+  "content_types": ["UGC", "Ads"],
+  "platforms": ["tiktok", "instagram"],
+  "budget_range": "500-1000",
+  "deadline": "2026-03-01",
+  "brief": "Description du projet...",
+  "deliverables": "1 vidéo TikTok...",
+  "additional_info": "...",
+  "status": "pending|accepted|declined",
+  "created_at": "datetime"
+}
+```
+
+**Tests:** 100% backend + frontend vérifiés
+- `/app/backend/tests/test_creator_profile_v2.py`
+
 ### 📋 Upcoming (P0-P1)
 1. **P0 - CAPTCHA** - Cloudflare Turnstile sur création compte et mot de passe oublié
 2. **P1 - Stripe Integration** - Remplacer `is_subscribed` mocké par paiements réels
