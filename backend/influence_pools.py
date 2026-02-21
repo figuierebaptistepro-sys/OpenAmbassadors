@@ -230,6 +230,10 @@ async def create_pool(db, business_user: dict, pool_data: CreatePoolRequest) -> 
         "package_name": package_config["name"],
         "package_power": package_config["power"],
         
+        # Approval settings
+        "requires_approval": pool_data.requires_approval,
+        "total_applications": 0,  # Track pending applications
+        
         # Metadata
         "created_at": now.isoformat(),
         "updated_at": now.isoformat()
