@@ -36,6 +36,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Briefcase, label: "Missions", path: "/projects" },
+    { icon: Crown, label: "Pool", path: "/pool", highlight: true },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
@@ -44,6 +45,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
+    { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
