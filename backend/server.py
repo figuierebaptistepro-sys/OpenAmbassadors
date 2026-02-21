@@ -479,6 +479,11 @@ class CreatorProfile(BaseModel):
     
     # Portfolio
     portfolio_videos: List[dict] = []  # [{url, title, views, platform}]
+    portfolio_photos: List[dict] = []  # [{url, caption, type}] - type: product, backstage, lifestyle, instagram
+    
+    # Creator headline/tagline
+    tagline: Optional[str] = None  # Short 1-line pitch
+    response_time: Optional[str] = None  # "< 1h", "< 24h", "2-3 jours"
     
     # Rates
     min_rate: Optional[int] = None
@@ -518,6 +523,9 @@ class CreatorProfileUpdate(BaseModel):
     brands_worked: Optional[List[str]] = None
     results: Optional[str] = None
     portfolio_videos: Optional[List[dict]] = None
+    portfolio_photos: Optional[List[dict]] = None
+    tagline: Optional[str] = None
+    response_time: Optional[str] = None
     min_rate: Optional[int] = None
     max_rate: Optional[int] = None
     available: Optional[bool] = None
@@ -684,6 +692,34 @@ class Review(BaseModel):
     project_id: Optional[str] = None
     rating: int  # 1-5
     comment: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ==================== COLLABORATION REQUEST MODELS ====================
+
+class CollaborationRequestCreate(BaseModel):
+    creator_id: str
+    content_types: List[str] = []  # UGC, Ads, etc.
+    platforms: List[str] = []  # TikTok, Instagram, YouTube
+    budget_range: Optional[str] = None  # "500-1000", "1000-2500", etc.
+    deadline: Optional[str] = None
+    brief: str  # Description du projet
+    deliverables: Optional[str] = None  # Ce qui est attendu
+    additional_info: Optional[str] = None
+
+class CollaborationRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    request_id: str = Field(default_factory=lambda: f"collab_{uuid.uuid4().hex[:12]}")
+    creator_id: str
+    business_id: str
+    business_name: Optional[str] = None
+    content_types: List[str] = []
+    platforms: List[str] = []
+    budget_range: Optional[str] = None
+    deadline: Optional[str] = None
+    brief: str
+    deliverables: Optional[str] = None
+    additional_info: Optional[str] = None
+    status: str = "pending"  # pending, accepted, declined, expired
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== HELPER FUNCTIONS ====================
@@ -1927,6 +1963,24 @@ async def get_creator(user_id: str):
     
     return profile
 
+@api_router.get("/creators/{user_id}/reviews")
+async def get_creator_reviews(user_id: str):
+    """Get all reviews for a specific creator"""
+    reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with business info
+    for review in reviews:
+        business = await db.users.find_one({"user_id": review.get("business_id")}, {"_id": 0, "name": 1})
+        business_profile = await db.business_profiles.find_one({"user_id": review.get("business_id")}, {"_id": 0, "company_name": 1})
+        review["business_name"] = business_profile.get("company_name") if business_profile else (business.get("name") if business else "Entreprise")
+        
+        # Get project title if available
+        if review.get("project_id"):
+            project = await db.projects.find_one({"project_id": review["project_id"]}, {"_id": 0, "title": 1})
+            review["project_title"] = project.get("title") if project else None
+    
+    return reviews
+
 @api_router.get("/creators/me/profile")
 async def get_my_creator_profile(user: dict = Depends(get_current_user)):
     profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
@@ -2040,6 +2094,232 @@ async def delete_portfolio_video(video_index: int, user: dict = Depends(get_curr
     )
     
     return {"message": "Video deleted", "deleted": deleted_video}
+
+@api_router.post("/creators/me/photos")
+async def add_portfolio_photo(request: Request, user: dict = Depends(get_current_user)):
+    """Add a photo to creator's portfolio"""
+    body = await request.json()
+    url = body.get("url")
+    caption = body.get("caption", "")
+    photo_type = body.get("type", "product")  # product, backstage, lifestyle, instagram
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    photo_entry = {
+        "url": url,
+        "caption": caption,
+        "type": photo_type,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$push": {"portfolio_photos": photo_entry}}
+    )
+    
+    if result.modified_count == 0:
+        profile = CreatorProfile(user_id=user["user_id"], portfolio_photos=[photo_entry])
+        await db.creator_profiles.insert_one(profile.model_dump())
+    
+    return {"message": "Photo added", "photo": photo_entry}
+
+@api_router.delete("/creators/me/photos/{photo_index}")
+async def delete_portfolio_photo(photo_index: int, user: dict = Depends(get_current_user)):
+    """Delete a photo from creator's portfolio by index"""
+    profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    photos = profile.get("portfolio_photos", [])
+    
+    if photo_index < 0 or photo_index >= len(photos):
+        raise HTTPException(status_code=400, detail="Invalid photo index")
+    
+    deleted_photo = photos.pop(photo_index)
+    
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"portfolio_photos": photos}}
+    )
+    
+    return {"message": "Photo deleted", "deleted": deleted_photo}
+
+# ==================== FAVORITES ====================
+
+@api_router.post("/favorites/{creator_id}")
+async def add_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Add a creator to user's favorites"""
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Add to favorites (upsert)
+    await db.favorites.update_one(
+        {"user_id": user["user_id"], "creator_id": creator_id},
+        {"$set": {
+            "user_id": user["user_id"],
+            "creator_id": creator_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Ajouté aux favoris", "creator_id": creator_id}
+
+@api_router.delete("/favorites/{creator_id}")
+async def remove_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Remove a creator from user's favorites"""
+    result = await db.favorites.delete_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Favori non trouvé")
+    
+    return {"message": "Retiré des favoris", "creator_id": creator_id}
+
+@api_router.get("/favorites")
+async def get_favorites(user: dict = Depends(get_current_user)):
+    """Get user's favorite creators"""
+    favorites = await db.favorites.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Get creator details
+    creator_ids = [f["creator_id"] for f in favorites]
+    creators = []
+    
+    for cid in creator_ids:
+        creator = await db.users.find_one({"user_id": cid}, {"_id": 0, "password": 0})
+        if creator:
+            profile = await db.creator_profiles.find_one({"user_id": cid}, {"_id": 0})
+            if profile:
+                creator.update(profile)
+            creators.append(creator)
+    
+    return creators
+
+@api_router.get("/favorites/check/{creator_id}")
+async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Check if a creator is in user's favorites"""
+    favorite = await db.favorites.find_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    return {"is_favorite": favorite is not None}
+
+# ==================== COLLABORATION REQUESTS ====================
+
+@api_router.post("/collaboration-requests")
+async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
+    """Create a collaboration request from a business to a creator"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Seules les entreprises peuvent envoyer des demandes")
+    
+    # Check if business is subscribed
+    if not user.get("is_subscribed") and not user.get("is_premium"):
+        raise HTTPException(status_code=403, detail="Abonnement requis pour contacter les créateurs")
+    
+    # Get business profile for name
+    business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    business_name = business_profile.get("company_name") if business_profile else user.get("name", "Entreprise")
+    
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": data.creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Create request
+    collab_request = CollaborationRequest(
+        creator_id=data.creator_id,
+        business_id=user["user_id"],
+        business_name=business_name,
+        content_types=data.content_types,
+        platforms=data.platforms,
+        budget_range=data.budget_range,
+        deadline=data.deadline,
+        brief=data.brief,
+        deliverables=data.deliverables,
+        additional_info=data.additional_info
+    )
+    
+    await db.collaboration_requests.insert_one(collab_request.model_dump())
+    
+    # Create notification for creator
+    await create_notification(
+        user_id=data.creator_id,
+        notif_type="collaboration_request",
+        title="Nouvelle demande de collaboration",
+        message=f"{business_name} souhaite collaborer avec vous !",
+        icon="💼",
+        link="/creator/requests",
+        data={"request_id": collab_request.request_id, "business_name": business_name}
+    )
+    
+    return {"message": "Demande envoyée", "request_id": collab_request.request_id}
+
+@api_router.get("/collaboration-requests/creator")
+async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests for a creator"""
+    requests = await db.collaboration_requests.find(
+        {"creator_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.get("/collaboration-requests/business")
+async def get_business_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests sent by a business"""
+    requests = await db.collaboration_requests.find(
+        {"business_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.patch("/collaboration-requests/{request_id}/status")
+async def update_collaboration_request_status(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update collaboration request status (accept/decline)"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    if new_status not in ["accepted", "declined"]:
+        raise HTTPException(status_code=400, detail="Status invalide")
+    
+    collab_request = await db.collaboration_requests.find_one({"request_id": request_id}, {"_id": 0})
+    
+    if not collab_request:
+        raise HTTPException(status_code=404, detail="Demande non trouvée")
+    
+    # Only creator can update status
+    if collab_request["creator_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Non autorisé")
+    
+    await db.collaboration_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    # Notify business
+    creator_name = user.get("name", "Un créateur")
+    status_text = "accepté" if new_status == "accepted" else "décliné"
+    
+    await create_notification(
+        user_id=collab_request["business_id"],
+        notif_type="collaboration_response",
+        title=f"Demande {status_text}",
+        message=f"{creator_name} a {status_text} votre demande de collaboration",
+        icon="✅" if new_status == "accepted" else "❌",
+        link="/business/requests",
+        data={"request_id": request_id}
+    )
+    
+    return {"message": f"Demande {status_text}"}
 
 # ==================== BUSINESS ROUTES ====================
 
