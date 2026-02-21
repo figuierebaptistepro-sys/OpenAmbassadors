@@ -4487,14 +4487,22 @@ async def get_pool_payouts(pool_id: str, user: dict = Depends(get_current_user))
     return payouts
 
 @api_router.post("/pools/{pool_id}/join")
-async def join_pool(pool_id: str, user: dict = Depends(get_current_user)):
-    """Creator joins a pool"""
+async def join_pool(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Creator joins a pool (or applies if requires_approval)"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Only creators can join pools")
     
+    # Get optional message from request body
+    message = None
     try:
-        participation = await influence_pools.join_pool(db, user, pool_id)
-        return participation
+        body = await request.json()
+        message = body.get("message")
+    except:
+        pass
+    
+    try:
+        result = await influence_pools.join_pool(db, user, pool_id, message)
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
