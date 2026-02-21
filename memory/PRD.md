@@ -141,6 +141,58 @@
 
 **Note**: Les commissions seront déclenchées via webhook Stripe `invoice.paid` (à implémenter avec Stripe)
 
+#### 9. 🆕 Système Pool d'Influence (Feb 2026)
+**Backend** (`/app/backend/influence_pools.py`):
+- **Modes de rémunération:**
+  - CPM (Coût Par Mille): Paiement basé sur les vues
+  - POOL: Budget partagé selon performance
+- **Packages disponibles:** 5000€, 15000€, 25000€
+- **Système d'approbation:**
+  - Option `requires_approval` pour filtrer les créateurs
+  - Workflow: Postuler → En attente → Approuvé/Refusé → Soumettre vidéos
+- **Gestion des candidatures:**
+  - Message de motivation optionnel
+  - Approbation/rejet par la marque
+  - Notifications automatiques
+- **Soumission de contenu:**
+  - Support multi-plateformes (TikTok, Instagram Reels, YouTube Shorts)
+  - Plusieurs vidéos par participant
+  - Tracking des vues et gains
+
+**Collections MongoDB:**
+- `influence_pools`: Pools avec brief, budget, plateformes
+- `pool_participations`: Participants actifs
+- `pool_applications`: Candidatures en attente/traitées
+- `pool_submissions`: Vidéos soumises
+
+**API Endpoints (Business):**
+- `GET /api/pools` - Liste des pools
+- `POST /api/pools` - Créer une pool
+- `GET /api/pools/{id}/applications` - Voir candidatures
+- `POST /api/pools/{id}/applications/{app_id}/approve` - Approuver
+- `POST /api/pools/{id}/applications/{app_id}/reject` - Refuser
+- `PUT /api/pools/{id}/status` - Mettre en pause/reprendre
+
+**API Endpoints (Creator):**
+- `GET /api/pools` - Pools disponibles
+- `POST /api/pools/{id}/join` - Rejoindre/Postuler
+- `POST /api/pools/{id}/submit` - Soumettre vidéo
+- `GET /api/pools/my/applications` - Mes candidatures
+- `GET /api/pools/my/participations` - Mes participations
+- `GET /api/pools/my/submissions` - Mes soumissions
+
+**Frontend (Business):**
+- `BusinessPoolsPage.jsx` - Liste pools avec filtres
+- `BusinessPoolDetailPage.jsx` - Détail + onglet Candidatures
+- `CreatePoolPage.jsx` - Formulaire création avec option approbation
+- Menu "Pool" dans sidebar → `/business/pools`
+
+**Frontend (Creator):**
+- `ArenaPage.jsx` - Liste pools disponibles (`/pool`)
+- `PoolDetailPage.jsx` - Brief + boutons Postuler/Rejoindre/Soumettre
+- Modal de candidature avec message de motivation
+- Menu "Pool" dans sidebar
+
 ### 🚧 In Progress / Blocked
 1. **Forgot Password Email** - BLOCKED on Resend domain verification
 
