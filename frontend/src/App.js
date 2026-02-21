@@ -375,7 +375,7 @@ function AppRouter({ onUserChange }) {
         path="/creators/:userId"
         element={
           <ProtectedRoute requireType>
-            {({ user }) => <CreatorProfile currentUser={user} />}
+            {({ user }) => <CreatorProfileV2 currentUser={user} />}
           </ProtectedRoute>
         }
       />
