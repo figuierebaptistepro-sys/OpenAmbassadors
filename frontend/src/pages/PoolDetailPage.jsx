@@ -370,6 +370,7 @@ const PoolDetailPage = ({ user }) => {
               <div className="text-xl font-bold">{getTimeRemaining(pool.end_date)}j</div>
               <div className="text-xs text-gray-400">Restants</div>
             </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
               <Award className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
               <div className="text-xl font-bold">{pool.max_payout_per_creator}€</div>
               <div className="text-xs text-gray-400">Gain max</div>
