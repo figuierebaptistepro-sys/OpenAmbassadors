@@ -1949,6 +1949,9 @@ async def get_creator(user_id: str):
         profile["picture"] = user.get("picture")
         profile["banner"] = user.get("banner")
         profile["is_premium"] = user.get("is_premium", False)
+        # Add portfolio photos from user collection
+        if user.get("portfolio_photos"):
+            profile["portfolio_photos"] = user.get("portfolio_photos")
     
     # Get reviews
     reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).to_list(50)
