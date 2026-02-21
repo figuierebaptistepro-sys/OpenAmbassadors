@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2
+  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2, Heart
 } from "lucide-react";
 
 const LOGO_URL = "/logo-sun.png";
