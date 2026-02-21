@@ -266,8 +266,8 @@ async def get_business_pools(db, business_id: str) -> list:
     ).sort("created_at", -1).to_list(length=100)
     return pools
 
-async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
-    """Creator joins a pool"""
+async def join_pool(db, creator_user: dict, pool_id: str, message: str = None) -> dict:
+    """Creator joins a pool (direct join or apply if requires_approval)"""
     pool = await get_pool_by_id(db, pool_id)
     if not pool:
         raise ValueError("Pool not found")
@@ -275,15 +275,50 @@ async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
     if pool["status"] != PoolStatus.ACTIVE.value:
         raise ValueError("Pool is not active")
     
-    # Check if already joined
-    existing = await db.pool_participations.find_one({
+    # Check if already participated or applied
+    existing_participation = await db.pool_participations.find_one({
         "pool_id": pool_id,
         "creator_id": creator_user["user_id"]
     })
-    if existing:
+    if existing_participation:
         raise ValueError("Already joined this pool")
     
+    existing_application = await db.pool_applications.find_one({
+        "pool_id": pool_id,
+        "creator_id": creator_user["user_id"]
+    })
+    if existing_application:
+        raise ValueError("Already applied to this pool")
+    
     now = datetime.now(timezone.utc)
+    
+    # If pool requires approval, create an application instead
+    if pool.get("requires_approval", False):
+        application = {
+            "application_id": f"app_{uuid.uuid4().hex[:12]}",
+            "pool_id": pool_id,
+            "creator_id": creator_user["user_id"],
+            "creator_name": creator_user.get("name", "Créateur"),
+            "creator_picture": creator_user.get("picture"),
+            "creator_email": creator_user.get("email"),
+            "message": message,
+            "status": ApplicationStatus.PENDING.value,
+            "applied_at": now.isoformat(),
+            "updated_at": now.isoformat()
+        }
+        
+        await db.pool_applications.insert_one(application)
+        
+        # Update pool stats
+        await db.influence_pools.update_one(
+            {"pool_id": pool_id},
+            {"$inc": {"total_applications": 1}}
+        )
+        
+        application.pop("_id", None)
+        return {"type": "application", "data": application}
+    
+    # Direct join (no approval required)
     participation = {
         "participation_id": f"part_{uuid.uuid4().hex[:12]}",
         "pool_id": pool_id,
@@ -308,7 +343,7 @@ async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
     )
     
     participation.pop("_id", None)
-    return participation
+    return {"type": "participation", "data": participation}
 
 async def get_creator_participations(db, creator_id: str) -> list:
     """Get all pools a creator has joined"""
