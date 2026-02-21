@@ -247,7 +247,70 @@ const PoolDetailPage = ({ user }) => {
   }
 
   const hasJoined = !!participation;
+  const hasApplied = !!application;
+  const applicationPending = application?.status === "pending";
+  const applicationRejected = application?.status === "rejected";
   const ui = pool.ui_arena || {};
+  
+  // Determine CTA state
+  const renderCTA = () => {
+    if (pool.status !== "active") return null;
+    
+    if (hasJoined) {
+      return (
+        <Button 
+          size="lg"
+          className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+          onClick={() => setSubmitDialogOpen(true)}
+          data-testid="submit-content-btn"
+        >
+          <Send className="w-5 h-5 mr-2" />
+          Soumettre du contenu
+        </Button>
+      );
+    }
+    
+    if (applicationPending) {
+      return (
+        <Button 
+          size="lg"
+          disabled
+          className="bg-yellow-500/80 cursor-not-allowed"
+          data-testid="application-pending-btn"
+        >
+          <Clock className="w-5 h-5 mr-2 animate-pulse" />
+          Candidature en attente
+        </Button>
+      );
+    }
+    
+    if (applicationRejected) {
+      return (
+        <Button 
+          size="lg"
+          disabled
+          className="bg-red-500/50 cursor-not-allowed"
+          data-testid="application-rejected-btn"
+        >
+          <AlertCircle className="w-5 h-5 mr-2" />
+          Candidature refusée
+        </Button>
+      );
+    }
+    
+    // Not joined, not applied
+    return (
+      <Button 
+        size="lg"
+        className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+        onClick={handleJoinPool}
+        data-testid="join-pool-btn"
+      >
+        <Zap className="w-5 h-5 mr-2" />
+        {pool.requires_approval ? "Postuler" : "Rejoindre le pool"}
+      </Button>
+    );
+  };
 
   return (
     <AppLayout user={user}>
@@ -256,11 +319,11 @@ const PoolDetailPage = ({ user }) => {
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           {/* Back button */}
           <button 
-            onClick={() => navigate("/arena")}
+            onClick={() => navigate("/pool")}
             className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
-            Retour à l'Arena
+            Retour aux Pools
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -273,6 +336,11 @@ const PoolDetailPage = ({ user }) => {
                 }>
                   {pool.status === "active" ? "Actif" : "Terminé"}
                 </Badge>
+                {pool.requires_approval && (
+                  <Badge className="bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                    Candidature requise
+                  </Badge>
+                )}
                 <span className="text-gray-400 text-sm">{pool.brand?.industry}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold">{pool.brand?.name}</h1>
@@ -280,29 +348,9 @@ const PoolDetailPage = ({ user }) => {
             </div>
 
             {/* CTA */}
-            {pool.status === "active" && (
-              <div className="flex gap-3">
-                {hasJoined ? (
-                  <Button 
-                    size="lg"
-                    className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
-                    onClick={() => setSubmitDialogOpen(true)}
-                  >
-                    <Send className="w-5 h-5 mr-2" />
-                    Soumettre du contenu
-                  </Button>
-                ) : (
-                  <Button 
-                    size="lg"
-                    className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
-                    onClick={handleJoinPool}
-                  >
-                    <Zap className="w-5 h-5 mr-2" />
-                    Rejoindre le pool
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className="flex gap-3">
+              {renderCTA()}
+            </div>
           </div>
 
           {/* Stats bar */}
@@ -322,7 +370,6 @@ const PoolDetailPage = ({ user }) => {
               <div className="text-xl font-bold">{getTimeRemaining(pool.end_date)}j</div>
               <div className="text-xs text-gray-400">Restants</div>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
               <Award className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
               <div className="text-xl font-bold">{pool.max_payout_per_creator}€</div>
               <div className="text-xs text-gray-400">Gain max</div>
