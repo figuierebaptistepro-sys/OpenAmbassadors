@@ -503,4 +503,4 @@ GOOGLE_CLIENT_SECRET=GOCSPX-xxx
 ```
 
 ---
-*Last updated: 2026-02-04 - Système de Notation Hybride implémenté*
+*Last updated: 2026-02-21 - Fiche Créateur V2 (Mini Landing Page B2B) implémentée*
