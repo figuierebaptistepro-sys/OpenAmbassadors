@@ -618,103 +618,152 @@ const CreatorProfileV2 = ({ currentUser }) => {
             )}
           </div>
 
-          {/* SIDEBAR - Desktop */}
-          <div className="hidden lg:block w-80 xl:w-[340px] flex-shrink-0">
+          {/* BLOC DÉCISION - Premium Sidebar */}
+          <div className="hidden lg:block w-[400px] xl:w-[420px] flex-shrink-0">
             <div className="sticky top-20">
               <motion.div 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden"
+                className="bg-white rounded-[28px] border border-gray-200/80 shadow-2xl shadow-gray-200/50 overflow-hidden"
               >
-                {/* Price Header */}
-                <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
-                  <p className="text-sm text-gray-500 mb-1">À partir de</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-gray-900">
-                      {creator.min_rate || "—"}
-                    </span>
-                    {creator.min_rate && <span className="text-xl text-gray-400">€</span>}
+                {/* PRIX - Section dominante */}
+                <div className="p-8 pb-6 bg-gradient-to-br from-slate-50 via-white to-gray-50/50">
+                  <div className="flex items-start justify-between mb-1">
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-5xl xl:text-6xl font-extrabold text-gray-900 tracking-tight">
+                          {creator.min_rate || "—"}
+                        </span>
+                        {creator.min_rate && <span className="text-2xl font-semibold text-gray-400">€</span>}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1 font-medium">À partir de</p>
+                    </div>
+                    {/* Badge disponibilité en haut à droite */}
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                      creator.available 
+                        ? 'bg-emerald-50 border border-emerald-200' 
+                        : 'bg-orange-50 border border-orange-200'
+                    }`}>
+                      <div className={`w-2.5 h-2.5 rounded-full ${creator.available ? 'bg-emerald-500 animate-pulse' : 'bg-orange-400'}`} />
+                      <span className={`text-sm font-semibold ${creator.available ? 'text-emerald-700' : 'text-orange-700'}`}>
+                        {creator.available ? "Disponible" : "Occupé"}
+                      </span>
+                    </div>
                   </div>
-                  {!creator.min_rate && <p className="text-sm text-gray-400 mt-1">Tarif sur devis</p>}
                 </div>
 
-                {/* Info List */}
-                <div className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 flex items-center gap-2 text-sm">
-                      <div className={`w-2.5 h-2.5 rounded-full ${creator.available ? 'bg-emerald-500' : 'bg-orange-400'}`} />
-                      Disponibilité
-                    </span>
-                    <span className={`font-semibold text-sm ${creator.available ? 'text-emerald-600' : 'text-orange-600'}`}>
-                      {creator.available ? "Disponible" : "Occupé"}
-                    </span>
+                {/* Séparateur stylé */}
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+                {/* INDICATEURS CLÉS */}
+                <div className="p-8 space-y-5">
+                  {/* Temps de réponse */}
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Temps de réponse</p>
+                        <p className="font-bold text-gray-900">Répond en moins de 24h</p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4" />
-                      Temps de réponse
-                    </span>
-                    <span className="font-semibold text-gray-900 text-sm">{creator.response_time || "< 24h"}</span>
-                  </div>
-                  
-                  {badge && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-sm">Statut</span>
-                      <Badge className={`${badge.color} gap-1 text-xs`}>
-                        <badge.icon className="w-3 h-3" />
-                        {badge.label}
-                      </Badge>
+
+                  {/* Indicateurs de performance OU badge nouveau créateur */}
+                  {isNewCreator ? (
+                    /* Nouveau créateur */
+                    <div className="p-5 bg-gradient-to-br from-sky-50 to-indigo-50 rounded-2xl border border-sky-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                          <Sparkles className="w-6 h-6 text-sky-500" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">Nouveau créateur</p>
+                          <p className="text-sm text-gray-500">Lancez la première collaboration !</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Stats de performance */
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-2xl font-bold text-gray-900">{creator.completed_projects || 0}</p>
+                        <p className="text-xs text-gray-500 mt-1">Projets</p>
+                      </div>
+                      <div className="text-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                        <div className="flex items-center justify-center gap-1">
+                          <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                          <span className="text-2xl font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Note</p>
+                      </div>
+                      <div className="text-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                        <p className="text-2xl font-bold text-gray-900">{creator.completion_score || 100}%</p>
+                        <p className="text-xs text-gray-500 mt-1">Complétion</p>
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 flex items-center gap-2 text-sm">
-                      <Shield className="w-4 h-4" />
-                      Paiement sécurisé
-                    </span>
-                    <CheckCircle className="w-5 h-5 text-emerald-500" />
-                  </div>
+                  {/* Badge Premium si applicable */}
+                  {creator.is_premium && (
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200">
+                      <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
+                        <Award className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-amber-900">Créateur Premium</p>
+                        <p className="text-sm text-amber-700">Profil vérifié et prioritaire</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* CTA */}
-                <div className="p-6 pt-2 space-y-3">
+                {/* Séparateur */}
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-8" />
+
+                {/* CTA PRINCIPAL */}
+                <div className="p-8 pt-6 space-y-4">
                   <Button 
                     onClick={() => setCollaborationDialogOpen(true)}
-                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold text-base rounded-2xl shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5"
+                    className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-2xl shadow-xl shadow-primary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/40"
                     data-testid="sidebar-request-btn"
                   >
-                    <Send className="w-5 h-5 mr-2" />
+                    <Send className="w-5 h-5 mr-3" />
                     Demander une collaboration
                   </Button>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <Button 
                       variant="outline" 
-                      className="flex-1 h-12 rounded-xl border-2"
+                      className={`flex-1 h-14 rounded-xl border-2 font-semibold transition-all duration-200 ${
+                        isFavorite 
+                          ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
                       onClick={() => setIsFavorite(!isFavorite)}
                     >
-                      <Heart className={`w-4 h-4 mr-2 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                      <Heart className={`w-5 h-5 mr-2 ${isFavorite ? "fill-red-500" : ""}`} />
                       Favoris
                     </Button>
-                    <Button variant="outline" className="flex-1 h-12 rounded-xl border-2">
-                      <Share2 className="w-4 h-4 mr-2" />
+                    <Button variant="outline" className="flex-1 h-14 rounded-xl border-2 border-gray-200 font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                      <Share2 className="w-5 h-5 mr-2" />
                       Partager
                     </Button>
                   </div>
                 </div>
 
                 {/* Trust badges */}
-                <div className="px-6 pb-6">
-                  <div className="flex items-center justify-center gap-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <Shield className="w-3.5 h-3.5" />
-                      Transaction protégée
+                <div className="px-8 pb-8">
+                  <div className="flex items-center justify-between pt-5 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Shield className="w-4 h-4 text-emerald-500" />
+                      <span>Transaction sécurisée</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <Users className="w-3.5 h-3.5" />
-                      Support 24/7
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      <span>Paiement protégé</span>
                     </div>
                   </div>
                 </div>
