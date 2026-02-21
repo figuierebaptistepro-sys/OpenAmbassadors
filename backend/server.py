@@ -2074,6 +2074,164 @@ async def delete_portfolio_video(video_index: int, user: dict = Depends(get_curr
     
     return {"message": "Video deleted", "deleted": deleted_video}
 
+@api_router.post("/creators/me/photos")
+async def add_portfolio_photo(request: Request, user: dict = Depends(get_current_user)):
+    """Add a photo to creator's portfolio"""
+    body = await request.json()
+    url = body.get("url")
+    caption = body.get("caption", "")
+    photo_type = body.get("type", "product")  # product, backstage, lifestyle, instagram
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    photo_entry = {
+        "url": url,
+        "caption": caption,
+        "type": photo_type,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$push": {"portfolio_photos": photo_entry}}
+    )
+    
+    if result.modified_count == 0:
+        profile = CreatorProfile(user_id=user["user_id"], portfolio_photos=[photo_entry])
+        await db.creator_profiles.insert_one(profile.model_dump())
+    
+    return {"message": "Photo added", "photo": photo_entry}
+
+@api_router.delete("/creators/me/photos/{photo_index}")
+async def delete_portfolio_photo(photo_index: int, user: dict = Depends(get_current_user)):
+    """Delete a photo from creator's portfolio by index"""
+    profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    photos = profile.get("portfolio_photos", [])
+    
+    if photo_index < 0 or photo_index >= len(photos):
+        raise HTTPException(status_code=400, detail="Invalid photo index")
+    
+    deleted_photo = photos.pop(photo_index)
+    
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"portfolio_photos": photos}}
+    )
+    
+    return {"message": "Photo deleted", "deleted": deleted_photo}
+
+# ==================== COLLABORATION REQUESTS ====================
+
+@api_router.post("/collaboration-requests")
+async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
+    """Create a collaboration request from a business to a creator"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Seules les entreprises peuvent envoyer des demandes")
+    
+    # Check if business is subscribed
+    if not user.get("is_subscribed") and not user.get("is_premium"):
+        raise HTTPException(status_code=403, detail="Abonnement requis pour contacter les créateurs")
+    
+    # Get business profile for name
+    business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    business_name = business_profile.get("company_name") if business_profile else user.get("name", "Entreprise")
+    
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": data.creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Create request
+    collab_request = CollaborationRequest(
+        creator_id=data.creator_id,
+        business_id=user["user_id"],
+        business_name=business_name,
+        content_types=data.content_types,
+        platforms=data.platforms,
+        budget_range=data.budget_range,
+        deadline=data.deadline,
+        brief=data.brief,
+        deliverables=data.deliverables,
+        additional_info=data.additional_info
+    )
+    
+    await db.collaboration_requests.insert_one(collab_request.model_dump())
+    
+    # Create notification for creator
+    await create_notification(
+        user_id=data.creator_id,
+        notif_type="collaboration_request",
+        title="Nouvelle demande de collaboration",
+        message=f"{business_name} souhaite collaborer avec vous !",
+        icon="💼",
+        link="/creator/requests",
+        data={"request_id": collab_request.request_id, "business_name": business_name}
+    )
+    
+    return {"message": "Demande envoyée", "request_id": collab_request.request_id}
+
+@api_router.get("/collaboration-requests/creator")
+async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests for a creator"""
+    requests = await db.collaboration_requests.find(
+        {"creator_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.get("/collaboration-requests/business")
+async def get_business_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests sent by a business"""
+    requests = await db.collaboration_requests.find(
+        {"business_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.patch("/collaboration-requests/{request_id}/status")
+async def update_collaboration_request_status(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update collaboration request status (accept/decline)"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    if new_status not in ["accepted", "declined"]:
+        raise HTTPException(status_code=400, detail="Status invalide")
+    
+    collab_request = await db.collaboration_requests.find_one({"request_id": request_id}, {"_id": 0})
+    
+    if not collab_request:
+        raise HTTPException(status_code=404, detail="Demande non trouvée")
+    
+    # Only creator can update status
+    if collab_request["creator_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Non autorisé")
+    
+    await db.collaboration_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    # Notify business
+    creator_name = user.get("name", "Un créateur")
+    status_text = "accepté" if new_status == "accepted" else "décliné"
+    
+    await create_notification(
+        user_id=collab_request["business_id"],
+        notif_type="collaboration_response",
+        title=f"Demande {status_text}",
+        message=f"{creator_name} a {status_text} votre demande de collaboration",
+        icon="✅" if new_status == "accepted" else "❌",
+        link="/business/requests",
+        data={"request_id": request_id}
+    )
+    
+    return {"message": f"Demande {status_text}"}
+
 # ==================== BUSINESS ROUTES ====================
 
 @api_router.get("/business/me/profile")
