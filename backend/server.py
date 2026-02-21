@@ -476,6 +476,11 @@ class CreatorProfile(BaseModel):
     
     # Portfolio
     portfolio_videos: List[dict] = []  # [{url, title, views, platform}]
+    portfolio_photos: List[dict] = []  # [{url, caption, type}] - type: product, backstage, lifestyle, instagram
+    
+    # Creator headline/tagline
+    tagline: Optional[str] = None  # Short 1-line pitch
+    response_time: Optional[str] = None  # "< 1h", "< 24h", "2-3 jours"
     
     # Rates
     min_rate: Optional[int] = None
