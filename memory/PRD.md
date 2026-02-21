@@ -195,12 +195,18 @@
 
 ### 🚧 In Progress / Blocked
 1. **Forgot Password Email** - BLOCKED on Resend domain verification
-2. **Tester fonctionnalité Favoris/Partager** - À valider sur CreatorProfileV2
+2. **Demandes de collaboration** - Nécessite abonnement business actif pour tester l'envoi complet
 
 ### 📋 Backlog (P1-P2)
-1. **P1** - Ajouter données de test pour afficher la section "Portfolio Photos" sur CreatorProfileV2
-2. **P2** - Paiement Stripe pour abonnements Business
-3. **P2** - Notifications email lors d'approbation candidature pool
+1. **P1** - Ajouter fonctionnalité "Accepter/Refuser/Négocier" côté créateur pour les demandes de collaboration
+2. **P1** - Configurer abonnement business pour les utilisateurs de test
+3. **P2** - Notifications email lors de nouvelles demandes de collaboration
+4. **P2** - Historique des demandes côté business
+
+### ✅ Récemment complété (Feb 21, 2026)
+- **Formulaire de collaboration** : Budget obligatoire, envoi de message au créateur
+- **Bouton Favoris** : API POST/DELETE, toggle visuel, page "Mes Favoris"
+- **Portfolio photos** : Section visible sur profil créateur
 
 ### ✅ Security Improvements (Feb 2026)
 
