@@ -2248,6 +2248,80 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
     
     await db.collaboration_requests.insert_one(collab_request.model_dump())
     
+    # Create or get conversation with creator
+    conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
+    existing_conv = await db.conversations.find_one({
+        "$or": [
+            {"participants": [user["user_id"], data.creator_id]},
+            {"participants": [data.creator_id, user["user_id"]]}
+        ]
+    })
+    
+    if existing_conv:
+        conversation_id = existing_conv["conversation_id"]
+    else:
+        # Create new conversation
+        new_conv = {
+            "conversation_id": conversation_id,
+            "participants": [user["user_id"], data.creator_id],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_message": None
+        }
+        await db.conversations.insert_one(new_conv)
+    
+    # Format collaboration message
+    objective_labels = {
+        "notoriete": "Notoriété",
+        "ads": "Ads", 
+        "ugc": "UGC",
+        "micro-trottoir": "Micro-trottoir",
+        "autre": "Autre"
+    }
+    objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
+    
+    collab_message = f"""📋 **Nouvelle demande de collaboration**
+
+💰 **Budget**: {data.budget_range or 'Non spécifié'}
+🎯 **Objectif**: {objective_label}
+📅 **Deadline**: {data.deadline or 'Flexible'}
+📢 **Diffusion**: {data.deliverables or 'Non spécifié'}
+
+📝 **Brief**:
+{data.brief}
+
+{f'📦 Infos supplémentaires: {data.additional_info}' if data.additional_info else ''}
+
+---
+*Vous pouvez accepter, refuser ou négocier cette demande.*"""
+    
+    # Create message in conversation
+    message_id = f"msg_{uuid.uuid4().hex[:12]}"
+    message = {
+        "message_id": message_id,
+        "conversation_id": conversation_id,
+        "sender_id": user["user_id"],
+        "content": collab_message,
+        "message_type": "collaboration_request",
+        "collaboration_request_id": collab_request.request_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read": False
+    }
+    await db.messages.insert_one(message)
+    
+    # Update conversation last message
+    await db.conversations.update_one(
+        {"conversation_id": conversation_id},
+        {"$set": {
+            "last_message": {
+                "content": "📋 Nouvelle demande de collaboration",
+                "sender_id": user["user_id"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            },
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
     # Create notification for creator
     await create_notification(
         user_id=data.creator_id,
@@ -2255,11 +2329,11 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         title="Nouvelle demande de collaboration",
         message=f"{business_name} souhaite collaborer avec vous !",
         icon="💼",
-        link="/creator/requests",
-        data={"request_id": collab_request.request_id, "business_name": business_name}
+        link=f"/messages?conversation={conversation_id}",
+        data={"request_id": collab_request.request_id, "business_name": business_name, "conversation_id": conversation_id}
     )
     
-    return {"message": "Demande envoyée", "request_id": collab_request.request_id}
+    return {"message": "Demande envoyée", "request_id": collab_request.request_id, "conversation_id": conversation_id}
 
 @api_router.get("/collaboration-requests/creator")
 async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):
