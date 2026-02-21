@@ -82,6 +82,7 @@ const CreatePoolPage = ({ user }) => {
     cpm_rate: "",
     has_max_payout: false,
     max_payout_per_creator: "",
+    requires_approval: false,
     
     // Step 2: Platforms & Duration
     platforms: [],
