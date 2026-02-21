@@ -290,24 +290,157 @@ const BusinessPoolDetailPage = ({ user }) => {
       {/* Tabs */}
       <div className="px-4 sm:px-6 lg:px-8 py-4 bg-white border-b sticky top-14 lg:top-0 z-30">
         <div className="flex gap-2">
-          {["overview", "submissions", "payouts"].map((tab) => (
+          <Button
+            variant={activeTab === "overview" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("overview")}
+            className={activeTab === "overview" ? "bg-primary" : ""}
+          >
+            Vue d'ensemble
+          </Button>
+          {pool.requires_approval && (
             <Button
-              key={tab}
-              variant={activeTab === tab ? "default" : "ghost"}
+              variant={activeTab === "applications" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setActiveTab(tab)}
-              className={activeTab === tab ? "bg-primary" : ""}
+              onClick={() => setActiveTab("applications")}
+              className={activeTab === "applications" ? "bg-primary" : ""}
+              data-testid="tab-applications"
             >
-              {tab === "overview" && "Vue d'ensemble"}
-              {tab === "submissions" && `Publications (${submissions.length})`}
-              {tab === "payouts" && "Paiements"}
+              Candidatures
+              {pendingApplications.length > 0 && (
+                <Badge className="ml-2 bg-red-500 text-white text-xs">{pendingApplications.length}</Badge>
+              )}
             </Button>
-          ))}
+          )}
+          <Button
+            variant={activeTab === "submissions" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("submissions")}
+            className={activeTab === "submissions" ? "bg-primary" : ""}
+          >
+            Publications ({submissions.length})
+          </Button>
+          <Button
+            variant={activeTab === "payouts" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("payouts")}
+            className={activeTab === "payouts" ? "bg-primary" : ""}
+          >
+            Paiements
+          </Button>
         </div>
       </div>
 
       {/* Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Applications Tab */}
+        {activeTab === "applications" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">
+                Candidatures en attente ({pendingApplications.length})
+              </h2>
+            </div>
+
+            {applications.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Aucune candidature pour le moment</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {applications.map((app) => (
+                  <Card key={app.application_id} className="border-0 shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        {/* Avatar */}
+                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                          {app.creator_picture ? (
+                            <img src={app.creator_picture} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold">
+                              {(app.creator_name || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900">{app.creator_name}</h3>
+                            <Badge className={`text-xs ${
+                              app.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                              app.status === "approved" ? "bg-green-100 text-green-700" :
+                              "bg-red-100 text-red-700"
+                            }`}>
+                              {app.status === "pending" ? "En attente" :
+                               app.status === "approved" ? "Approuvé" : "Refusé"}
+                            </Badge>
+                          </div>
+                          
+                          {app.creator_email && (
+                            <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
+                              <Mail className="w-3 h-3" />
+                              {app.creator_email}
+                            </div>
+                          )}
+                          
+                          {app.message && (
+                            <div className="p-3 bg-gray-50 rounded-lg mt-2">
+                              <div className="flex items-start gap-2">
+                                <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                <p className="text-sm text-gray-600 italic">"{app.message}"</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <p className="text-xs text-gray-400 mt-2">
+                            Candidature le {new Date(app.applied_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        {app.status === "pending" && (
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                              onClick={() => handleRejectApplication(app.application_id)}
+                              disabled={processingApp === app.application_id}
+                              data-testid={`reject-${app.application_id}`}
+                            >
+                              <UserX className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600"
+                              onClick={() => handleApproveApplication(app.application_id)}
+                              disabled={processingApp === app.application_id}
+                              data-testid={`approve-${app.application_id}`}
+                            >
+                              {processingApp === app.application_id ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <>
+                                  <UserCheck className="w-4 h-4 mr-1" />
+                                  Accepter
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "overview" && (
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main info */}
