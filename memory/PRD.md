@@ -195,6 +195,12 @@
 
 ### 🚧 In Progress / Blocked
 1. **Forgot Password Email** - BLOCKED on Resend domain verification
+2. **Tester fonctionnalité Favoris/Partager** - À valider sur CreatorProfileV2
+
+### 📋 Backlog (P1-P2)
+1. **P1** - Ajouter données de test pour afficher la section "Portfolio Photos" sur CreatorProfileV2
+2. **P2** - Paiement Stripe pour abonnements Business
+3. **P2** - Notifications email lors d'approbation candidature pool
 
 ### ✅ Security Improvements (Feb 2026)
 
