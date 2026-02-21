@@ -4540,24 +4540,6 @@ async def submit_content(pool_id: str, submission: influence_pools.SubmitContent
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@api_router.get("/pools/my/participations")
-async def get_my_participations(user: dict = Depends(get_current_user)):
-    """Get all pools the creator has joined"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can view participations")
-    
-    participations = await influence_pools.get_creator_participations(db, user["user_id"])
-    return participations
-
-@api_router.get("/pools/my/submissions")
-async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
-    """Get all submissions by the creator"""
-    if user.get("user_type") != "creator":
-        raise HTTPException(status_code=403, detail="Only creators can view submissions")
-    
-    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
-    return submissions
-
 @api_router.put("/pools/{pool_id}/status")
 async def update_pool_status(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Update pool status (Business owner or admin)"""
