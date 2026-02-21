@@ -4373,6 +4373,34 @@ async def list_active_pools(limit: int = 50):
     pools = await influence_pools.get_active_pools(db, limit)
     return pools
 
+# IMPORTANT: These /pools/my/* routes MUST come BEFORE /pools/{pool_id} to avoid "my" being treated as pool_id
+@api_router.get("/pools/my/applications")
+async def get_my_pool_applications(user: dict = Depends(get_current_user)):
+    """Get all pool applications for the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view applications")
+    
+    applications = await influence_pools.get_creator_applications(db, user["user_id"])
+    return applications
+
+@api_router.get("/pools/my/participations")
+async def get_my_participations(user: dict = Depends(get_current_user)):
+    """Get all pools the creator has joined"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view participations")
+    
+    participations = await influence_pools.get_creator_participations(db, user["user_id"])
+    return participations
+
+@api_router.get("/pools/my/submissions")
+async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get all submissions by the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view submissions")
+    
+    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
+    return submissions
+
 @api_router.get("/pools/{pool_id}")
 async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
     """Get pool details"""
