@@ -193,6 +193,10 @@ const CreatorProfileV2 = ({ currentUser }) => {
   };
 
   const handleCollaborationRequest = async () => {
+    if (!collabForm.budget_range) {
+      toast.error("Veuillez sélectionner un budget");
+      return;
+    }
     if (!collabForm.brief.trim()) {
       toast.error("Veuillez décrire votre projet");
       return;
@@ -214,16 +218,21 @@ const CreatorProfileV2 = ({ currentUser }) => {
           budget_range: collabForm.budget_range,
           deadline: collabForm.deadline,
           brief: collabForm.brief,
-          deliverables: `Type: ${collabForm.diffusion_type}`,
+          deliverables: collabForm.diffusion_type,
           additional_info: collabForm.product_sent === "yes" 
             ? `Produit envoyé: Oui - Adresse: ${collabForm.shipping_address}` 
-            : "Produit envoyé: Non"
+            : ""
         })
       });
       if (response.ok) {
-        toast.success("Demande envoyée avec succès !");
+        const data = await response.json();
+        toast.success("Demande envoyée ! Redirection vers la conversation...");
         setCollaborationDialogOpen(false);
         setCollabForm({ budget_range: "", objective: "", diffusion_type: "", deadline: "", brief: "", product_sent: "", shipping_address: "" });
+        // Redirect to conversation
+        setTimeout(() => {
+          navigate(`/messages?conversation=${data.conversation_id}`);
+        }, 1000);
       } else {
         const error = await response.json();
         if (error.detail?.includes("Abonnement")) {
