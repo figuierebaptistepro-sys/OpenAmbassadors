@@ -44,6 +44,7 @@ import CreatePoolPage from "./pages/CreatePoolPage";
 import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
 import BusinessPoolsPage from "./pages/BusinessPoolsPage";
 import PoolPaymentSuccessPage from "./pages/PoolPaymentSuccessPage";
+import MyFavoritesPage from "./pages/MyFavoritesPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
