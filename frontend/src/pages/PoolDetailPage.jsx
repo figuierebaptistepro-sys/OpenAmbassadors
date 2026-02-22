@@ -419,18 +419,18 @@ const PoolDetailPage = ({ user }) => {
           </CardContent>
         </Card>
 
-        {/* My Participation Card - Only if joined */}
+        {/* My Participation Card - Only if joined - Rose pâle */}
         {hasJoined && (
-          <Card className="mt-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm">
+          <Card className="mt-4 bg-gradient-to-r from-primary/5 to-pink-50 border border-primary/20 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-green-800">Tu participes à ce pool</p>
-                    <p className="text-sm text-green-600">Continue de publier pour maximiser tes gains</p>
+                    <p className="font-semibold text-primary">Tu participes à ce pool</p>
+                    <p className="text-sm text-gray-500">Continue de publier pour maximiser tes gains</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
@@ -443,7 +443,7 @@ const PoolDetailPage = ({ user }) => {
                     <div className="text-xs text-gray-500">Vues</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-primary">
                       {(participation?.estimated_earnings || 0).toFixed(2)}€
                     </div>
                     <div className="text-xs text-gray-500">Gains</div>
