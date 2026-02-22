@@ -334,6 +334,14 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
+        path="/business/projects/:projectId/edit"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <NewProjectPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/business/projects/:projectId"
         element={
           <ProtectedRoute requireType>

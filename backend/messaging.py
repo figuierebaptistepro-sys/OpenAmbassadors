@@ -90,34 +90,45 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         user_id = user["user_id"]
         user_type = user.get("user_type")
         
-        # Build query based on user type
-        if user_type == "creator":
-            query = {"creator_id": user_id}
-        elif user_type == "business":
-            query = {"company_id": user_id}
-        else:
+        # Build query - find all conversations where user is a participant
+        # Support both old schema (creator_id/company_id) and new schema (participants array)
+        if user.get("email") in ["figuierebaptistepro@gmail.com"]:
             # Admin can see all
-            if user.get("email") in ["figuierebaptistepro@gmail.com"]:
-                query = {}
-            else:
-                raise HTTPException(status_code=403, detail="User type not set")
+            query = {}
+        else:
+            query = {
+                "$or": [
+                    {"participants": user_id},
+                    {"creator_id": user_id},
+                    {"company_id": user_id},
+                    {"business_id": user_id}
+                ]
+            }
         
         conversations = await db.conversations.find(
             query, {"_id": 0}
-        ).sort("last_message_at", -1).to_list(100)
+        ).sort("updated_at", -1).to_list(100)
         
         # Enrich with participant info and unread count
         for conv in conversations:
-            # Get other participant info
-            if user_type == "creator":
+            # Get other participant info from participants array
+            participants = conv.get("participants", [])
+            other_user_id = None
+            for p_id in participants:
+                if p_id != user_id:
+                    other_user_id = p_id
+                    break
+            
+            # Fallback to old schema
+            if not other_user_id:
+                if user_type == "creator":
+                    other_user_id = conv.get("company_id") or conv.get("business_id")
+                else:
+                    other_user_id = conv.get("creator_id")
+            
+            if other_user_id:
                 other_user = await db.users.find_one(
-                    {"user_id": conv["company_id"]}, 
-                    {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-                )
-                conv["other_participant"] = other_user
-            else:
-                other_user = await db.users.find_one(
-                    {"user_id": conv["creator_id"]}, 
+                    {"user_id": other_user_id}, 
                     {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
                 )
                 conv["other_participant"] = other_user
@@ -125,8 +136,12 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
             # Get last message preview
             last_msg = await db.messages.find_one(
                 {"conversation_id": conv["conversation_id"]},
-                {"_id": 0, "text": 1, "content_type": 1, "created_at": 1, "sender_id": 1}
+                {"_id": 0, "text": 1, "content": 1, "content_type": 1, "created_at": 1, "sender_id": 1},
+                sort=[("created_at", -1)]
             )
+            if last_msg:
+                # Normalize text field
+                last_msg["text"] = last_msg.get("text") or last_msg.get("content", "")
             conv["last_message"] = last_msg
             
             # Get unread count
@@ -260,22 +275,35 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation non trouvée")
         
-        # Check access
+        # Check access - user must be a participant or admin
         is_admin = user.get("email") in ["figuierebaptistepro@gmail.com"]
-        if not is_admin and conversation["company_id"] != user_id and conversation["creator_id"] != user_id:
+        participants = conversation.get("participants", [])
+        business_user_id = conversation.get("company_id") or conversation.get("business_id")
+        creator_user_id = conversation.get("creator_id")
+        
+        has_access = (
+            is_admin or 
+            user_id in participants or
+            user_id == business_user_id or 
+            user_id == creator_user_id
+        )
+        
+        if not has_access:
             raise HTTPException(status_code=403, detail="Accès non autorisé")
         
-        # Enrich with participant info
-        company = await db.users.find_one(
-            {"user_id": conversation["company_id"]}, 
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-        )
-        creator = await db.users.find_one(
-            {"user_id": conversation["creator_id"]}, 
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-        )
-        conversation["company"] = company
-        conversation["creator"] = creator
+        # Enrich with participant info from participants list
+        participants_list = conversation.get("participants", [])
+        for p_id in participants_list:
+            if p_id != user_id:
+                other_user = await db.users.find_one(
+                    {"user_id": p_id}, 
+                    {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "user_type": 1}
+                )
+                if other_user:
+                    if other_user.get("user_type") == "creator":
+                        conversation["creator"] = other_user
+                    else:
+                        conversation["company"] = other_user
         
         if conversation.get("mission_id"):
             mission = await db.projects.find_one(
@@ -302,9 +330,21 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation non trouvée")
         
-        # Check access
+        # Check access - user must be a participant or admin
         is_admin = user.get("email") in ["figuierebaptistepro@gmail.com"]
-        if not is_admin and conversation["company_id"] != user_id and conversation["creator_id"] != user_id:
+        participants = conversation.get("participants", [])
+        business_user_id = conversation.get("company_id") or conversation.get("business_id")
+        creator_user_id = conversation.get("creator_id")
+        
+        # Allow access if user is in participants list, or is the business/creator, or is admin
+        has_access = (
+            is_admin or 
+            user_id in participants or
+            user_id == business_user_id or 
+            user_id == creator_user_id
+        )
+        
+        if not has_access:
             raise HTTPException(status_code=403, detail="Accès non autorisé")
         
         query = {"conversation_id": conversation_id, "deleted_at": None}

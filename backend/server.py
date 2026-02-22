@@ -2586,6 +2586,40 @@ async def get_business_project_detail(project_id: str, user: dict = Depends(get_
     project["applications"] = enriched_applications
     return project
 
+@api_router.put("/projects/{project_id}")
+async def update_project(project_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update a project (business owner only)"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    project = await db.projects.find_one({"project_id": project_id, "business_id": user["user_id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    
+    body = await request.json()
+    
+    # Fields that can be updated
+    update_fields = {}
+    allowed_fields = [
+        "title", "description", "brief", "content_type", "budget",
+        "target_creators", "duration", "deadline", "location", 
+        "remote_ok", "requirements", "deliverables", "incubator_only", "banner_url"
+    ]
+    
+    for field in allowed_fields:
+        if field in body:
+            update_fields[field] = body[field]
+    
+    if update_fields:
+        update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.projects.update_one(
+            {"project_id": project_id},
+            {"$set": update_fields}
+        )
+    
+    updated_project = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    return updated_project
+
 @api_router.put("/projects/business/{project_id}/application/{creator_id}")
 async def update_application_status(project_id: str, creator_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Update the status of an application (accept/reject)"""
