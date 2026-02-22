@@ -427,6 +427,38 @@ export const ConversationPage = ({ user }) => {
     }
   };
 
+  const handleCollabResponse = async (requestId, status) => {
+    if (!requestId) {
+      toast.error("ID de demande manquant");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/collaboration-requests/${requestId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        const statusLabels = {
+          accepted: "acceptée",
+          rejected: "refusée", 
+          negotiating: "en négociation"
+        };
+        toast.success(`Demande ${statusLabels[status] || status}`);
+        fetchMessages(); // Refresh messages
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de la mise à jour");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erreur de connexion");
+    }
+  };
+
   const handleReport = async (reason) => {
     try {
       const response = await fetch(`${API_URL}/api/messaging/reports`, {
