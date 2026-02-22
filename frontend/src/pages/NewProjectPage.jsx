@@ -658,7 +658,7 @@ const NewProjectPage = ({ user }) => {
           >
             <Button
               variant="outline"
-              onClick={() => navigate("/business")}
+              onClick={() => navigate("/business/projects")}
               className="flex-1 sm:flex-none border-gray-200"
             >
               Annuler
@@ -674,7 +674,7 @@ const NewProjectPage = ({ user }) => {
               ) : (
                 <CheckCircle className="w-5 h-5 mr-2" />
               )}
-              Publier le projet
+              {isEditMode ? "Enregistrer les modifications" : "Publier la mission"}
             </Button>
           </motion.div>
 
