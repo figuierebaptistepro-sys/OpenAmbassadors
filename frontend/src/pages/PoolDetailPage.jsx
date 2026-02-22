@@ -260,7 +260,7 @@ const PoolDetailPage = ({ user }) => {
       return (
         <Button 
           size="lg"
-          className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+          className="bg-primary hover:bg-primary/90 text-white"
           onClick={() => setSubmitDialogOpen(true)}
           data-testid="submit-content-btn"
         >
@@ -302,7 +302,7 @@ const PoolDetailPage = ({ user }) => {
     return (
       <Button 
         size="lg"
-        className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+        className="bg-primary hover:bg-primary/90 text-white"
         onClick={handleJoinPool}
         data-testid="join-pool-btn"
       >
