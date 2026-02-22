@@ -110,6 +110,11 @@ export const InboxPage = ({ user }) => {
 
   useEffect(() => {
     fetchConversations();
+    
+    // Poll conversations every 5 seconds for new messages
+    const pollInterval = setInterval(fetchConversations, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, []);
 
   // WebSocket for real-time updates
