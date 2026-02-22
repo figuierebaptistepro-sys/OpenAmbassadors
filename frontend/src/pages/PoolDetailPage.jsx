@@ -314,13 +314,13 @@ const PoolDetailPage = ({ user }) => {
 
   return (
     <AppLayout user={user}>
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white">
+      {/* Header - White/Pink Design */}
+      <div className="bg-white border-b">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           {/* Back button */}
           <button 
             onClick={() => navigate("/pool")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
+            className="flex items-center gap-2 text-gray-500 hover:text-primary mb-4 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             Retour aux Pools
@@ -331,20 +331,20 @@ const PoolDetailPage = ({ user }) => {
               <div className="flex items-center gap-3 mb-2">
                 <Badge className={
                   pool.status === "active" 
-                    ? "bg-green-500 text-white" 
-                    : "bg-gray-500 text-white"
+                    ? "bg-green-100 text-green-700 border border-green-200" 
+                    : "bg-gray-100 text-gray-600 border border-gray-200"
                 }>
                   {pool.status === "active" ? "Actif" : "Terminé"}
                 </Badge>
                 {pool.requires_approval && (
-                  <Badge className="bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                  <Badge className="bg-primary/10 text-primary border border-primary/20">
                     Candidature requise
                   </Badge>
                 )}
-                <span className="text-gray-400 text-sm">{pool.brand?.industry}</span>
+                <span className="text-gray-500 text-sm">{pool.brand?.industry}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold">{pool.brand?.name}</h1>
-              <p className="text-gray-400 mt-1">{pool.brief?.key_message}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{pool.brand?.name}</h1>
+              <p className="text-gray-500 mt-1">{pool.brief?.key_message}</p>
             </div>
 
             {/* CTA */}
@@ -353,51 +353,51 @@ const PoolDetailPage = ({ user }) => {
             </div>
           </div>
 
-          {/* Stats bar */}
+          {/* Stats bar - Pink/Rose themed */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <Euro className="w-6 h-6 text-green-400 mx-auto mb-2" />
-              <div className="text-xl font-bold">{pool.budget_remaining}€</div>
-              <div className="text-xs text-gray-400">Budget restant</div>
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+              <Euro className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-xl font-bold text-gray-900">{pool.budget_remaining}€</div>
+              <div className="text-xs text-gray-500">Budget restant</div>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <Users className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-              <div className="text-xl font-bold">{pool.total_participants}</div>
-              <div className="text-xs text-gray-400">Participants</div>
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+              <Users className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-xl font-bold text-gray-900">{pool.total_participants}</div>
+              <div className="text-xs text-gray-500">Participants</div>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <Clock className="w-6 h-6 text-orange-400 mx-auto mb-2" />
-              <div className="text-xl font-bold">{getTimeRemaining(pool.end_date)}j</div>
-              <div className="text-xs text-gray-400">Restants</div>
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+              <Clock className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-xl font-bold text-gray-900">{getTimeRemaining(pool.end_date)}j</div>
+              <div className="text-xs text-gray-500">Restants</div>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <Award className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-              <div className="text-xl font-bold">{pool.max_payout_per_creator}€</div>
-              <div className="text-xs text-gray-400">Gain max</div>
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+              <Award className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-xl font-bold text-gray-900">{pool.max_payout_per_creator}€</div>
+              <div className="text-xs text-gray-500">Gain max</div>
             </div>
           </div>
 
-          {/* My stats if joined */}
+          {/* My stats if joined - Pink themed */}
           {hasJoined && (
-            <div className="mt-6 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
+            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-pink-100 rounded-xl border border-primary/20">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="font-semibold text-green-400">Tu participes à ce pool</span>
+                <CheckCircle className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-primary">Tu participes à ce pool</span>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{participation?.total_submissions || 0}</div>
-                  <div className="text-xs text-gray-400">Mes publications</div>
+                  <div className="text-2xl font-bold text-gray-900">{participation?.total_submissions || 0}</div>
+                  <div className="text-xs text-gray-500">Mes publications</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{participation?.total_views || 0}</div>
-                  <div className="text-xs text-gray-400">Mes vues</div>
+                  <div className="text-2xl font-bold text-gray-900">{participation?.total_views || 0}</div>
+                  <div className="text-xs text-gray-500">Mes vues</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">
+                  <div className="text-2xl font-bold text-primary">
                     {(participation?.estimated_earnings || 0).toFixed(2)}€
                   </div>
-                  <div className="text-xs text-gray-400">Gains estimés</div>
+                  <div className="text-xs text-gray-500">Gains estimés</div>
                 </div>
               </div>
             </div>
