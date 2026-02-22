@@ -49,6 +49,8 @@ const DELIVERABLES = [
 
 const NewProjectPage = ({ user }) => {
   const navigate = useNavigate();
+  const { projectId } = useParams(); // For edit mode
+  const isEditMode = !!projectId;
   const fileInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
@@ -79,7 +81,46 @@ const NewProjectPage = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (isEditMode) {
+      fetchProject();
+    }
+  }, [projectId]);
+
+  const fetchProject = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const project = await response.json();
+        setForm({
+          title: project.title || "",
+          description: project.description || "",
+          brief: project.brief || "",
+          content_type: project.content_type || "UGC",
+          budget: project.budget || "",
+          target_creators: project.target_creators || 1,
+          duration: project.duration || "2 semaines",
+          deadline: project.deadline ? project.deadline.split("T")[0] : "",
+          location: project.location || "",
+          remote_ok: project.remote_ok !== false,
+          requirements: project.requirements || [],
+          deliverables: project.deliverables || [],
+          incubator_only: project.incubator_only || false,
+          banner_url: project.banner_url || "",
+        });
+        if (project.banner_url) {
+          setPreviewUrl(project.banner_url);
+        }
+      } else {
+        toast.error("Mission introuvable");
+        navigate("/business/projects");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erreur de chargement");
+    }
+  };
 
   const fetchData = async () => {
     try {
