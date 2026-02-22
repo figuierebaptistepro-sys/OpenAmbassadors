@@ -285,15 +285,19 @@ const NewProjectPage = ({ user }) => {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/business")}
+            onClick={() => navigate("/business/projects")}
             className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
             data-testid="back-btn"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Nouveau projet</h1>
-            <p className="text-gray-500 text-xs sm:text-sm">Créez une mission pour les créateurs</p>
+            <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">
+              {isEditMode ? "Modifier la mission" : "Nouvelle mission"}
+            </h1>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              {isEditMode ? "Modifiez les détails de votre mission" : "Créez une mission pour les créateurs"}
+            </p>
           </div>
         </div>
       </div>
