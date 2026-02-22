@@ -456,7 +456,7 @@ const PoolDetailPage = ({ user }) => {
       </div>
 
       {/* Tabs */}
-      <div className="px-4 sm:px-6 lg:px-8 py-4 bg-white border-b sticky top-14 lg:top-0 z-30">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 bg-white border-b sticky top-14 lg:top-0 z-20 mt-4">
         <div className="flex gap-2">
           {["brief", "submissions", "leaderboard"].map((tab) => (
             <Button
@@ -464,7 +464,7 @@ const PoolDetailPage = ({ user }) => {
               variant={activeTab === tab ? "default" : "ghost"}
               size="sm"
               onClick={() => setActiveTab(tab)}
-              className={activeTab === tab ? "bg-primary" : ""}
+              className={activeTab === tab ? "bg-primary hover:bg-primary/90" : "text-gray-600 hover:text-gray-900"}
             >
               {tab === "brief" && "Brief"}
               {tab === "submissions" && `Mes soumissions (${submissions.length})`}
