@@ -222,7 +222,8 @@ const NewProjectPage = ({ user }) => {
       return;
     }
 
-    if (!stats?.selected_pack) {
+    // Skip pack validation for edit mode
+    if (!isEditMode && !stats?.selected_pack) {
       toast.error("Vous devez d'abord choisir un pack");
       navigate("/billing");
       return;
@@ -230,27 +231,31 @@ const NewProjectPage = ({ user }) => {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/api/projects`, {
-        method: "POST",
+      const url = isEditMode 
+        ? `${API_URL}/api/projects/${projectId}` 
+        : `${API_URL}/api/projects`;
+      
+      const response = await fetch(url, {
+        method: isEditMode ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           ...form,
-          pack_id: stats.selected_pack,
+          pack_id: stats?.selected_pack,
           budget: parseInt(form.budget) || 0,
           target_creators: parseInt(form.target_creators) || 1,
         }),
       });
 
       if (response.ok) {
-        toast.success("Projet créé avec succès !");
-        navigate("/business");
+        toast.success(isEditMode ? "Mission mise à jour !" : "Mission créée avec succès !");
+        navigate("/business/projects");
       } else {
         const error = await response.json();
-        toast.error(error.detail || "Erreur lors de la création");
+        toast.error(error.detail || "Erreur lors de l'opération");
       }
     } catch (error) {
-      toast.error("Erreur lors de la création");
+      toast.error("Erreur lors de l'opération");
     } finally {
       setSubmitting(false);
     }
