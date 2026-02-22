@@ -90,34 +90,45 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         user_id = user["user_id"]
         user_type = user.get("user_type")
         
-        # Build query based on user type
-        if user_type == "creator":
-            query = {"creator_id": user_id}
-        elif user_type == "business":
-            query = {"company_id": user_id}
-        else:
+        # Build query - find all conversations where user is a participant
+        # Support both old schema (creator_id/company_id) and new schema (participants array)
+        if user.get("email") in ["figuierebaptistepro@gmail.com"]:
             # Admin can see all
-            if user.get("email") in ["figuierebaptistepro@gmail.com"]:
-                query = {}
-            else:
-                raise HTTPException(status_code=403, detail="User type not set")
+            query = {}
+        else:
+            query = {
+                "$or": [
+                    {"participants": user_id},
+                    {"creator_id": user_id},
+                    {"company_id": user_id},
+                    {"business_id": user_id}
+                ]
+            }
         
         conversations = await db.conversations.find(
             query, {"_id": 0}
-        ).sort("last_message_at", -1).to_list(100)
+        ).sort("updated_at", -1).to_list(100)
         
         # Enrich with participant info and unread count
         for conv in conversations:
-            # Get other participant info
-            if user_type == "creator":
+            # Get other participant info from participants array
+            participants = conv.get("participants", [])
+            other_user_id = None
+            for p_id in participants:
+                if p_id != user_id:
+                    other_user_id = p_id
+                    break
+            
+            # Fallback to old schema
+            if not other_user_id:
+                if user_type == "creator":
+                    other_user_id = conv.get("company_id") or conv.get("business_id")
+                else:
+                    other_user_id = conv.get("creator_id")
+            
+            if other_user_id:
                 other_user = await db.users.find_one(
-                    {"user_id": conv["company_id"]}, 
-                    {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-                )
-                conv["other_participant"] = other_user
-            else:
-                other_user = await db.users.find_one(
-                    {"user_id": conv["creator_id"]}, 
+                    {"user_id": other_user_id}, 
                     {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
                 )
                 conv["other_participant"] = other_user
@@ -125,8 +136,12 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
             # Get last message preview
             last_msg = await db.messages.find_one(
                 {"conversation_id": conv["conversation_id"]},
-                {"_id": 0, "text": 1, "content_type": 1, "created_at": 1, "sender_id": 1}
+                {"_id": 0, "text": 1, "content": 1, "content_type": 1, "created_at": 1, "sender_id": 1},
+                sort=[("created_at", -1)]
             )
+            if last_msg:
+                # Normalize text field
+                last_msg["text"] = last_msg.get("text") or last_msg.get("content", "")
             conv["last_message"] = last_msg
             
             # Get unread count
