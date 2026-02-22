@@ -120,7 +120,7 @@ class ApplicationStatus(str, Enum):
     REJECTED = "rejected"
 
 class SubmitContentRequest(BaseModel):
-    pool_id: str
+    pool_id: Optional[str] = None
     platform: Platform
     content_url: str
     description: Optional[str] = None
