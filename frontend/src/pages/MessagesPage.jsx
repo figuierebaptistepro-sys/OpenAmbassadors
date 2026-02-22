@@ -324,6 +324,38 @@ export const ConversationPage = ({ user }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Polling for messages (fallback when WebSocket not connected)
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const pollMessages = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/messaging/conversations/${conversationId}/messages`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(prev => {
+            // Only update if there are new messages
+            if (data.length !== prev.length || 
+                (data.length > 0 && prev.length > 0 && 
+                 data[data.length - 1].message_id !== prev[prev.length - 1].message_id)) {
+              return data;
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    };
+
+    // Poll every 3 seconds
+    const pollInterval = setInterval(pollMessages, 3000);
+    
+    return () => clearInterval(pollInterval);
+  }, [conversationId]);
+
   // WebSocket for real-time messages
   const handleWsMessage = useCallback((data) => {
     if (data.type === "message:new" && data.conversation_id === conversationId) {
