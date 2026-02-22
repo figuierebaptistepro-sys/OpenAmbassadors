@@ -132,6 +132,14 @@ const CreatorProfileV2 = ({ currentUser }) => {
   };
 
   const toggleFavorite = async () => {
+    if (!currentUser) {
+      toast.error("Vous devez être connecté");
+      return;
+    }
+    if (currentUser.user_type !== "business") {
+      toast.error("Seules les entreprises peuvent ajouter des favoris");
+      return;
+    }
     try {
       if (isFavorite) {
         const response = await fetch(`${API_URL}/api/favorites/${userId}`, {
@@ -141,6 +149,9 @@ const CreatorProfileV2 = ({ currentUser }) => {
         if (response.ok) {
           setIsFavorite(false);
           toast.success("Retiré des favoris");
+        } else {
+          const error = await response.json();
+          toast.error(error.detail || "Erreur lors de la suppression");
         }
       } else {
         const response = await fetch(`${API_URL}/api/favorites/${userId}`, {
@@ -150,10 +161,14 @@ const CreatorProfileV2 = ({ currentUser }) => {
         if (response.ok) {
           setIsFavorite(true);
           toast.success("Ajouté aux favoris !");
+        } else {
+          const error = await response.json();
+          toast.error(error.detail || "Erreur lors de l'ajout");
         }
       }
     } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
+      console.error("Favorite error:", error);
+      toast.error("Erreur de connexion");
     }
   };
 
