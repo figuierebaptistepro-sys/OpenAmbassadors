@@ -4649,11 +4649,11 @@ app.include_router(api_router)
 # Add Security Headers Middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS Configuration - More restrictive
+# CORS Configuration - Include production domains
 cors_origins = os.environ.get('CORS_ORIGINS', '')
 if not cors_origins:
-    logging.warning("CORS_ORIGINS not set - using restrictive default")
-    cors_origins = "https://influence-pool-bugs.preview.emergentagent.com"
+    logging.warning("CORS_ORIGINS not set - using default with production domains")
+    cors_origins = "https://influence-pool-bugs.preview.emergentagent.com,https://app.openambassadors.com,https://openambassadors.com,https://www.openambassadors.com"
 
 app.add_middleware(
     CORSMiddleware,
