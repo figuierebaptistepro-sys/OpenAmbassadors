@@ -2,13 +2,24 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Euro, Zap, ChevronRight, ChevronLeft,
-  TrendingUp, Target, Building2, Globe, Hash,
-  AtSign, Link2, AlertCircle, Instagram, Youtube, Info
+  Zap,
+  ChevronRight,
+  ChevronLeft,
+  TrendingUp,
+  Target,
+  Instagram,
+  Youtube,
+  Info,
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -25,12 +36,12 @@ import {
 import { toast } from "sonner";
 import { apiPost } from "../lib/api";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
 // TikTok icon component
 const TikTokIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
 
@@ -41,7 +52,7 @@ const PACKAGES = [
     power: "Petit pool",
     description: "Idéal pour démarrer",
     color: "from-blue-500 to-cyan-500",
-    icon: "🚀"
+    icon: "🚀",
   },
   {
     value: 15000,
@@ -50,7 +61,7 @@ const PACKAGES = [
     description: "Visibilité significative",
     color: "from-purple-500 to-pink-500",
     popular: true,
-    icon: "⚡"
+    icon: "⚡",
   },
   {
     value: 25000,
@@ -58,14 +69,29 @@ const PACKAGES = [
     power: "Grand pool",
     description: "Impact maximal",
     color: "from-orange-500 to-red-500",
-    icon: "🔥"
-  }
+    icon: "🔥",
+  },
 ];
 
 const PLATFORMS = [
-  { value: "TIKTOK", name: "TikTok", icon: <TikTokIcon className="w-5 h-5" />, cpmSuggestion: 2.50 },
-  { value: "INSTAGRAM_REELS", name: "Instagram Reels", icon: <Instagram className="w-5 h-5" />, cpmSuggestion: 3.00 },
-  { value: "YOUTUBE_SHORTS", name: "YouTube Shorts", icon: <Youtube className="w-5 h-5" />, cpmSuggestion: 2.80 }
+  {
+    value: "TIKTOK",
+    name: "TikTok",
+    icon: <TikTokIcon className="w-5 h-5" />,
+    cpmSuggestion: 2.5,
+  },
+  {
+    value: "INSTAGRAM_REELS",
+    name: "Instagram Reels",
+    icon: <Instagram className="w-5 h-5" />,
+    cpmSuggestion: 3.0,
+  },
+  {
+    value: "YOUTUBE_SHORTS",
+    name: "YouTube Shorts",
+    icon: <Youtube className="w-5 h-5" />,
+    cpmSuggestion: 2.8,
+  },
 ];
 
 const MAX_PAYOUT_SUGGESTIONS = [50, 100, 150, 200, 250, 300, 400, 500];
@@ -89,15 +115,15 @@ const CreatePoolPage = ({ user }) => {
     country: "FR",
     language: "fr",
     duration_days: 30,
-    
+
     // Step 3: Brand Info
     brand: {
       name: user?.company_name || "",
       industry: "",
       website: "",
-      social_handles: []
+      social_handles: [],
     },
-    
+
     // Step 4: Brief
     brief: {
       offer_description: "",
@@ -109,28 +135,27 @@ const CreatePoolPage = ({ user }) => {
       content_format: "",
       examples_links: [],
       brand_guidelines: [],
-      things_to_avoid: []
-    }
+      things_to_avoid: [],
+    },
   });
 
   // Temp inputs for array fields
   const [tempHashtag, setTempHashtag] = useState("");
   const [tempMention, setTempMention] = useState("");
-  const [tempExample, setTempExample] = useState("");
   const [tempAvoid, setTempAvoid] = useState("");
   const [tempHandle, setTempHandle] = useState("");
 
   const updateBrand = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      brand: { ...prev.brand, [field]: value }
+      brand: { ...prev.brand, [field]: value },
     }));
   };
 
   const updateBrief = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      brief: { ...prev.brief, [field]: value }
+      brief: { ...prev.brief, [field]: value },
     }));
   };
 
@@ -141,15 +166,18 @@ const CreatePoolPage = ({ user }) => {
   };
 
   const removeFromArray = (field, index) => {
-    updateBrief(field, formData.brief[field].filter((_, i) => i !== index));
+    updateBrief(
+      field,
+      formData.brief[field].filter((_, i) => i !== index)
+    );
   };
 
   const togglePlatform = (platform) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       platforms: prev.platforms.includes(platform)
-        ? prev.platforms.filter(p => p !== platform)
-        : [...prev.platforms, platform]
+        ? prev.platforms.filter((p) => p !== platform)
+        : [...prev.platforms, platform],
     }));
   };
 
@@ -158,14 +186,19 @@ const CreatePoolPage = ({ user }) => {
       case 1:
         if (!formData.package) return false;
         if (formData.mode === "CPM" && !formData.cpm_rate) return false;
-        if (formData.has_max_payout && !formData.max_payout_per_creator) return false;
+        if (formData.has_max_payout && !formData.max_payout_per_creator)
+          return false;
         return true;
       case 2:
         return formData.platforms.length > 0 && formData.duration_days >= 7;
       case 3:
         return formData.brand.name && formData.brand.industry;
       case 4:
-        return formData.brief.offer_description && formData.brief.key_message && formData.brief.cta;
+        return (
+          formData.brief.offer_description &&
+          formData.brief.key_message &&
+          formData.brief.cta
+        );
       default:
         return false;
     }
@@ -173,38 +206,52 @@ const CreatePoolPage = ({ user }) => {
 
   const handleSubmit = async () => {
     setLoading(true);
+
     try {
       const payload = {
         ...formData,
-        cpm_rate: formData.mode === "CPM" ? parseFloat(formData.cpm_rate) : null,
-        max_payout_per_creator: formData.has_max_payout ? parseFloat(formData.max_payout_per_creator) : null
+        cpm_rate:
+          formData.mode === "CPM" ? parseFloat(formData.cpm_rate) : null,
+        max_payout_per_creator: formData.has_max_payout
+          ? parseFloat(formData.max_payout_per_creator)
+          : null,
       };
 
-      // Use the safe API helper to avoid body stream issues
-      const result = await apiPost("/api/stripe/pool-checkout", {
+      // ✅ Safe API helper (single body read) + absolute URL to avoid proxy issues
+      const result = await apiPost(`${API_URL}/api/stripe/pool-checkout`, {
         pool_data: payload,
-        origin_url: window.location.origin
+        origin_url: window.location.origin,
       });
 
-      if (result.isHtml) {
-        toast.error("Erreur: HTML reçu au lieu de JSON (proxy /api mal configuré)");
+      // Auth handling
+      if (result?.status === 401) {
+        toast.error("Session expirée");
         return;
       }
 
-      if (result.ok && result.data.checkout_url) {
-        window.location.href = result.data.checkout_url;
-      } else {
-        toast.error(result.data?.detail || "Erreur lors de la création");
+      // If proxy misroutes and returns HTML
+      if (result?.isHtml) {
+        toast.error(
+          "Erreur: HTML reçu au lieu de JSON (proxy /api mal configuré)"
+        );
+        return;
       }
+
+      if (result?.ok && result?.data?.checkout_url) {
+        window.location.href = result.data.checkout_url;
+        return;
+      }
+
+      toast.error(result?.data?.detail || "Erreur lors de la création");
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error.message || "Erreur de connexion");
+      toast.error(error?.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedPackage = PACKAGES.find(p => p.value === formData.package);
+  const selectedPackage = PACKAGES.find((p) => p.value === formData.package);
 
   return (
     <AppLayout user={user}>
@@ -212,8 +259,8 @@ const CreatePoolPage = ({ user }) => {
       <div className="bg-white border-b sticky top-14 lg:top-0 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <button 
-              onClick={() => step > 1 ? setStep(step - 1) : navigate("/business")}
+            <button
+              onClick={() => (step > 1 ? setStep(step - 1) : navigate("/business"))}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -221,9 +268,9 @@ const CreatePoolPage = ({ user }) => {
             </button>
             <span className="text-sm text-gray-500">Étape {step}/4</span>
           </div>
-          
+
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${(step / 4) * 100}%` }}
             />
@@ -251,11 +298,11 @@ const CreatePoolPage = ({ user }) => {
             {/* Package Selection */}
             <div className="grid md:grid-cols-3 gap-4">
               {PACKAGES.map((pkg) => (
-                <Card 
+                <Card
                   key={pkg.value}
                   className={`cursor-pointer transition-all hover:shadow-lg ${
-                    formData.package === pkg.value 
-                      ? "ring-2 ring-primary shadow-lg" 
+                    formData.package === pkg.value
+                      ? "ring-2 ring-primary shadow-lg"
                       : ""
                   } ${pkg.popular ? "relative" : ""}`}
                   onClick={() => setFormData({ ...formData, package: pkg.value })}
@@ -266,10 +313,14 @@ const CreatePoolPage = ({ user }) => {
                     </div>
                   )}
                   <CardContent className="p-6 text-center">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mx-auto mb-4`}>
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mx-auto mb-4`}
+                    >
                       <span className="text-2xl">{pkg.icon}</span>
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 mb-1">{pkg.budget}</div>
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
+                      {pkg.budget}
+                    </div>
                     <div className="text-primary font-semibold mb-1">{pkg.power}</div>
                     <div className="text-sm text-gray-500">{pkg.description}</div>
                   </CardContent>
@@ -284,10 +335,10 @@ const CreatePoolPage = ({ user }) => {
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div 
+                  <div
                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.mode === "CPM" 
-                        ? "border-primary bg-primary/5" 
+                      formData.mode === "CPM"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setFormData({ ...formData, mode: "CPM" })}
@@ -300,10 +351,11 @@ const CreatePoolPage = ({ user }) => {
                       Vous définissez le prix pour 1000 vues
                     </p>
                   </div>
-                  <div 
+
+                  <div
                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.mode === "POOL" 
-                        ? "border-primary bg-primary/5" 
+                      formData.mode === "POOL"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setFormData({ ...formData, mode: "POOL" })}
@@ -321,7 +373,9 @@ const CreatePoolPage = ({ user }) => {
                 {/* CPM Rate Input */}
                 {formData.mode === "CPM" && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                    <Label className="mb-2 block">Votre CPM (€ pour 1000 vues) *</Label>
+                    <Label className="mb-2 block">
+                      Votre CPM (€ pour 1000 vues) *
+                    </Label>
                     <div className="flex gap-2 items-center">
                       <Input
                         type="number"
@@ -329,14 +383,18 @@ const CreatePoolPage = ({ user }) => {
                         min="0.5"
                         placeholder="Ex: 2.50"
                         value={formData.cpm_rate}
-                        onChange={(e) => setFormData({ ...formData, cpm_rate: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cpm_rate: e.target.value })
+                        }
                         className="w-32"
                       />
                       <span className="text-gray-500">€</span>
                     </div>
                     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                       <Info className="w-4 h-4" />
-                      <span>Suggestion : TikTok ~2.50€, Instagram ~3€, YouTube ~2.80€</span>
+                      <span>
+                        Suggestion : TikTok ~2.50€, Instagram ~3€, YouTube ~2.80€
+                      </span>
                     </div>
                   </div>
                 )}
@@ -348,12 +406,18 @@ const CreatePoolPage = ({ user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-base font-semibold">Plafond par créateur</Label>
-                    <p className="text-sm text-gray-500">Limiter le gain maximum par créateur</p>
+                    <Label className="text-base font-semibold">
+                      Plafond par créateur
+                    </Label>
+                    <p className="text-sm text-gray-500">
+                      Limiter le gain maximum par créateur
+                    </p>
                   </div>
                   <Switch
                     checked={formData.has_max_payout}
-                    onCheckedChange={(checked) => setFormData({ ...formData, has_max_payout: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, has_max_payout: checked })
+                    }
                   />
                 </div>
 
@@ -366,7 +430,12 @@ const CreatePoolPage = ({ user }) => {
                         min="10"
                         placeholder="Ex: 100"
                         value={formData.max_payout_per_creator}
-                        onChange={(e) => setFormData({ ...formData, max_payout_per_creator: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            max_payout_per_creator: e.target.value,
+                          })
+                        }
                         className="w-32"
                       />
                       <span className="text-gray-500">€</span>
@@ -374,11 +443,16 @@ const CreatePoolPage = ({ user }) => {
                     <div className="flex flex-wrap gap-2">
                       <span className="text-sm text-gray-500">Suggestions :</span>
                       {MAX_PAYOUT_SUGGESTIONS.map((amount) => (
-                        <Badge 
+                        <Badge
                           key={amount}
                           variant="outline"
                           className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
-                          onClick={() => setFormData({ ...formData, max_payout_per_creator: amount.toString() })}
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              max_payout_per_creator: amount.toString(),
+                            })
+                          }
                         >
                           {amount}€
                         </Badge>
@@ -441,7 +515,7 @@ const CreatePoolPage = ({ user }) => {
               <CardContent>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {PLATFORMS.map((platform) => (
-                    <div 
+                    <div
                       key={platform.value}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
                         formData.platforms.includes(platform.value)
@@ -468,7 +542,9 @@ const CreatePoolPage = ({ user }) => {
                   <Label>Nombre de jours *</Label>
                   <Select
                     value={formData.duration_days.toString()}
-                    onValueChange={(value) => setFormData({ ...formData, duration_days: parseInt(value) })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, duration_days: parseInt(value, 10) })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -489,7 +565,9 @@ const CreatePoolPage = ({ user }) => {
                     <Label>Pays cible</Label>
                     <Select
                       value={formData.country}
-                      onValueChange={(value) => setFormData({ ...formData, country: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, country: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -502,11 +580,14 @@ const CreatePoolPage = ({ user }) => {
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="space-y-2">
                     <Label>Langue</Label>
                     <Select
                       value={formData.language}
-                      onValueChange={(value) => setFormData({ ...formData, language: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, language: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -594,18 +675,24 @@ const CreatePoolPage = ({ user }) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
                           if (tempHandle.trim()) {
-                            updateBrand("social_handles", [...formData.brand.social_handles, tempHandle.trim()]);
+                            updateBrand("social_handles", [
+                              ...formData.brand.social_handles,
+                              tempHandle.trim(),
+                            ]);
                             setTempHandle("");
                           }
                         }
                       }}
                     />
-                    <Button 
+                    <Button
                       type="button"
                       variant="outline"
                       onClick={() => {
                         if (tempHandle.trim()) {
-                          updateBrand("social_handles", [...formData.brand.social_handles, tempHandle.trim()]);
+                          updateBrand("social_handles", [
+                            ...formData.brand.social_handles,
+                            tempHandle.trim(),
+                          ]);
                           setTempHandle("");
                         }
                       }}
@@ -613,14 +700,20 @@ const CreatePoolPage = ({ user }) => {
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brand.social_handles.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brand.social_handles.map((handle, i) => (
-                        <Badge 
-                          key={i} 
+                        <Badge
+                          key={`${handle}-${i}`}
                           variant="secondary"
                           className="cursor-pointer"
-                          onClick={() => updateBrand("social_handles", formData.brand.social_handles.filter((_, j) => j !== i))}
+                          onClick={() =>
+                            updateBrand(
+                              "social_handles",
+                              formData.brand.social_handles.filter((_, j) => j !== i)
+                            )
+                          }
                         >
                           {handle} ×
                         </Badge>
@@ -705,16 +798,33 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="#votrehashtag"
                       value={tempHashtag}
                       onChange={(e) => setTempHashtag(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("mandatory_hashtags", tempHashtag, setTempHashtag))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("mandatory_hashtags", tempHashtag, setTempHashtag);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("mandatory_hashtags", tempHashtag, setTempHashtag)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        addToArray("mandatory_hashtags", tempHashtag, setTempHashtag)
+                      }
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.mandatory_hashtags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.mandatory_hashtags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeFromArray("mandatory_hashtags", i)}>
+                        <Badge
+                          key={`${tag}-${i}`}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("mandatory_hashtags", i)}
+                        >
                           {tag} ×
                         </Badge>
                       ))}
@@ -729,16 +839,33 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="@votrecompte"
                       value={tempMention}
                       onChange={(e) => setTempMention(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("mandatory_mentions", tempMention, setTempMention))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("mandatory_mentions", tempMention, setTempMention);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("mandatory_mentions", tempMention, setTempMention)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        addToArray("mandatory_mentions", tempMention, setTempMention)
+                      }
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.mandatory_mentions.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.mandatory_mentions.map((mention, i) => (
-                        <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeFromArray("mandatory_mentions", i)}>
+                        <Badge
+                          key={`${mention}-${i}`}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("mandatory_mentions", i)}
+                        >
                           {mention} ×
                         </Badge>
                       ))}
@@ -753,16 +880,31 @@ const CreatePoolPage = ({ user }) => {
                       placeholder="Ce que les créateurs ne doivent pas faire"
                       value={tempAvoid}
                       onChange={(e) => setTempAvoid(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addToArray("things_to_avoid", tempAvoid, setTempAvoid))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addToArray("things_to_avoid", tempAvoid, setTempAvoid);
+                        }
+                      }}
                     />
-                    <Button type="button" variant="outline" onClick={() => addToArray("things_to_avoid", tempAvoid, setTempAvoid)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addToArray("things_to_avoid", tempAvoid, setTempAvoid)}
+                    >
                       Ajouter
                     </Button>
                   </div>
+
                   {formData.brief.things_to_avoid.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.brief.things_to_avoid.map((item, i) => (
-                        <Badge key={i} variant="destructive" className="cursor-pointer" onClick={() => removeFromArray("things_to_avoid", i)}>
+                        <Badge
+                          key={`${item}-${i}`}
+                          variant="destructive"
+                          className="cursor-pointer"
+                          onClick={() => removeFromArray("things_to_avoid", i)}
+                        >
                           {item} ×
                         </Badge>
                       ))}
@@ -782,12 +924,16 @@ const CreatePoolPage = ({ user }) => {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Budget</p>
-                      <p className="font-semibold">{selectedPackage.budget} - {selectedPackage.power}</p>
+                      <p className="font-semibold">
+                        {selectedPackage.budget} - {selectedPackage.power}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Mode</p>
                       <p className="font-semibold">
-                        {formData.mode === "CPM" ? `CPM ${formData.cpm_rate}€` : "Pool (répartition par vues)"}
+                        {formData.mode === "CPM"
+                          ? `CPM ${formData.cpm_rate}€`
+                          : "Pool (répartition par vues)"}
                       </p>
                     </div>
                     <div>
@@ -797,7 +943,9 @@ const CreatePoolPage = ({ user }) => {
                     <div>
                       <p className="text-sm text-gray-500">Plafond créateur</p>
                       <p className="font-semibold">
-                        {formData.has_max_payout ? `${formData.max_payout_per_creator}€ max` : "Aucun"}
+                        {formData.has_max_payout
+                          ? `${formData.max_payout_per_creator}€ max`
+                          : "Aucun"}
                       </p>
                     </div>
                   </div>
@@ -815,9 +963,10 @@ const CreatePoolPage = ({ user }) => {
               Précédent
             </Button>
           )}
+
           <div className="ml-auto">
             {step < 4 ? (
-              <Button 
+              <Button
                 onClick={() => setStep(step + 1)}
                 disabled={!canProceed()}
                 className="bg-primary hover:bg-primary-hover"
@@ -826,7 +975,7 @@ const CreatePoolPage = ({ user }) => {
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={!canProceed() || loading}
                 className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
