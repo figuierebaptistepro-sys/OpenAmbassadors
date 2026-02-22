@@ -314,95 +314,145 @@ const PoolDetailPage = ({ user }) => {
 
   return (
     <AppLayout user={user}>
-      {/* Header - White/Pink Design */}
-      <div className="bg-white border-b">
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
-          {/* Back button */}
-          <button 
-            onClick={() => navigate("/pool")}
-            className="flex items-center gap-2 text-gray-500 hover:text-primary mb-4 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Retour aux Pools
-          </button>
+      {/* Banner Image */}
+      <div className="relative h-40 sm:h-52 bg-gradient-to-r from-gray-100 to-gray-200 overflow-hidden">
+        {pool.brief?.banner_url ? (
+          <img 
+            src={pool.brief.banner_url} 
+            alt={pool.brand?.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-pink-100 to-primary/10" />
+        )}
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        
+        {/* Back button */}
+        <button 
+          onClick={() => navigate("/pool")}
+          className="absolute top-4 left-4 flex items-center gap-2 text-white/90 hover:text-white bg-black/20 hover:bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm transition-all"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span className="text-sm">Retour aux Pools</span>
+        </button>
+      </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Badge className={
-                  pool.status === "active" 
-                    ? "bg-green-100 text-green-700 border border-green-200" 
-                    : "bg-gray-100 text-gray-600 border border-gray-200"
-                }>
-                  {pool.status === "active" ? "Actif" : "Terminé"}
-                </Badge>
-                {pool.requires_approval && (
-                  <Badge className="bg-primary/10 text-primary border border-primary/20">
-                    Candidature requise
-                  </Badge>
-                )}
-                <span className="text-gray-500 text-sm">{pool.brand?.industry}</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{pool.brand?.name}</h1>
-              <p className="text-gray-500 mt-1">{pool.brief?.key_message}</p>
-            </div>
-
-            {/* CTA */}
-            <div className="flex gap-3">
-              {renderCTA()}
-            </div>
-          </div>
-
-          {/* Stats bar - Pink/Rose themed */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
-              <Euro className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold text-gray-900">{pool.budget_remaining}€</div>
-              <div className="text-xs text-gray-500">Budget restant</div>
-            </div>
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
-              <Users className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold text-gray-900">{pool.total_participants}</div>
-              <div className="text-xs text-gray-500">Participants</div>
-            </div>
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
-              <Clock className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold text-gray-900">{getTimeRemaining(pool.end_date)}j</div>
-              <div className="text-xs text-gray-500">Restants</div>
-            </div>
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
-              <Award className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold text-gray-900">{pool.max_payout_per_creator}€</div>
-              <div className="text-xs text-gray-500">Gain max</div>
-            </div>
-          </div>
-
-          {/* My stats if joined - Pink themed */}
-          {hasJoined && (
-            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-pink-100 rounded-xl border border-primary/20">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-primary">Tu participes à ce pool</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{participation?.total_submissions || 0}</div>
-                  <div className="text-xs text-gray-500">Mes publications</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{participation?.total_views || 0}</div>
-                  <div className="text-xs text-gray-500">Mes vues</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {(participation?.estimated_earnings || 0).toFixed(2)}€
+      {/* Brand Card - Floating over banner */}
+      <div className="px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
+        <Card className="bg-white shadow-lg border-0 overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              {/* Brand Logo */}
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border-2 border-gray-100 shadow-sm overflow-hidden flex-shrink-0 flex items-center justify-center p-2">
+                {pool.brand?.logo_url ? (
+                  <img 
+                    src={pool.brand.logo_url} 
+                    alt={pool.brand?.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center">
+                    <span className="text-3xl font-bold text-primary">{pool.brand?.name?.charAt(0) || "?"}</span>
                   </div>
-                  <div className="text-xs text-gray-500">Gains estimés</div>
+                )}
+              </div>
+
+              {/* Brand Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge className={
+                    pool.status === "active" 
+                      ? "bg-green-100 text-green-700" 
+                      : "bg-gray-100 text-gray-600"
+                  }>
+                    {pool.status === "active" ? "Actif" : "Terminé"}
+                  </Badge>
+                  {pool.requires_approval && (
+                    <Badge className="bg-amber-100 text-amber-700">
+                      Sur candidature
+                    </Badge>
+                  )}
+                  <span className="text-gray-400 text-sm">{pool.brand?.industry}</span>
                 </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{pool.brand?.name}</h1>
+                <p className="text-gray-500 text-sm sm:text-base line-clamp-2">{pool.brief?.key_message}</p>
+              </div>
+
+              {/* CTA Button */}
+              <div className="sm:ml-auto flex-shrink-0">
+                {renderCTA()}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-100">
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+                  <Euro className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900">{pool.budget_remaining}€</div>
+                <div className="text-xs text-gray-500">Budget restant</div>
+              </div>
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900">{pool.total_participants}</div>
+                <div className="text-xs text-gray-500">Participants</div>
+              </div>
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900">{getTimeRemaining(pool.end_date)}j</div>
+                <div className="text-xs text-gray-500">Restants</div>
+              </div>
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                  <Award className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900">{pool.max_payout_per_creator}€</div>
+                <div className="text-xs text-gray-500">Gain max</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* My Participation Card - Only if joined */}
+        {hasJoined && (
+          <Card className="mt-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-green-800">Tu participes à ce pool</p>
+                    <p className="text-sm text-green-600">Continue de publier pour maximiser tes gains</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{participation?.total_submissions || 0}</div>
+                    <div className="text-xs text-gray-500">Publications</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{participation?.total_views || 0}</div>
+                    <div className="text-xs text-gray-500">Vues</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {(participation?.estimated_earnings || 0).toFixed(2)}€
+                    </div>
+                    <div className="text-xs text-gray-500">Gains</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Tabs */}
