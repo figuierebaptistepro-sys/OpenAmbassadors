@@ -215,7 +215,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </div>
                     
                     <div style="text-align: center; margin: 25px 0;">
-                        <a href="https://pool-payment-flow.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                        <a href="https://creator-conversion.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
                             Se connecter maintenant →
                         </a>
                     </div>
@@ -247,7 +247,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://pool-payment-flow.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <a href="https://creator-conversion.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                         Accéder à mon compte
                     </a>
                 </div>
@@ -280,7 +280,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://pool-payment-flow.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-conversion.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -335,7 +335,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://pool-payment-flow.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-conversion.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -384,7 +384,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://pool-payment-flow.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://creator-conversion.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
@@ -869,7 +869,7 @@ class ResetPasswordRequest(BaseModel):
 
 async def send_password_reset_email(email: str, name: str, reset_token: str):
     """Send password reset email"""
-    reset_url = f"https://pool-payment-flow.preview.emergentagent.com/reset-password?token={reset_token}"
+    reset_url = f"https://creator-conversion.preview.emergentagent.com/reset-password?token={reset_token}"
     await send_email(
         to=email,
         subject="🔐 Réinitialisation de votre mot de passe",
@@ -1004,7 +1004,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
                 Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://pool-payment-flow.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="https://creator-conversion.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
                     Se connecter
                 </a>
             </div>
@@ -1952,6 +1952,9 @@ async def get_creator(user_id: str):
         profile["picture"] = user.get("picture")
         profile["banner"] = user.get("banner")
         profile["is_premium"] = user.get("is_premium", False)
+        # Add portfolio photos from user collection
+        if user.get("portfolio_photos"):
+            profile["portfolio_photos"] = user.get("portfolio_photos")
     
     # Get reviews
     reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).to_list(50)
@@ -2251,6 +2254,80 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
     
     await db.collaboration_requests.insert_one(collab_request.model_dump())
     
+    # Create or get conversation with creator
+    conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
+    existing_conv = await db.conversations.find_one({
+        "$or": [
+            {"participants": [user["user_id"], data.creator_id]},
+            {"participants": [data.creator_id, user["user_id"]]}
+        ]
+    })
+    
+    if existing_conv:
+        conversation_id = existing_conv["conversation_id"]
+    else:
+        # Create new conversation
+        new_conv = {
+            "conversation_id": conversation_id,
+            "participants": [user["user_id"], data.creator_id],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_message": None
+        }
+        await db.conversations.insert_one(new_conv)
+    
+    # Format collaboration message
+    objective_labels = {
+        "notoriete": "Notoriété",
+        "ads": "Ads", 
+        "ugc": "UGC",
+        "micro-trottoir": "Micro-trottoir",
+        "autre": "Autre"
+    }
+    objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
+    
+    collab_message = f"""📋 **Nouvelle demande de collaboration**
+
+💰 **Budget**: {data.budget_range or 'Non spécifié'}
+🎯 **Objectif**: {objective_label}
+📅 **Deadline**: {data.deadline or 'Flexible'}
+📢 **Diffusion**: {data.deliverables or 'Non spécifié'}
+
+📝 **Brief**:
+{data.brief}
+
+{f'📦 Infos supplémentaires: {data.additional_info}' if data.additional_info else ''}
+
+---
+*Vous pouvez accepter, refuser ou négocier cette demande.*"""
+    
+    # Create message in conversation
+    message_id = f"msg_{uuid.uuid4().hex[:12]}"
+    message = {
+        "message_id": message_id,
+        "conversation_id": conversation_id,
+        "sender_id": user["user_id"],
+        "content": collab_message,
+        "message_type": "collaboration_request",
+        "collaboration_request_id": collab_request.request_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read": False
+    }
+    await db.messages.insert_one(message)
+    
+    # Update conversation last message
+    await db.conversations.update_one(
+        {"conversation_id": conversation_id},
+        {"$set": {
+            "last_message": {
+                "content": "📋 Nouvelle demande de collaboration",
+                "sender_id": user["user_id"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            },
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
     # Create notification for creator
     await create_notification(
         user_id=data.creator_id,
@@ -2258,11 +2335,11 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         title="Nouvelle demande de collaboration",
         message=f"{business_name} souhaite collaborer avec vous !",
         icon="💼",
-        link="/creator/requests",
-        data={"request_id": collab_request.request_id, "business_name": business_name}
+        link=f"/messages?conversation={conversation_id}",
+        data={"request_id": collab_request.request_id, "business_name": business_name, "conversation_id": conversation_id}
     )
     
-    return {"message": "Demande envoyée", "request_id": collab_request.request_id}
+    return {"message": "Demande envoyée", "request_id": collab_request.request_id, "conversation_id": conversation_id}
 
 @api_router.get("/collaboration-requests/creator")
 async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):
@@ -4376,6 +4453,34 @@ async def list_active_pools(limit: int = 50):
     pools = await influence_pools.get_active_pools(db, limit)
     return pools
 
+# IMPORTANT: These /pools/my/* routes MUST come BEFORE /pools/{pool_id} to avoid "my" being treated as pool_id
+@api_router.get("/pools/my/applications")
+async def get_my_pool_applications(user: dict = Depends(get_current_user)):
+    """Get all pool applications for the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view applications")
+    
+    applications = await influence_pools.get_creator_applications(db, user["user_id"])
+    return applications
+
+@api_router.get("/pools/my/participations")
+async def get_my_participations(user: dict = Depends(get_current_user)):
+    """Get all pools the creator has joined"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view participations")
+    
+    participations = await influence_pools.get_creator_participations(db, user["user_id"])
+    return participations
+
+@api_router.get("/pools/my/submissions")
+async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get all submissions by the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view submissions")
+    
+    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
+    return submissions
+
 @api_router.get("/pools/{pool_id}")
 async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
     """Get pool details"""
@@ -4383,13 +4488,19 @@ async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     
-    # Get participation status for creators
+    # Get participation and application status for creators
     participation = None
+    application = None
     if user.get("user_type") == "creator":
         participation = await db.pool_participations.find_one(
             {"pool_id": pool_id, "creator_id": user["user_id"]},
             {"_id": 0}
         )
+        if not participation:
+            application = await db.pool_applications.find_one(
+                {"pool_id": pool_id, "creator_id": user["user_id"]},
+                {"_id": 0}
+            )
     
     # Return UI-formatted data based on user type
     if user.get("user_type") == "business":
@@ -4401,8 +4512,46 @@ async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
         return {
             **pool,
             "ui_arena": influence_pools.get_ui_creator_arena(pool, participation),
-            "participation": participation
+            "participation": participation,
+            "application": application
         }
+
+@api_router.get("/pools/{pool_id}/applications")
+async def get_pool_applications(pool_id: str, user: dict = Depends(get_current_user)):
+    """Get all applications for a pool (Business owner only)"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    if user.get("user_type") != "business" or pool["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    applications = await influence_pools.get_pool_applications(db, pool_id)
+    return applications
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/approve")
+async def approve_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Approve a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can approve applications")
+    
+    try:
+        result = await influence_pools.approve_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/reject")
+async def reject_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Reject a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can reject applications")
+    
+    try:
+        result = await influence_pools.reject_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.get("/pools/{pool_id}/leaderboard")
 async def get_pool_leaderboard(pool_id: str, limit: int = 20):
@@ -4437,14 +4586,22 @@ async def get_pool_payouts(pool_id: str, user: dict = Depends(get_current_user))
     return payouts
 
 @api_router.post("/pools/{pool_id}/join")
-async def join_pool(pool_id: str, user: dict = Depends(get_current_user)):
-    """Creator joins a pool"""
+async def join_pool(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Creator joins a pool (or applies if requires_approval)"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Only creators can join pools")
     
+    # Get optional message from request body
+    message = None
     try:
-        participation = await influence_pools.join_pool(db, user, pool_id)
-        return participation
+        body = await request.json()
+        message = body.get("message")
+    except:
+        pass
+    
+    try:
+        result = await influence_pools.join_pool(db, user, pool_id, message)
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -4463,30 +4620,46 @@ async def submit_content(pool_id: str, submission: influence_pools.SubmitContent
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@api_router.put("/pools/{pool_id}/status")
+async def update_pool_status(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+
+    is_admin = user.get("email") in ADMIN_EMAILS
+    is_owner = user.get("user_type") == "business" and pool.get("business_id") == user.get("user_id")
+
+    if not is_admin and not is_owner:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    body = await request.json()
+    new_status = body.get("status")
+
+    if new_status not in [s.value for s in influence_pools.PoolStatus]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    await db.influence_pools.update_one(
+        {"pool_id": pool_id},
+        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    return {"pool_id": pool_id, "status": new_status}
+
+
 @api_router.get("/pools/my/participations")
 async def get_my_participations(user: dict = Depends(get_current_user)):
-    """Get all pools the creator has joined"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Only creators can view participations")
-    
-    participations = await influence_pools.get_creator_participations(db, user["user_id"])
-    return participations
+
+    return await influence_pools.get_creator_participations(db, user["user_id"])
+
 
 @api_router.get("/pools/my/submissions")
 async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
-    """Get all submissions by the creator"""
     if user.get("user_type") != "creator":
         raise HTTPException(status_code=403, detail="Only creators can view submissions")
-    
-    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
-    return submissions
 
-    result = await stripe_payments.create_checkout_session(
-        request=request,
-        checkout_request=checkout_request,
-        user_id=current_user.get("user_id"),
-        user_email=current_user.get("email"),
-    )
+    return await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
 
     return RedirectResponse(url=result["url"], status_code=303)
 
@@ -4500,7 +4673,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 cors_origins = os.environ.get('CORS_ORIGINS', '')
 if not cors_origins:
     logging.warning("CORS_ORIGINS not set - using restrictive default")
-    cors_origins = "https://pool-payment-flow.preview.emergentagent.com"
+    cors_origins = "https://creator-conversion.preview.emergentagent.com"
 
 app.add_middleware(
     CORSMiddleware,

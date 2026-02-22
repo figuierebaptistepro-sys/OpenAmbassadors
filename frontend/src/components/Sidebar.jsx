@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2
+  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2, Heart
 } from "lucide-react";
 
 const LOGO_URL = "/logo-sun.png";
@@ -36,6 +36,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Briefcase, label: "Missions", path: "/projects" },
+    { icon: Crown, label: "Pool", path: "/pool", highlight: true },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
@@ -43,7 +44,9 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
+    { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 

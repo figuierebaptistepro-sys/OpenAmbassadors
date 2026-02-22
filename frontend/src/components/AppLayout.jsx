@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2, Trophy, Zap
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2, Trophy, Zap, Heart
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
@@ -59,7 +59,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
-    { icon: Trophy, label: "Pool", path: "/pool", highlight: true },
+    { icon: Crown, label: "Pool", path: "/pool", highlight: true },
     { icon: CreditCard, label: "Creator Card", path: "/dashboard", soon: true },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
@@ -70,8 +70,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
-    { icon: Zap, label: "Créer Pool", path: "/business/pools/new", highlight: true },
+    { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
     { icon: BookOpen, label: "Learn", path: "/learn" },

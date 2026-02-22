@@ -42,7 +42,9 @@ import ArenaPage from "./pages/ArenaPage";
 import PoolDetailPage from "./pages/PoolDetailPage";
 import CreatePoolPage from "./pages/CreatePoolPage";
 import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
+import BusinessPoolsPage from "./pages/BusinessPoolsPage";
 import PoolPaymentSuccessPage from "./pages/PoolPaymentSuccessPage";
+import MyFavoritesPage from "./pages/MyFavoritesPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -340,6 +342,14 @@ function AppRouter({ onUserChange }) {
         }
       />
       <Route
+        path="/business/pools"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessPoolsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/business/pools/new"
         element={
           <ProtectedRoute requireType>
@@ -360,6 +370,14 @@ function AppRouter({ onUserChange }) {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <BusinessPoolDetailPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/favorites"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <MyFavoritesPage user={user} />}
           </ProtectedRoute>
         }
       />

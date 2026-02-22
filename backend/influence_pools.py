@@ -95,6 +95,8 @@ class CreatePoolRequest(BaseModel):
     # Max payout settings
     has_max_payout: bool = False
     max_payout_per_creator: Optional[float] = None
+    # Approval settings
+    requires_approval: bool = False  # If True, creators must be approved before joining
     # Platforms & targeting
     platforms: List[Platform]
     country: str = "FR"
@@ -106,12 +108,26 @@ class CreatePoolRequest(BaseModel):
 
 class JoinPoolRequest(BaseModel):
     pool_id: str
+    message: Optional[str] = None  # Optional message when applying
+
+class ApplyPoolRequest(BaseModel):
+    pool_id: str
+    message: Optional[str] = None  # Motivation message
+
+class ApplicationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 class SubmitContentRequest(BaseModel):
     pool_id: str
     platform: Platform
     content_url: str
     description: Optional[str] = None
+
+class SubmitMultipleContentRequest(BaseModel):
+    pool_id: str
+    submissions: List[dict]  # [{platform, content_url, description}]
 
 class UpdateViewsRequest(BaseModel):
     submission_id: str
@@ -214,6 +230,10 @@ async def create_pool(db, business_user: dict, pool_data: CreatePoolRequest) -> 
         "package_name": package_config["name"],
         "package_power": package_config["power"],
         
+        # Approval settings
+        "requires_approval": pool_data.requires_approval,
+        "total_applications": 0,  # Track pending applications
+        
         # Metadata
         "created_at": now.isoformat(),
         "updated_at": now.isoformat()
@@ -246,8 +266,8 @@ async def get_business_pools(db, business_id: str) -> list:
     ).sort("created_at", -1).to_list(length=100)
     return pools
 
-async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
-    """Creator joins a pool"""
+async def join_pool(db, creator_user: dict, pool_id: str, message: str = None) -> dict:
+    """Creator joins a pool (direct join or apply if requires_approval)"""
     pool = await get_pool_by_id(db, pool_id)
     if not pool:
         raise ValueError("Pool not found")
@@ -255,15 +275,50 @@ async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
     if pool["status"] != PoolStatus.ACTIVE.value:
         raise ValueError("Pool is not active")
     
-    # Check if already joined
-    existing = await db.pool_participations.find_one({
+    # Check if already participated or applied
+    existing_participation = await db.pool_participations.find_one({
         "pool_id": pool_id,
         "creator_id": creator_user["user_id"]
     })
-    if existing:
+    if existing_participation:
         raise ValueError("Already joined this pool")
     
+    existing_application = await db.pool_applications.find_one({
+        "pool_id": pool_id,
+        "creator_id": creator_user["user_id"]
+    })
+    if existing_application:
+        raise ValueError("Already applied to this pool")
+    
     now = datetime.now(timezone.utc)
+    
+    # If pool requires approval, create an application instead
+    if pool.get("requires_approval", False):
+        application = {
+            "application_id": f"app_{uuid.uuid4().hex[:12]}",
+            "pool_id": pool_id,
+            "creator_id": creator_user["user_id"],
+            "creator_name": creator_user.get("name", "Créateur"),
+            "creator_picture": creator_user.get("picture"),
+            "creator_email": creator_user.get("email"),
+            "message": message,
+            "status": ApplicationStatus.PENDING.value,
+            "applied_at": now.isoformat(),
+            "updated_at": now.isoformat()
+        }
+        
+        await db.pool_applications.insert_one(application)
+        
+        # Update pool stats
+        await db.influence_pools.update_one(
+            {"pool_id": pool_id},
+            {"$inc": {"total_applications": 1}}
+        )
+        
+        application.pop("_id", None)
+        return {"type": "application", "data": application}
+    
+    # Direct join (no approval required)
     participation = {
         "participation_id": f"part_{uuid.uuid4().hex[:12]}",
         "pool_id": pool_id,
@@ -288,7 +343,7 @@ async def join_pool(db, creator_user: dict, pool_id: str) -> dict:
     )
     
     participation.pop("_id", None)
-    return participation
+    return {"type": "participation", "data": participation}
 
 async def get_creator_participations(db, creator_id: str) -> list:
     """Get all pools a creator has joined"""
@@ -304,6 +359,138 @@ async def get_creator_participations(db, creator_id: str) -> list:
             p["pool"] = pool
     
     return participations
+
+async def get_creator_applications(db, creator_id: str) -> list:
+    """Get all pool applications for a creator"""
+    applications = await db.pool_applications.find(
+        {"creator_id": creator_id},
+        {"_id": 0}
+    ).sort("applied_at", -1).to_list(length=100)
+    
+    # Enrich with pool data
+    for app in applications:
+        pool = await get_pool_by_id(db, app["pool_id"])
+        if pool:
+            app["pool"] = pool
+    
+    return applications
+
+async def get_pool_applications(db, pool_id: str) -> list:
+    """Get all applications for a pool (for business)"""
+    applications = await db.pool_applications.find(
+        {"pool_id": pool_id},
+        {"_id": 0}
+    ).sort("applied_at", -1).to_list(length=500)
+    return applications
+
+async def approve_application(db, pool_id: str, application_id: str, business_id: str) -> dict:
+    """Business approves a creator's application"""
+    # Verify ownership
+    pool = await get_pool_by_id(db, pool_id)
+    if not pool:
+        raise ValueError("Pool not found")
+    if pool["business_id"] != business_id:
+        raise ValueError("Not authorized")
+    
+    # Find and update application
+    application = await db.pool_applications.find_one({
+        "application_id": application_id,
+        "pool_id": pool_id
+    })
+    if not application:
+        raise ValueError("Application not found")
+    
+    if application["status"] != ApplicationStatus.PENDING.value:
+        raise ValueError("Application already processed")
+    
+    now = datetime.now(timezone.utc)
+    
+    # Update application status
+    await db.pool_applications.update_one(
+        {"application_id": application_id},
+        {"$set": {
+            "status": ApplicationStatus.APPROVED.value,
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    # Create participation
+    participation = {
+        "participation_id": f"part_{uuid.uuid4().hex[:12]}",
+        "pool_id": pool_id,
+        "creator_id": application["creator_id"],
+        "creator_name": application.get("creator_name", "Créateur"),
+        "creator_picture": application.get("creator_picture"),
+        "status": "active",
+        "total_views": 0,
+        "total_submissions": 0,
+        "estimated_earnings": 0,
+        "paid_earnings": 0,
+        "joined_at": now.isoformat(),
+        "updated_at": now.isoformat()
+    }
+    
+    await db.pool_participations.insert_one(participation)
+    
+    # Update pool stats
+    await db.influence_pools.update_one(
+        {"pool_id": pool_id},
+        {"$inc": {"total_participants": 1}}
+    )
+    
+    return {"status": "approved", "participation_id": participation["participation_id"]}
+
+async def reject_application(db, pool_id: str, application_id: str, business_id: str) -> dict:
+    """Business rejects a creator's application"""
+    # Verify ownership
+    pool = await get_pool_by_id(db, pool_id)
+    if not pool:
+        raise ValueError("Pool not found")
+    if pool["business_id"] != business_id:
+        raise ValueError("Not authorized")
+    
+    # Find and update application
+    application = await db.pool_applications.find_one({
+        "application_id": application_id,
+        "pool_id": pool_id
+    })
+    if not application:
+        raise ValueError("Application not found")
+    
+    if application["status"] != ApplicationStatus.PENDING.value:
+        raise ValueError("Application already processed")
+    
+    now = datetime.now(timezone.utc)
+    
+    await db.pool_applications.update_one(
+        {"application_id": application_id},
+        {"$set": {
+            "status": ApplicationStatus.REJECTED.value,
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    return {"status": "rejected"}
+
+async def get_creator_pool_status(db, creator_id: str, pool_id: str) -> dict:
+    """Get creator's status for a specific pool (participation, application, or none)"""
+    participation = await db.pool_participations.find_one({
+        "pool_id": pool_id,
+        "creator_id": creator_id
+    }, {"_id": 0})
+    
+    if participation:
+        return {"status": "participant", "data": participation}
+    
+    application = await db.pool_applications.find_one({
+        "pool_id": pool_id,
+        "creator_id": creator_id
+    }, {"_id": 0})
+    
+    if application:
+        return {"status": "applied", "data": application}
+    
+    return {"status": "none", "data": None}
 
 async def submit_content(db, creator_user: dict, submission_data: SubmitContentRequest) -> dict:
     """Creator submits content for a pool"""

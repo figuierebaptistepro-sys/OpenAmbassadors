@@ -193,6 +193,10 @@ const CreatorProfileV2 = ({ currentUser }) => {
   };
 
   const handleCollaborationRequest = async () => {
+    if (!collabForm.budget_range) {
+      toast.error("Veuillez sélectionner un budget");
+      return;
+    }
     if (!collabForm.brief.trim()) {
       toast.error("Veuillez décrire votre projet");
       return;
@@ -214,16 +218,21 @@ const CreatorProfileV2 = ({ currentUser }) => {
           budget_range: collabForm.budget_range,
           deadline: collabForm.deadline,
           brief: collabForm.brief,
-          deliverables: `Type: ${collabForm.diffusion_type}`,
+          deliverables: collabForm.diffusion_type,
           additional_info: collabForm.product_sent === "yes" 
             ? `Produit envoyé: Oui - Adresse: ${collabForm.shipping_address}` 
-            : "Produit envoyé: Non"
+            : ""
         })
       });
       if (response.ok) {
-        toast.success("Demande envoyée avec succès !");
+        const data = await response.json();
+        toast.success("Demande envoyée ! Redirection vers la conversation...");
         setCollaborationDialogOpen(false);
         setCollabForm({ budget_range: "", objective: "", diffusion_type: "", deadline: "", brief: "", product_sent: "", shipping_address: "" });
+        // Redirect to conversation
+        setTimeout(() => {
+          navigate(`/messages?conversation=${data.conversation_id}`);
+        }, 1000);
       } else {
         const error = await response.json();
         if (error.detail?.includes("Abonnement")) {
@@ -403,6 +412,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
                     size="icon"
                     className={`h-12 w-12 rounded-xl border-2 transition-all ${isFavorite ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 hover:border-red-200 hover:bg-red-50'}`}
                     onClick={toggleFavorite}
+                    data-testid="toggle-favorite-btn"
                   >
                     <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                   </Button>
@@ -412,6 +422,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
                     size="icon" 
                     className="h-12 w-12 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
                     onClick={handleShare}
+                    data-testid="share-profile-btn"
                   >
                     <Share2 className="w-5 h-5" />
                   </Button>
@@ -685,9 +696,9 @@ const CreatorProfileV2 = ({ currentUser }) => {
 
           <div className="px-6 py-5 space-y-5">
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Budget estimé</Label>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Budget estimé *</Label>
               <Select value={collabForm.budget_range} onValueChange={(v) => setCollabForm(p => ({ ...p, budget_range: v }))}>
-                <SelectTrigger className="h-12 rounded-xl border-gray-200"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger className={`h-12 rounded-xl ${!collabForm.budget_range ? 'border-red-200' : 'border-gray-200'}`}><SelectValue placeholder="Sélectionner un budget" /></SelectTrigger>
                 <SelectContent>{BUDGET_RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -749,7 +760,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
 
           <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3">
             <Button variant="outline" onClick={() => setCollaborationDialogOpen(false)} className="flex-1 h-12 rounded-xl">Annuler</Button>
-            <Button onClick={handleCollaborationRequest} disabled={!collabForm.brief.trim() || submitting} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-semibold">
+            <Button onClick={handleCollaborationRequest} disabled={!collabForm.budget_range || !collabForm.brief.trim() || submitting} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-semibold">
               {submitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Envoyer la demande"}
             </Button>
           </div>

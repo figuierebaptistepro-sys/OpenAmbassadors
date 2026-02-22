@@ -66,19 +66,24 @@ const PoolDetailPage = ({ user }) => {
   const navigate = useNavigate();
   const [pool, setPool] = useState(null);
   const [participation, setParticipation] = useState(null);
+  const [application, setApplication] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("brief"); // brief | submissions | leaderboard
 
-  // Form state
+  // Form state for single submission
   const [submitForm, setSubmitForm] = useState({
     platform: "",
     content_url: "",
     description: ""
   });
+  
+  // Apply form state
+  const [applyMessage, setApplyMessage] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -96,6 +101,7 @@ const PoolDetailPage = ({ user }) => {
         const data = await poolRes.json();
         setPool(data);
         setParticipation(data.participation);
+        setApplication(data.application);
       }
       if (submissionsRes.ok) {
         const data = await submissionsRes.json();
@@ -114,6 +120,13 @@ const PoolDetailPage = ({ user }) => {
   };
 
   const handleJoinPool = async () => {
+    // If pool requires approval, open apply dialog
+    if (pool?.requires_approval) {
+      setApplyDialogOpen(true);
+      return;
+    }
+    
+    // Direct join
     try {
       const response = await fetch(`${API_URL}/api/pools/${poolId}/join`, {
         method: "POST",
@@ -121,7 +134,12 @@ const PoolDetailPage = ({ user }) => {
       });
 
       if (response.ok) {
-        toast.success("🎉 Tu as rejoint le pool ! Publie du contenu pour gagner.");
+        const result = await response.json();
+        if (result.type === "application") {
+          toast.success("Candidature envoyée ! En attente de validation.");
+        } else {
+          toast.success("Tu as rejoint le pool ! Publie du contenu pour gagner.");
+        }
         fetchData();
       } else {
         const error = await response.json();
@@ -129,6 +147,32 @@ const PoolDetailPage = ({ user }) => {
       }
     } catch (error) {
       toast.error("Erreur de connexion");
+    }
+  };
+
+  const handleApplyPool = async () => {
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/pools/${poolId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: applyMessage })
+      });
+
+      if (response.ok) {
+        toast.success("Candidature envoyée ! En attente de validation par la marque.");
+        setApplyDialogOpen(false);
+        setApplyMessage("");
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de la candidature");
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -203,7 +247,70 @@ const PoolDetailPage = ({ user }) => {
   }
 
   const hasJoined = !!participation;
+  const hasApplied = !!application;
+  const applicationPending = application?.status === "pending";
+  const applicationRejected = application?.status === "rejected";
   const ui = pool.ui_arena || {};
+  
+  // Determine CTA state
+  const renderCTA = () => {
+    if (pool.status !== "active") return null;
+    
+    if (hasJoined) {
+      return (
+        <Button 
+          size="lg"
+          className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+          onClick={() => setSubmitDialogOpen(true)}
+          data-testid="submit-content-btn"
+        >
+          <Send className="w-5 h-5 mr-2" />
+          Soumettre du contenu
+        </Button>
+      );
+    }
+    
+    if (applicationPending) {
+      return (
+        <Button 
+          size="lg"
+          disabled
+          className="bg-yellow-500/80 cursor-not-allowed"
+          data-testid="application-pending-btn"
+        >
+          <Clock className="w-5 h-5 mr-2 animate-pulse" />
+          Candidature en attente
+        </Button>
+      );
+    }
+    
+    if (applicationRejected) {
+      return (
+        <Button 
+          size="lg"
+          disabled
+          className="bg-red-500/50 cursor-not-allowed"
+          data-testid="application-rejected-btn"
+        >
+          <AlertCircle className="w-5 h-5 mr-2" />
+          Candidature refusée
+        </Button>
+      );
+    }
+    
+    // Not joined, not applied
+    return (
+      <Button 
+        size="lg"
+        className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
+        onClick={handleJoinPool}
+        data-testid="join-pool-btn"
+      >
+        <Zap className="w-5 h-5 mr-2" />
+        {pool.requires_approval ? "Postuler" : "Rejoindre le pool"}
+      </Button>
+    );
+  };
 
   return (
     <AppLayout user={user}>
@@ -212,11 +319,11 @@ const PoolDetailPage = ({ user }) => {
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           {/* Back button */}
           <button 
-            onClick={() => navigate("/arena")}
+            onClick={() => navigate("/pool")}
             className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
-            Retour à l'Arena
+            Retour aux Pools
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -229,6 +336,11 @@ const PoolDetailPage = ({ user }) => {
                 }>
                   {pool.status === "active" ? "Actif" : "Terminé"}
                 </Badge>
+                {pool.requires_approval && (
+                  <Badge className="bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                    Candidature requise
+                  </Badge>
+                )}
                 <span className="text-gray-400 text-sm">{pool.brand?.industry}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold">{pool.brand?.name}</h1>
@@ -236,29 +348,9 @@ const PoolDetailPage = ({ user }) => {
             </div>
 
             {/* CTA */}
-            {pool.status === "active" && (
-              <div className="flex gap-3">
-                {hasJoined ? (
-                  <Button 
-                    size="lg"
-                    className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
-                    onClick={() => setSubmitDialogOpen(true)}
-                  >
-                    <Send className="w-5 h-5 mr-2" />
-                    Soumettre du contenu
-                  </Button>
-                ) : (
-                  <Button 
-                    size="lg"
-                    className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary-hover hover:to-orange-600"
-                    onClick={handleJoinPool}
-                  >
-                    <Zap className="w-5 h-5 mr-2" />
-                    Rejoindre le pool
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className="flex gap-3">
+              {renderCTA()}
+            </div>
           </div>
 
           {/* Stats bar */}
@@ -676,6 +768,54 @@ const PoolDetailPage = ({ user }) => {
           </div>
         )}
       </div>
+
+      {/* Apply to Pool Dialog */}
+      <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              Postuler à cette pool
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <p className="text-sm text-blue-700">
+                Cette pool nécessite une approbation de la marque. Une fois accepté, tu pourras soumettre tes vidéos.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Message de motivation (optionnel)</Label>
+              <Textarea
+                placeholder="Explique pourquoi tu souhaites participer à cette pool..."
+                value={applyMessage}
+                onChange={(e) => setApplyMessage(e.target.value)}
+                rows={4}
+              />
+              <p className="text-xs text-gray-500">
+                Un bon message augmente tes chances d'être accepté !
+              </p>
+            </div>
+
+            <Button 
+              className="w-full bg-primary hover:bg-primary-hover"
+              onClick={handleApplyPool}
+              disabled={submitting}
+              data-testid="submit-application-btn"
+            >
+              {submitting ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Envoyer ma candidature
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Submit Content Dialog */}
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
