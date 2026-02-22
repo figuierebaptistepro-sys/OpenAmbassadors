@@ -88,7 +88,7 @@ const NewProjectPage = ({ user }) => {
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`${API_URL}/api/projects/business/${projectId}`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -110,7 +110,7 @@ const NewProjectPage = ({ user }) => {
           banner_url: project.banner_url || "",
         });
         if (project.banner_url) {
-          setPreviewUrl(project.banner_url);
+          setPreviewUrl(project.banner_url.startsWith("http") ? project.banner_url : `${API_URL}${project.banner_url}`);
         }
       } else {
         toast.error("Mission introuvable");
