@@ -275,22 +275,35 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation non trouvée")
         
-        # Check access
+        # Check access - user must be a participant or admin
         is_admin = user.get("email") in ["figuierebaptistepro@gmail.com"]
-        if not is_admin and conversation["company_id"] != user_id and conversation["creator_id"] != user_id:
+        participants = conversation.get("participants", [])
+        business_user_id = conversation.get("company_id") or conversation.get("business_id")
+        creator_user_id = conversation.get("creator_id")
+        
+        has_access = (
+            is_admin or 
+            user_id in participants or
+            user_id == business_user_id or 
+            user_id == creator_user_id
+        )
+        
+        if not has_access:
             raise HTTPException(status_code=403, detail="Accès non autorisé")
         
-        # Enrich with participant info
-        company = await db.users.find_one(
-            {"user_id": conversation["company_id"]}, 
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-        )
-        creator = await db.users.find_one(
-            {"user_id": conversation["creator_id"]}, 
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1}
-        )
-        conversation["company"] = company
-        conversation["creator"] = creator
+        # Enrich with participant info from participants list
+        participants_list = conversation.get("participants", [])
+        for p_id in participants_list:
+            if p_id != user_id:
+                other_user = await db.users.find_one(
+                    {"user_id": p_id}, 
+                    {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "user_type": 1}
+                )
+                if other_user:
+                    if other_user.get("user_type") == "creator":
+                        conversation["creator"] = other_user
+                    else:
+                        conversation["company"] = other_user
         
         if conversation.get("mission_id"):
             mission = await db.projects.find_one(
