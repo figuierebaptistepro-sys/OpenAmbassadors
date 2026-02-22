@@ -302,9 +302,12 @@ def create_messaging_router(db: AsyncIOMotorDatabase, get_current_user, upload_t
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation non trouvée")
         
-        # Check access
+        # Check access - handle both company_id and business_id field names
         is_admin = user.get("email") in ["figuierebaptistepro@gmail.com"]
-        if not is_admin and conversation["company_id"] != user_id and conversation["creator_id"] != user_id:
+        business_user_id = conversation.get("company_id") or conversation.get("business_id")
+        creator_user_id = conversation.get("creator_id")
+        
+        if not is_admin and business_user_id != user_id and creator_user_id != user_id:
             raise HTTPException(status_code=403, detail="Accès non autorisé")
         
         query = {"conversation_id": conversation_id, "deleted_at": None}
