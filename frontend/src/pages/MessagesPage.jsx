@@ -236,7 +236,7 @@ export const InboxPage = ({ user }) => {
                     )}
                     
                     <p className={`text-sm truncate ${conv.unread_count > 0 ? "text-gray-900 font-medium" : "text-gray-500"}`}>
-                      {conv.last_message?.text || (conv.last_message?.content_type === "file" ? "📎 Fichier" : "Nouvelle conversation")}
+                      {conv.last_message?.text || conv.last_message?.content || (conv.last_message?.content_type === "file" ? "📎 Fichier" : "Nouvelle conversation")}
                     </p>
                   </div>
                 </Link>
