@@ -1935,6 +1935,7 @@ VISIBILITY_ORDER = {"1K": 1, "5K": 2, "10K": 3, "35K": 4, "50K": 5, "100K": 6, "
 @api_router.get("/creators")
 async def get_creators(
     city: Optional[str] = None,
+    search: Optional[str] = None,
     content_type: Optional[str] = None,
     available: Optional[bool] = None,
     min_score: Optional[int] = None,
@@ -1944,7 +1945,9 @@ async def get_creators(
     skip: int = 0,
     limit: int = 20
 ):
-    query = {"is_visible": True}
+    query = {"is_visible": {"$ne": False}}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
     if city:
         query["city"] = {"$regex": city, "$options": "i"}
     if content_type:
