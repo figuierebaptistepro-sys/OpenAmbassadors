@@ -3634,6 +3634,15 @@ async def admin_get_profile_status(user_id: str, user: dict = Depends(get_admin_
     """Admin: Diagnostic — returns raw creator_profile state for a user"""
     target = await db.users.find_one({"user_id": user_id}, {"_id": 0})
     profile = await db.creator_profiles.find_one({"user_id": user_id}, {"_id": 0})
+    # Also simulate the get_creators inner lookup
+    user_lookup = None
+    if profile:
+        user_lookup = await db.users.find_one({"user_id": profile.get("user_id")}, {"_id": 0})
+    # Check if it passes the current query
+    passes_query = False
+    if profile:
+        vis = profile.get("is_visible")
+        passes_query = (vis is True) or ("is_visible" not in profile)
     return {
         "user_found": target is not None,
         "profile_found": profile is not None,
@@ -3641,6 +3650,9 @@ async def admin_get_profile_status(user_id: str, user: dict = Depends(get_admin_
         "is_visible_type": type(profile.get("is_visible")).__name__ if profile else None,
         "name": profile.get("name") if profile else None,
         "profile_id": profile.get("profile_id") if profile else None,
+        "user_lookup_ok": user_lookup is not None,
+        "profile_user_id": profile.get("user_id") if profile else None,
+        "passes_visibility_query": passes_query,
     }
 
 @api_router.put("/admin/users/{user_id}/premium")
