@@ -2261,7 +2261,15 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         }
         objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
 
-        admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
+        # Try to find admin user by email (case-insensitive)
+        admin_user = await db.users.find_one(
+            {"email": {"$regex": f"^{ADMIN_EMAILS[0]}$", "$options": "i"}}, {"_id": 0}
+        )
+        logging.info(f"Admin user lookup for '{ADMIN_EMAILS[0]}': {'found' if admin_user else 'NOT FOUND'}")
+        if admin_user is None:
+            # Log all users for debugging
+            all_users = await db.users.find({}, {"_id": 0, "email": 1, "user_id": 1}).to_list(20)
+            logging.info(f"All users in DB: {[u.get('email') for u in all_users]}")
         if admin_user:
             admin_id = admin_user.get("user_id")
             if admin_id:
@@ -2317,6 +2325,18 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
                 )
     except Exception as e:
         logging.error(f"Error creating admin conversation for collab request: {e}")
+
+    # Always send email to admin as backup
+    try:
+        objective_labels = {"notoriete": "Notoriété", "ads": "Ads", "ugc": "UGC", "micro-trottoir": "Micro-trottoir", "autre": "Autre"}
+        objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
+        await send_email(
+            to=ADMIN_EMAILS[0],
+            subject=f"Nouvelle demande : {business_name} → {creator_name}",
+            html=f"<h2>Nouvelle demande</h2><p><b>Marque :</b> {business_name} ({business_email})</p><p><b>Créateur :</b> {creator_name}</p><p><b>Budget :</b> {data.budget_range}</p><p><b>Objectif :</b> {objective_label}</p><p><b>Brief :</b><br>{data.brief.replace(chr(10),'<br>')}</p>"
+        )
+    except Exception as e:
+        logging.error(f"Error sending admin email: {e}")
 
     return {"message": "Demande transmise à notre équipe", "request_id": collab_request.request_id}
 
