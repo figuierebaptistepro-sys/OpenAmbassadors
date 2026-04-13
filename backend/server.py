@@ -2253,68 +2253,70 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
     )
     await db.collaboration_requests.insert_one(collab_request.model_dump())
 
-    # Find admin user to create conversation with
-    objective_labels = {
-        "notoriete": "Notoriété", "ads": "Ads", "ugc": "UGC",
-        "micro-trottoir": "Micro-trottoir", "autre": "Autre"
-    }
-    objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
+    # Find admin user and create conversation
+    try:
+        objective_labels = {
+            "notoriete": "Notoriété", "ads": "Ads", "ugc": "UGC",
+            "micro-trottoir": "Micro-trottoir", "autre": "Autre"
+        }
+        objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
 
-    admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
-    if admin_user:
-        admin_id = admin_user["user_id"]
-        # Get or create conversation between brand and admin
-        existing_conv = await db.conversations.find_one({
-            "$or": [
-                {"participants": [user["user_id"], admin_id]},
-                {"participants": [admin_id, user["user_id"]]}
-            ]
-        })
-        if existing_conv:
-            conversation_id = existing_conv["conversation_id"]
-        else:
-            conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
-            await db.conversations.insert_one({
-                "conversation_id": conversation_id,
-                "participants": [user["user_id"], admin_id],
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                "last_message": None
-            })
+        admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
+        if admin_user:
+            admin_id = admin_user.get("user_id")
+            if admin_id:
+                existing_conv = await db.conversations.find_one({
+                    "$or": [
+                        {"participants": [user["user_id"], admin_id]},
+                        {"participants": [admin_id, user["user_id"]]}
+                    ]
+                })
+                if existing_conv:
+                    conversation_id = existing_conv["conversation_id"]
+                else:
+                    conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
+                    await db.conversations.insert_one({
+                        "conversation_id": conversation_id,
+                        "participants": [user["user_id"], admin_id],
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "last_message": None
+                    })
 
-        # Clean formatted message
-        msg_content = (
-            f"Demande de {business_name} ({business_email}) pour {creator_name}\n\n"
-            f"Budget : {data.budget_range or 'Non spécifié'}\n"
-            f"Objectif : {objective_label}\n"
-            f"Deadline : {data.deadline or 'Flexible'}\n"
-            f"Diffusion : {data.deliverables or 'Non spécifié'}\n\n"
-            f"Brief :\n{data.brief}"
-            + (f"\n\nInfos supplémentaires : {data.additional_info}" if data.additional_info else "")
-        )
+                msg_content = (
+                    f"Demande de {business_name} ({business_email}) pour {creator_name}\n\n"
+                    f"Budget : {data.budget_range or 'Non spécifié'}\n"
+                    f"Objectif : {objective_label}\n"
+                    f"Deadline : {data.deadline or 'Flexible'}\n"
+                    f"Diffusion : {data.deliverables or 'Non spécifié'}\n\n"
+                    f"Brief :\n{data.brief}"
+                    + (f"\n\nInfos supplémentaires : {data.additional_info}" if data.additional_info else "")
+                )
 
-        message_id = f"msg_{uuid.uuid4().hex[:12]}"
-        await db.messages.insert_one({
-            "message_id": message_id,
-            "conversation_id": conversation_id,
-            "sender_id": user["user_id"],
-            "content": msg_content,
-            "message_type": "collaboration_request",
-            "collaboration_request_id": collab_request.request_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "read": False
-        })
-        await db.conversations.update_one(
-            {"conversation_id": conversation_id},
-            {"$set": {
-                "last_message": {
-                    "content": f"Demande de {business_name} pour {creator_name}",
+                message_id = f"msg_{uuid.uuid4().hex[:12]}"
+                await db.messages.insert_one({
+                    "message_id": message_id,
+                    "conversation_id": conversation_id,
                     "sender_id": user["user_id"],
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                },
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }}
-        )
+                    "content": msg_content,
+                    "message_type": "collaboration_request",
+                    "collaboration_request_id": collab_request.request_id,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "read": False
+                })
+                await db.conversations.update_one(
+                    {"conversation_id": conversation_id},
+                    {"$set": {
+                        "last_message": {
+                            "content": f"Demande de {business_name} pour {creator_name}",
+                            "sender_id": user["user_id"],
+                            "created_at": datetime.now(timezone.utc).isoformat()
+                        },
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+    except Exception as e:
+        logging.error(f"Error creating admin conversation for collab request: {e}")
 
     return {"message": "Demande transmise à notre équipe", "request_id": collab_request.request_id}
 
