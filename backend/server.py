@@ -2261,15 +2261,13 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         }
         objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
 
-        # Try to find admin user by email (case-insensitive)
-        admin_user = await db.users.find_one(
-            {"email": {"$regex": f"^{ADMIN_EMAILS[0]}$", "$options": "i"}}, {"_id": 0}
-        )
-        logging.info(f"Admin user lookup for '{ADMIN_EMAILS[0]}': {'found' if admin_user else 'NOT FOUND'}")
-        if admin_user is None:
-            # Log all users for debugging
-            all_users = await db.users.find({}, {"_id": 0, "email": 1, "user_id": 1}).to_list(20)
-            logging.info(f"All users in DB: {[u.get('email') for u in all_users]}")
+        # Find admin user — try exact match first, then case-insensitive
+        admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
+        if not admin_user:
+            admin_user = await db.users.find_one(
+                {"email": {"$regex": f"^{ADMIN_EMAILS[0].strip()}$", "$options": "i"}}, {"_id": 0}
+            )
+        logging.info(f"Admin user lookup: {'found uid=' + str(admin_user.get('user_id')) if admin_user else 'NOT FOUND'}")
         if admin_user:
             admin_id = admin_user.get("user_id")
             if admin_id:
