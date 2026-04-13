@@ -460,25 +460,27 @@ const AdminPage = ({ user }) => {
         setEditingCampaign(null);
         setCampaignForm({ client_id: "", title: "", description: "", budget: "", creator_name: "", notes: "", status: "brief_recu" });
         fetchAgencyCampaigns();
-      }
+      } else { toast.error("Erreur lors de l'enregistrement"); }
     } catch (e) { toast.error("Erreur"); }
   };
 
   const deleteCampaign = async (id) => {
     try {
-      await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, { method: "DELETE", credentials: "include" });
-      fetchAgencyCampaigns();
-    } catch (e) { console.error(e); }
+      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, { method: "DELETE", credentials: "include" });
+      if (r.ok) { toast.success("Campagne supprimée"); fetchAgencyCampaigns(); }
+      else { toast.error("Erreur lors de la suppression"); }
+    } catch (e) { toast.error("Erreur"); }
   };
 
   const updateCampaignStatus = async (id, status) => {
     try {
-      await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, {
+      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ status })
       });
-      fetchAgencyCampaigns();
-    } catch (e) { console.error(e); }
+      if (r.ok) fetchAgencyCampaigns();
+      else toast.error("Erreur lors de la mise à jour");
+    } catch (e) { toast.error("Erreur"); }
   };
 
   const updateDemandeStatus = async (requestId, status) => {
