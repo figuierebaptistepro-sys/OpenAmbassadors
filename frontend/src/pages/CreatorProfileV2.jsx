@@ -244,12 +244,16 @@ const CreatorProfileV2 = ({ currentUser }) => {
         setCollaborationDialogOpen(false);
         setCollabForm({ budget_range: "", objective: "", diffusion_type: "", deadline: "", brief: "", product_sent: "", shipping_address: "" });
       } else {
-        const error = await response.json();
-        toast.error(error.detail || "Erreur lors de l'envoi");
+        let errorMsg = `Erreur ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.detail || errorMsg;
+        } catch {}
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error("Collaboration request error:", error);
-      toast.error("Erreur : " + (error?.message || "Connexion impossible"));
+      toast.error("Erreur réseau : " + (error?.message || "impossible de contacter le serveur"));
     } finally {
       setSubmitting(false);
     }
