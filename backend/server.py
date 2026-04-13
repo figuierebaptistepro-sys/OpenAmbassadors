@@ -3592,7 +3592,12 @@ async def admin_ensure_creator_profile(user_id: str, user: dict = Depends(get_ad
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     existing = await db.creator_profiles.find_one({"user_id": user_id})
     if existing:
-        return {"message": "Profil déjà existant", "created": False}
+        # Force visible even if was explicitly False
+        await db.creator_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": {"is_visible": True, "name": existing.get("name") or target.get("name")}}
+        )
+        return {"message": "Profil activé et rendu visible", "created": False}
     profile = CreatorProfile(user_id=user_id)
     profile_dict = profile.model_dump()
     profile_dict["name"] = target.get("name")
