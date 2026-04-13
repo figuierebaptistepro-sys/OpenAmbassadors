@@ -528,8 +528,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             </Card>
 
             {/* Plan - hidden for launch */}
-            {false && (
-            <Card className="border-0 shadow-sm overflow-hidden">
+            {false && <Card className="border-0 shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-primary to-primary-hover p-3 text-white">
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5" />
@@ -558,8 +557,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                   {currentPack ? "Gérer" : "Choisir un plan"}
                 </Button>
               </CardContent>
-            </Card>
-            )}
+            </Card>}
 
             {/* Help */}
             <Card className="border-0 shadow-sm bg-gray-900 text-white hidden sm:block">

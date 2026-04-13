@@ -884,8 +884,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Wallet Widget - hidden for launch */}
-            {false && (
-            <Card className="border-0 shadow-sm overflow-hidden">
+            {false && <Card className="border-0 shadow-sm overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -918,8 +917,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </CardContent>
-            </Card>
-            )}
+            </Card>}
 
             {/* Stats */}
             <Card className="border-0 shadow-sm">
