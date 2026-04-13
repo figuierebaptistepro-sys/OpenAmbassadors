@@ -3584,6 +3584,21 @@ async def admin_verify_user(user_id: str, request: Request, user: dict = Depends
     
     return {"message": "Statut mis à jour", "status": new_status}
 
+@api_router.post("/admin/users/{user_id}/ensure-profile")
+async def admin_ensure_creator_profile(user_id: str, user: dict = Depends(get_admin_user)):
+    """Admin: Create creator_profile if missing (makes creator visible in Find Creator)"""
+    target = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    existing = await db.creator_profiles.find_one({"user_id": user_id})
+    if existing:
+        return {"message": "Profil déjà existant", "created": False}
+    profile = CreatorProfile(user_id=user_id)
+    profile_dict = profile.model_dump()
+    profile_dict["name"] = target.get("name")
+    await db.creator_profiles.insert_one(profile_dict)
+    return {"message": "Profil créateur créé", "created": True}
+
 @api_router.put("/admin/users/{user_id}/premium")
 async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Toggle user premium status"""
