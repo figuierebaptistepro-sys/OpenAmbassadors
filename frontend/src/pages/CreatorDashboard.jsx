@@ -697,8 +697,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
               </Card>
             </motion.div>
 
-            {/* Campagnes Pool - Section Centrale */}
-            {pools.length > 0 && (
+            {/* Campagnes Pool - hidden for launch */}
+            {false && pools.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -850,8 +850,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
               </CardContent>
             </Card>
 
-            {/* Creator Card Manager - Coming Soon */}
-            <motion.div
+            {/* Creator Card Manager - hidden for launch */}
+            {false && <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -878,7 +878,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </motion.div>}
           </div>
 
           {/* Sidebar */}
@@ -919,8 +919,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
               </CardContent>
             </Card>}
 
-            {/* Stats */}
-            <Card className="border-0 shadow-sm">
+            {/* Stats - hidden for launch */}
+            {false && <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <h3 className="font-heading font-semibold text-gray-900 mb-3 text-sm">Statistiques</h3>
                 <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
@@ -942,7 +942,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </Card>}
 
             {/* Premium CTA - hidden for launch */}
             {false && !user?.is_premium && (
@@ -962,8 +962,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 space-y-2">
                 {[
-                  { icon: Trophy, label: "Voir les campagnes Pool", path: "/pool" },
-                  { icon: Briefcase, label: "Voir les missions", path: "/projects" },
+                  // { icon: Trophy, label: "Voir les campagnes Pool", path: "/pool" }, // hidden for launch
+                  // { icon: Briefcase, label: "Voir les missions", path: "/projects" }, // hidden for launch
                   { icon: BookOpen, label: "Formations", path: "/learn" },
                   { icon: Award, label: "Mon profil public", path: `/creators/${user?.user_id}` },
                 ].map((item, i) => (

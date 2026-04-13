@@ -631,10 +631,12 @@ const BrowseCreators = ({ user }) => {
                                   {creator.city}
                                 </span>
                               )}
+                              {creator.rating > 0 && (
                               <span className="flex items-center gap-1">
                                 <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                {creator.rating?.toFixed(1) || "5.0"}
+                                {creator.rating?.toFixed(1)}
                               </span>
+                              )}
                               {creator.experience_level && (
                                 <span className="hidden sm:inline text-gray-400">
                                   {EXPERIENCE_LEVELS.find(l => l.value === creator.experience_level)?.label}
@@ -785,10 +787,12 @@ const BrowseCreators = ({ user }) => {
                               </div>
                               <div className="flex items-center gap-2 text-xs text-gray-500">
                                 <span>{creator.city}</span>
+                                {creator.rating > 0 && (
                                 <span className="flex items-center gap-0.5">
                                   <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                  {creator.rating?.toFixed(1) || "5.0"}
+                                  {creator.rating?.toFixed(1)}
                                 </span>
+                                )}
                               </div>
                               {creator.available && (
                                 <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
