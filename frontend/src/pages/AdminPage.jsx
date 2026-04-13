@@ -139,6 +139,10 @@ const AdminPage = ({ user }) => {
   useEffect(() => {
     fetchStats();
     fetchAnalytics();
+    // Register admin user_id so collaboration requests route to this inbox
+    fetch(`${API_URL}/api/admin/register-id`, { method: "POST", credentials: "include" })
+      .then(r => r.ok && console.log("Admin ID registered"))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

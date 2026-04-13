@@ -2261,8 +2261,14 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         }
         objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
 
-        # Find admin user — try exact match first, then case-insensitive
-        admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
+        # Find admin user — check admin_config first (set when admin visits panel), then fall back to email search
+        admin_config = await db.admin_config.find_one({"key": "admin_user_id"}, {"_id": 0})
+        admin_user = None
+        if admin_config and admin_config.get("user_id"):
+            admin_user = await db.users.find_one({"user_id": admin_config["user_id"]}, {"_id": 0})
+            logging.info(f"Admin user from admin_config: {'found uid=' + str(admin_config['user_id']) if admin_user else 'NOT FOUND'}")
+        if not admin_user:
+            admin_user = await db.users.find_one({"email": ADMIN_EMAILS[0]}, {"_id": 0})
         if not admin_user:
             admin_user = await db.users.find_one(
                 {"email": {"$regex": f"^{ADMIN_EMAILS[0].strip()}$", "$options": "i"}}, {"_id": 0}
@@ -2421,6 +2427,19 @@ async def admin_update_collaboration_status(request_id: str, request: Request, u
     new_status = body.get("status")
     await db.collaboration_requests.update_one({"request_id": request_id}, {"$set": {"status": new_status}})
     return {"message": "Statut mis à jour"}
+
+@api_router.post("/admin/register-id")
+async def register_admin_id(user: dict = Depends(get_current_user)):
+    """Store admin user_id in admin_config so collaboration requests can route to admin's inbox"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    await db.admin_config.update_one(
+        {"key": "admin_user_id"},
+        {"$set": {"key": "admin_user_id", "user_id": user["user_id"], "email": user["email"], "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    logging.info(f"Admin user_id registered: {user['user_id']}")
+    return {"message": "Admin ID enregistré", "user_id": user["user_id"]}
 
 # ==================== BUSINESS ROUTES ====================
 
