@@ -33,20 +33,20 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
-    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
-    { icon: Briefcase, label: "Missions", path: "/projects" },
-    { icon: Crown, label: "Pool", path: "/pool", highlight: true },
+    // { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true }, // hidden for launch
+    // { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount }, // hidden for launch
+    // { icon: Briefcase, label: "Missions", path: "/projects" }, // hidden for launch
+    // { icon: Crown, label: "Pool", path: "/pool", highlight: true }, // hidden for launch
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
-    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount },
+    // { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount }, // hidden for launch
     { icon: Users, label: "Find Creator", path: "/creators" },
     { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
-    { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
+    // { icon: Crown, label: "Pool", path: "/business/pools", highlight: true }, // hidden for launch
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
