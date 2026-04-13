@@ -1730,11 +1730,25 @@ const AdminPage = ({ user }) => {
                 <div className="pt-2 space-y-2">
                   <p className="text-gray-500 text-xs">Visibilité Find Creator</p>
                   <Button size="sm" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5" onClick={async () => {
-                    const r = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/ensure-profile`, { method: "POST", credentials: "include" });
-                    const d = await r.json();
-                    toast.success(d.created ? "Profil créateur créé — visible dans Find Creator" : "Profil déjà existant");
+                    try {
+                      const r = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/ensure-profile`, { method: "POST", credentials: "include" });
+                      if (!r.ok) { toast.error(`Erreur ${r.status}`); return; }
+                      const d = await r.json();
+                      if (d.created) toast.success("Profil créateur créé — maintenant visible dans Find Creator");
+                      else toast.success(`Profil forcé visible ✓ (was_visible: ${d.was_visible})`);
+                    } catch (e) { toast.error("Erreur réseau"); }
                   }}>
-                    <UserCheck className="w-4 h-4 mr-2" />Forcer la création du profil créateur
+                    <UserCheck className="w-4 h-4 mr-2" />Forcer visible dans Find Creator
+                  </Button>
+                  <Button size="sm" variant="ghost" className="w-full text-xs text-gray-400 hover:text-gray-600" onClick={async () => {
+                    try {
+                      const r = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/profile-status`, { credentials: "include" });
+                      if (!r.ok) { toast.error(`Erreur ${r.status}`); return; }
+                      const d = await r.json();
+                      toast.info(`Profile: ${d.profile_found ? "trouvé" : "ABSENT"} | is_visible: ${d.is_visible} (${d.is_visible_type}) | name: ${d.name || "null"}`);
+                    } catch (e) { toast.error("Erreur réseau"); }
+                  }}>
+                    Diagnostic profil
                   </Button>
                 </div>
               )}

@@ -1952,7 +1952,7 @@ async def get_creators(
     skip: int = 0,
     limit: int = 20
 ):
-    query = {"is_visible": {"$ne": False}}
+    query = {"$or": [{"is_visible": {"$exists": False}}, {"is_visible": True}]}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
     if city:
@@ -3615,17 +3615,32 @@ async def admin_ensure_creator_profile(user_id: str, user: dict = Depends(get_ad
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     existing = await db.creator_profiles.find_one({"user_id": user_id})
     if existing:
-        # Force visible even if was explicitly False
+        was_visible = existing.get("is_visible")
+        # Force visible — handle any type (bool False, string "false", 0, None)
         await db.creator_profiles.update_one(
             {"user_id": user_id},
             {"$set": {"is_visible": True, "name": existing.get("name") or target.get("name")}}
         )
-        return {"message": "Profil activé et rendu visible", "created": False}
+        return {"message": "Profil activé et rendu visible", "created": False, "was_visible": was_visible}
     profile = CreatorProfile(user_id=user_id)
     profile_dict = profile.model_dump()
     profile_dict["name"] = target.get("name")
     await db.creator_profiles.insert_one(profile_dict)
-    return {"message": "Profil créateur créé", "created": True}
+    return {"message": "Profil créateur créé", "created": True, "was_visible": None}
+
+@api_router.get("/admin/users/{user_id}/profile-status")
+async def admin_get_profile_status(user_id: str, user: dict = Depends(get_admin_user)):
+    """Admin: Diagnostic — returns raw creator_profile state for a user"""
+    target = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    profile = await db.creator_profiles.find_one({"user_id": user_id}, {"_id": 0})
+    return {
+        "user_found": target is not None,
+        "profile_found": profile is not None,
+        "is_visible": profile.get("is_visible") if profile else None,
+        "is_visible_type": type(profile.get("is_visible")).__name__ if profile else None,
+        "name": profile.get("name") if profile else None,
+        "profile_id": profile.get("profile_id") if profile else None,
+    }
 
 @api_router.put("/admin/users/{user_id}/premium")
 async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
