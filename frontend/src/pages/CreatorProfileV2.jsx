@@ -216,7 +216,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
       toast.error("Veuillez décrire votre projet");
       return;
     }
-    if (currentUser?.user_type !== "business") {
+    if (currentUser?.user_type === "creator") {
       toast.error("Seules les entreprises peuvent envoyer des demandes");
       return;
     }
