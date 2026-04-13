@@ -248,7 +248,8 @@ const CreatorProfileV2 = ({ currentUser }) => {
         toast.error(error.detail || "Erreur lors de l'envoi");
       }
     } catch (error) {
-      toast.error("Erreur de connexion");
+      console.error("Collaboration request error:", error);
+      toast.error("Erreur : " + (error?.message || "Connexion impossible"));
     } finally {
       setSubmitting(false);
     }
