@@ -123,7 +123,8 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
       </nav>
 
       {/* Premium CTA - Only for creators who aren't premium */}
-      {userType === "creator" && !isPremium && (
+      {/* Premium CTA hidden for launch */}
+      {false && userType === "creator" && !isPremium && (
         <div className="p-3 lg:p-4">
           <div className="premium-card rounded-xl p-3 lg:p-4">
             <div className="flex items-center gap-2 mb-2">

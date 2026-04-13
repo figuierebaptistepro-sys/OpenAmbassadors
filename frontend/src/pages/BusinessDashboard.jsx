@@ -337,8 +337,8 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
               </Card>
             </motion.div>
 
-            {/* Section 2: Compléter le profil (bonus) - Visible seulement si profil OK mais pas 100% */}
-            {canCreateProject && completedItems < checklistItems.length && (
+            {/* Section 2: Compléter le profil (bonus) - hidden for launch */}
+            {false && canCreateProject && completedItems < checklistItems.length && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <Card className="border-0 shadow-sm">
                   <CardHeader className="pb-2">
@@ -527,7 +527,8 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
               </CardContent>
             </Card>
 
-            {/* Plan */}
+            {/* Plan - hidden for launch */}
+            {false && (
             <Card className="border-0 shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-primary to-primary-hover p-3 text-white">
                 <div className="flex items-center gap-2">
@@ -558,6 +559,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                 </Button>
               </CardContent>
             </Card>
+            )}
 
             {/* Help */}
             <Card className="border-0 shadow-sm bg-gray-900 text-white hidden sm:block">

@@ -883,7 +883,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            {/* Wallet Widget */}
+            {/* Wallet Widget - hidden for launch */}
+            {false && (
             <Card className="border-0 shadow-sm overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -906,10 +907,10 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                     <p className="text-yellow-600 text-xs mt-1">{wallet.pending_amount.toFixed(2)}€ en attente</p>
                   )}
                 </div>
-                <Button 
-                  onClick={() => navigate("/wallet")} 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  onClick={() => navigate("/wallet")}
+                  variant="outline"
+                  size="sm"
                   className="w-full border-gray-200 text-xs"
                   data-testid="wallet-link"
                 >
@@ -918,6 +919,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                 </Button>
               </CardContent>
             </Card>
+            )}
 
             {/* Stats */}
             <Card className="border-0 shadow-sm">
@@ -944,8 +946,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
               </CardContent>
             </Card>
 
-            {/* Premium CTA */}
-            {!user?.is_premium && (
+            {/* Premium CTA - hidden for launch */}
+            {false && !user?.is_premium && (
               <Card className="border-0 shadow-sm bg-gradient-to-br from-primary to-primary-hover text-white">
                 <CardContent className="p-4">
                   <Crown className="w-6 h-6 mb-2" />
