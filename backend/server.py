@@ -697,12 +697,17 @@ class Review(BaseModel):
 # ==================== AGENCY MODELS ====================
 
 AGENCY_STATUSES = [
-    {"key": "brief_recu",           "label": "Brief reçu"},
-    {"key": "recherche_createur",   "label": "Recherche créateur"},
-    {"key": "createur_trouve",      "label": "Créateur trouvé"},
-    {"key": "en_production",        "label": "Contenu en production"},
-    {"key": "livraison",            "label": "Livraison"},
-    {"key": "termine",              "label": "Terminé"},
+    {"key": "brief_recu",       "label": "Brief reçu"},
+    {"key": "casting",          "label": "Casting"},
+    {"key": "tournage",         "label": "Tournage"},
+    {"key": "montage",          "label": "Montage"},
+    {"key": "livraison",        "label": "Livraison des fichiers"},
+    {"key": "termine",          "label": "Terminé"},
+]
+
+AGENCY_FORMULAS = [
+    {"key": "12_videos", "label": "12 vidéos / mois", "videos": 12},
+    {"key": "20_videos", "label": "20 vidéos / mois", "videos": 20},
 ]
 
 class AgencyCampaign(BaseModel):
@@ -712,7 +717,9 @@ class AgencyCampaign(BaseModel):
     title: str
     description: Optional[str] = None
     budget: Optional[str] = None
-    creator_id: Optional[str] = None
+    formula: Optional[str] = None  # "12_videos" or "20_videos"
+    videos_total: Optional[int] = None  # 12 or 20
+    videos_delivered: int = 0
     creator_name: Optional[str] = None
     status: str = "brief_recu"
     notes: Optional[str] = None
@@ -2579,8 +2586,24 @@ async def get_my_agency_campaigns(user: dict = Depends(get_current_user)):
 
 @api_router.get("/agency/statuses")
 async def get_agency_statuses():
-    """Get all possible campaign statuses"""
     return AGENCY_STATUSES
+
+@api_router.get("/agency/formulas")
+async def get_agency_formulas():
+    return AGENCY_FORMULAS
+
+@api_router.patch("/admin/agency/campaigns/{campaign_id}/videos")
+async def update_videos_delivered(campaign_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: update videos_delivered count"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    count = int(body.get("videos_delivered", 0))
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$set": {"videos_delivered": count, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Compteur mis à jour", "videos_delivered": count}
 
 @api_router.post("/auth/check-invitation")
 async def check_invitation(request: Request):

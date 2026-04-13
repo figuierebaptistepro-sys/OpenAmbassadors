@@ -54,11 +54,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
   const AGENCY_STATUSES = [
     { key: "brief_recu", label: "Brief reçu" },
-    { key: "recherche_createur", label: "Recherche créateur" },
-    { key: "createur_trouve", label: "Créateur trouvé" },
-    { key: "en_production", label: "Contenu en production" },
-    { key: "livraison", label: "Livraison" },
+    { key: "casting", label: "Casting" },
+    { key: "tournage", label: "Tournage" },
+    { key: "montage", label: "Montage" },
+    { key: "livraison", label: "Livraison des fichiers" },
     { key: "termine", label: "Terminé" },
+  ];
+  const AGENCY_FORMULAS = [
+    { key: "12_videos", label: "12 vidéos / mois", videos: 12 },
+    { key: "20_videos", label: "20 vidéos / mois", videos: 20 },
   ];
 
   const [editForm, setEditForm] = useState({
@@ -295,9 +299,22 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                         </div>
                         {c.description && <p className="text-xs text-gray-500 mb-3">{c.description}</p>}
                         <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
-                          {c.budget && <span>💰 {c.budget}</span>}
+                          {c.formula && <span className="font-medium text-primary">📦 {AGENCY_FORMULAS.find(f => f.key === c.formula)?.label || c.formula}</span>}
                           {c.creator_name && <span>🎬 {c.creator_name}</span>}
                         </div>
+                        {/* Videos delivered */}
+                        {c.formula && (
+                          <div className="mb-3 space-y-1">
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Vidéos livrées</span>
+                              <span className="font-semibold">{c.videos_delivered || 0} / {AGENCY_FORMULAS.find(f => f.key === c.formula)?.videos || "?"}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2">
+                              <div className="bg-green-500 h-2 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, ((c.videos_delivered || 0) / (AGENCY_FORMULAS.find(f => f.key === c.formula)?.videos || 1)) * 100)}%` }} />
+                            </div>
+                          </div>
+                        )}
                         {/* Progress bar */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs text-gray-400">

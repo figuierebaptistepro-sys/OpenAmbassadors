@@ -73,16 +73,20 @@ const AdminPage = ({ user }) => {
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [agencyClients, setAgencyClients] = useState([]);
   const [agencyInvitations, setAgencyInvitations] = useState([]);
-  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", creator_name: "", notes: "", status: "brief_recu" });
+  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" });
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
   const AGENCY_STATUSES = [
     { key: "brief_recu", label: "Brief reçu" },
-    { key: "recherche_createur", label: "Recherche créateur" },
-    { key: "createur_trouve", label: "Créateur trouvé" },
-    { key: "en_production", label: "Contenu en production" },
-    { key: "livraison", label: "Livraison" },
+    { key: "casting", label: "Casting" },
+    { key: "tournage", label: "Tournage" },
+    { key: "montage", label: "Montage" },
+    { key: "livraison", label: "Livraison des fichiers" },
     { key: "termine", label: "Terminé" },
+  ];
+  const AGENCY_FORMULAS = [
+    { key: "12_videos", label: "12 vidéos / mois", videos: 12 },
+    { key: "20_videos", label: "20 vidéos / mois", videos: 20 },
   ];
 
   // Global search
@@ -458,7 +462,7 @@ const AdminPage = ({ user }) => {
         toast.success(editingCampaign ? "Campagne mise à jour" : "Campagne créée");
         setShowCampaignForm(false);
         setEditingCampaign(null);
-        setCampaignForm({ client_id: "", title: "", description: "", budget: "", creator_name: "", notes: "", status: "brief_recu" });
+        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" });
         fetchAgencyCampaigns();
       } else { toast.error("Erreur lors de l'enregistrement"); }
     } catch (e) { toast.error("Erreur"); }
@@ -477,6 +481,17 @@ const AdminPage = ({ user }) => {
       const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ status })
+      });
+      if (r.ok) fetchAgencyCampaigns();
+      else toast.error("Erreur lors de la mise à jour");
+    } catch (e) { toast.error("Erreur"); }
+  };
+
+  const updateVideosDelivered = async (id, count) => {
+    try {
+      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}/videos`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ videos_delivered: count })
       });
       if (r.ok) fetchAgencyCampaigns();
       else toast.error("Erreur lors de la mise à jour");
@@ -1504,7 +1519,7 @@ const AdminPage = ({ user }) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Campagnes clients ({agencyCampaigns.length})</CardTitle>
-                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", creator_name: "", notes: "", status: "brief_recu" }); setShowCampaignForm(true); }} className="bg-primary text-white">
+                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" }); setShowCampaignForm(true); }} className="bg-primary text-white">
                     <Plus className="w-4 h-4 mr-1" />Nouvelle campagne
                   </Button>
                 </div>
@@ -1534,6 +1549,15 @@ const AdminPage = ({ user }) => {
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Créateur assigné</label>
                         <Input className="h-9 text-sm" placeholder="Nom du créateur" value={campaignForm.creator_name} onChange={e => setCampaignForm(f => ({ ...f, creator_name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Formule</label>
+                        <Select value={campaignForm.formula} onValueChange={(v) => setCampaignForm(f => ({ ...f, formula: v }))}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Choisir une formule" /></SelectTrigger>
+                          <SelectContent>
+                            {AGENCY_FORMULAS.map(f => <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Statut</label>
@@ -1572,7 +1596,7 @@ const AdminPage = ({ user }) => {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge className="text-xs bg-primary/10 text-primary">{AGENCY_STATUSES.find(s => s.key === c.status)?.label || c.status}</Badge>
-                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", creator_name: c.creator_name || "", notes: c.notes || "", status: c.status }); setShowCampaignForm(true); }}>
+                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_name: c.creator_name || "", notes: c.notes || "", status: c.status }); setShowCampaignForm(true); }}>
                               <Settings className="w-3 h-3" />
                             </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-red-500 hover:text-red-700" onClick={() => deleteCampaign(c.campaign_id)}>
@@ -1581,10 +1605,30 @@ const AdminPage = ({ user }) => {
                           </div>
                         </div>
                         {c.description && <p className="text-xs text-gray-600 mb-2">{c.description}</p>}
-                        <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-2">
                           {c.budget && <span>💰 {c.budget}</span>}
                           {c.creator_name && <span>🎬 {c.creator_name}</span>}
+                          {c.formula && <span>📦 {AGENCY_FORMULAS.find(f => f.key === c.formula)?.label || c.formula}</span>}
                         </div>
+                        {/* Videos delivered counter */}
+                        {c.formula && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs text-gray-500">Vidéos livrées :</span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => updateVideosDelivered(c.campaign_id, Math.max(0, (c.videos_delivered || 0) - 1))}
+                                className="w-5 h-5 rounded bg-gray-200 text-gray-600 text-xs flex items-center justify-center hover:bg-gray-300">−</button>
+                              <span className="text-xs font-semibold w-12 text-center">
+                                {c.videos_delivered || 0}/{AGENCY_FORMULAS.find(f => f.key === c.formula)?.videos || "?"}
+                              </span>
+                              <button onClick={() => updateVideosDelivered(c.campaign_id, Math.min(AGENCY_FORMULAS.find(f => f.key === c.formula)?.videos || 99, (c.videos_delivered || 0) + 1))}
+                                className="w-5 h-5 rounded bg-primary/20 text-primary text-xs flex items-center justify-center hover:bg-primary/30">+</button>
+                            </div>
+                            <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-green-500 h-1.5 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, ((c.videos_delivered || 0) / (AGENCY_FORMULAS.find(f => f.key === c.formula)?.videos || 1)) * 100)}%` }} />
+                            </div>
+                          </div>
+                        )}
                         {/* Status stepper */}
                         <div className="mt-3 flex items-center gap-1 overflow-x-auto">
                           {AGENCY_STATUSES.map((s, i) => {
