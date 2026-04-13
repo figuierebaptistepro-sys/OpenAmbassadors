@@ -32,6 +32,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState(null);
+  const [inviteToken, setInviteToken] = useState(null);
   const [googleClientId, setGoogleClientId] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -57,9 +58,15 @@ const LoginPage = () => {
 
   // Capture referral code from URL or cookie (60 days)
   useEffect(() => {
+    const inviteFromUrl = searchParams.get("invite");
+    if (inviteFromUrl) {
+      setInviteToken(inviteFromUrl);
+      setMode("register");
+    }
+
     const refFromUrl = searchParams.get("ref");
     const refFromCookie = getCookie("affiliate_ref");
-    
+
     if (refFromUrl) {
       // URL has priority - save to cookie for 60 days
       setRefCode(refFromUrl);
@@ -109,7 +116,8 @@ const LoginPage = () => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          ref_code: affiliateRef // Include referral code from URL or cookie
+          ref_code: affiliateRef,
+          invite_token: inviteToken || undefined
         }),
       });
 

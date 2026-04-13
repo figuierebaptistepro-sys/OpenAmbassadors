@@ -78,7 +78,10 @@ const AppLayout = ({ children, user, currentPlan }) => {
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
-  const menuItems = userType === "creator" ? creatorMenuItems : businessMenuItems;
+  const menuItems = [
+    ...(userType === "creator" ? creatorMenuItems : businessMenuItems),
+    ...(isAdmin ? [{ icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages }] : []),
+  ];
 
   const commonMenuItems = [
     { icon: HelpCircle, label: "Support & Guides", path: "/support" },

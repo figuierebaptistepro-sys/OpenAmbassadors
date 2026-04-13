@@ -134,7 +134,7 @@ const BrowseCreators = ({ user }) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.search) params.append("city", filters.search);
+      if (filters.search) params.append("search", filters.search);
       if (filters.city) params.append("city", filters.city);
       if (filters.contentTypes.length > 0) {
         params.append("content_type", filters.contentTypes[0]);
