@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2, Trophy, Zap, Heart
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
@@ -58,8 +58,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const creatorMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: Crown, label: "Pool", path: "/pool", highlight: true },
+    { icon: CreditCard, label: "Creator Card", path: "/dashboard", soon: true },
     { icon: Briefcase, label: "Missions", path: "/projects" },
     { icon: Wallet, label: "Cagnotte", path: "/wallet" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
@@ -69,7 +70,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
   const businessMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: Crown, label: "Pool", path: "/business/pools", highlight: true },
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
     { icon: Gift, label: "Affiliation", path: "/affiliate" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
@@ -199,12 +202,12 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
                   : item.highlight
-                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
+                    ? "bg-gradient-to-r from-primary/10 to-orange-500/10 text-primary hover:from-primary/20 hover:to-orange-500/20"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+              } ${item.soon ? "opacity-60" : ""}`}
             >
               <div className="relative">
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <item.icon className={`w-5 h-5 flex-shrink-0 ${item.highlight && !isActive(item.path) ? "text-primary" : ""}`} />
                 {item.badge > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full text-[10px] text-white font-bold flex items-center justify-center">
                     {item.badge > 9 ? "9+" : item.badge}
@@ -212,6 +215,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 )}
               </div>
               <span className="text-sm">{item.label}</span>
+              {item.soon && (
+                <span className="ml-auto text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Soon</span>
+              )}
             </button>
           ))}
 
@@ -287,10 +293,8 @@ const AppLayout = ({ children, user, currentPlan }) => {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive(item.path)
                   ? "bg-primary-soft text-primary font-semibold"
-                  : item.highlight
-                    ? "text-primary bg-gradient-to-r from-primary/5 to-pink-50 hover:from-primary/10 hover:to-pink-100 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              } ${item.soon ? "opacity-60" : ""}`}
             >
               <div className="relative">
                 <item.icon className="w-5 h-5" />
@@ -301,6 +305,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 )}
               </div>
               <span>{item.label}</span>
+              {item.soon && (
+                <span className="ml-auto text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Soon</span>
+              )}
             </Link>
           ))}
 

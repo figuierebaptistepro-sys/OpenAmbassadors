@@ -110,6 +110,11 @@ export const InboxPage = ({ user }) => {
 
   useEffect(() => {
     fetchConversations();
+    
+    // Poll conversations every 5 seconds for new messages
+    const pollInterval = setInterval(fetchConversations, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, []);
 
   // WebSocket for real-time updates
@@ -231,7 +236,7 @@ export const InboxPage = ({ user }) => {
                     )}
                     
                     <p className={`text-sm truncate ${conv.unread_count > 0 ? "text-gray-900 font-medium" : "text-gray-500"}`}>
-                      {conv.last_message?.text || (conv.last_message?.content_type === "file" ? "📎 Fichier" : "Nouvelle conversation")}
+                      {conv.last_message?.text || conv.last_message?.content || (conv.last_message?.content_type === "file" ? "📎 Fichier" : "Nouvelle conversation")}
                     </p>
                   </div>
                 </Link>
@@ -323,6 +328,38 @@ export const ConversationPage = ({ user }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Polling for messages (fallback when WebSocket not connected)
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const pollMessages = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/messaging/conversations/${conversationId}/messages`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(prev => {
+            // Only update if there are new messages
+            if (data.length !== prev.length || 
+                (data.length > 0 && prev.length > 0 && 
+                 data[data.length - 1].message_id !== prev[prev.length - 1].message_id)) {
+              return data;
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    };
+
+    // Poll every 3 seconds
+    const pollInterval = setInterval(pollMessages, 3000);
+    
+    return () => clearInterval(pollInterval);
+  }, [conversationId]);
 
   // WebSocket for real-time messages
   const handleWsMessage = useCallback((data) => {
@@ -424,6 +461,38 @@ export const ConversationPage = ({ user }) => {
     } finally {
       setSending(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleCollabResponse = async (requestId, status) => {
+    if (!requestId) {
+      toast.error("ID de demande manquant");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/collaboration-requests/${requestId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        const statusLabels = {
+          accepted: "acceptée",
+          rejected: "refusée", 
+          negotiating: "en négociation"
+        };
+        toast.success(`Demande ${statusLabels[status] || status}`);
+        fetchMessages(); // Refresh messages
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || "Erreur lors de la mise à jour");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erreur de connexion");
     }
   };
 
@@ -542,6 +611,9 @@ export const ConversationPage = ({ user }) => {
                 <div className="space-y-2">
                   {msgs.map((msg) => {
                     const isMe = msg.sender_id === user?.user_id;
+                    const isCollabRequest = msg.message_type === "collaboration_request";
+                    const messageText = msg.text || msg.content;
+                    
                     return (
                       <motion.div
                         key={msg.message_id}
@@ -549,7 +621,7 @@ export const ConversationPage = ({ user }) => {
                         animate={{ opacity: 1, y: 0 }}
                         className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                       >
-                        <div className={`max-w-[75%] ${isMe ? "order-2" : ""}`}>
+                        <div className={`max-w-[85%] ${isMe ? "order-2" : ""}`}>
                           {msg.content_type === "file" ? (
                             <a
                               href={getImageUrl(msg.file_url)}
@@ -575,6 +647,48 @@ export const ConversationPage = ({ user }) => {
                                 />
                               )}
                             </a>
+                          ) : isCollabRequest ? (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                              <div className="bg-gradient-to-r from-primary/10 to-pink-50 px-4 py-3 border-b border-gray-100">
+                                <div className="flex items-center gap-2">
+                                  <Briefcase className="w-5 h-5 text-primary" />
+                                  <span className="font-semibold text-gray-900">Demande de collaboration</span>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{messageText}</p>
+                              </div>
+                              {/* Action buttons for creator */}
+                              {!isMe && user?.user_type === "creator" && (
+                                <div className="px-4 pb-4 flex flex-wrap gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-500 hover:bg-green-600 text-white"
+                                    onClick={() => handleCollabResponse(msg.collaboration_request_id, "accepted")}
+                                  >
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Accepter
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-primary text-primary hover:bg-primary/10"
+                                    onClick={() => handleCollabResponse(msg.collaboration_request_id, "negotiating")}
+                                  >
+                                    Négocier
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={() => handleCollabResponse(msg.collaboration_request_id, "rejected")}
+                                  >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Refuser
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div
                               className={`px-4 py-2 rounded-2xl ${
@@ -583,7 +697,7 @@ export const ConversationPage = ({ user }) => {
                                   : "bg-white text-gray-900 rounded-bl-md"
                               }`}
                             >
-                              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                              <p className="text-sm whitespace-pre-wrap">{messageText}</p>
                             </div>
                           )}
                           <div className={`flex items-center gap-1 mt-1 ${isMe ? "justify-end" : ""}`}>

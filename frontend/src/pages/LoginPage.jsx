@@ -113,7 +113,14 @@ const LoginPage = () => {
         }),
       });
 
-      const data = await response.json();
+      // Read response as text first to avoid "body stream already read" error
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        throw new Error("Erreur serveur - réponse invalide");
+      }
       
       if (!response.ok) {
         throw new Error(data.detail || "Erreur lors de l'inscription");
@@ -125,7 +132,7 @@ const LoginPage = () => {
       toast.success("🎉 Félicitations ! Votre compte a été créé. Vérifiez votre email !");
       navigate("/select-type", { state: { user: data } });
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || "Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }
@@ -145,7 +152,8 @@ const LoginPage = () => {
         body: JSON.stringify({ email: formData.email }),
       });
 
-      const data = await response.json();
+      // Read as text to avoid body stream issues
+      await response.text();
       toast.success("📧 Si un compte existe, vous recevrez un email de réinitialisation.");
     } catch (error) {
       toast.error("Erreur lors de l'envoi");
@@ -172,7 +180,14 @@ const LoginPage = () => {
         }),
       });
 
-      const data = await response.json();
+      // Read response as text first to avoid "body stream already read" error
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        throw new Error("Erreur serveur - réponse invalide");
+      }
       
       if (!response.ok) {
         throw new Error(data.detail || "Email ou mot de passe incorrect");
@@ -188,7 +203,7 @@ const LoginPage = () => {
         navigate("/business", { state: { user: data } });
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
@@ -213,7 +228,14 @@ const LoginPage = () => {
         body: JSON.stringify({ credential: credentialResponse.credential })
       });
       
-      const data = await response.json();
+      // Read response as text first to avoid "body stream already read" error
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        throw new Error("Erreur serveur - réponse invalide");
+      }
       
       if (!response.ok) {
         throw new Error(data.detail || "Erreur de connexion Google");

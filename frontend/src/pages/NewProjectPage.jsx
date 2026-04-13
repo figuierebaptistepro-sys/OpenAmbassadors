@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Upload, Image, X, Calendar, MapPin, Users, Euro,
@@ -49,6 +49,8 @@ const DELIVERABLES = [
 
 const NewProjectPage = ({ user }) => {
   const navigate = useNavigate();
+  const { projectId } = useParams(); // For edit mode
+  const isEditMode = !!projectId;
   const fileInputRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
@@ -79,7 +81,46 @@ const NewProjectPage = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (isEditMode) {
+      fetchProject();
+    }
+  }, [projectId]);
+
+  const fetchProject = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/projects/business/${projectId}`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const project = await response.json();
+        setForm({
+          title: project.title || "",
+          description: project.description || "",
+          brief: project.brief || "",
+          content_type: project.content_type || "UGC",
+          budget: project.budget || "",
+          target_creators: project.target_creators || 1,
+          duration: project.duration || "2 semaines",
+          deadline: project.deadline ? project.deadline.split("T")[0] : "",
+          location: project.location || "",
+          remote_ok: project.remote_ok !== false,
+          requirements: project.requirements || [],
+          deliverables: project.deliverables || [],
+          incubator_only: project.incubator_only || false,
+          banner_url: project.banner_url || "",
+        });
+        if (project.banner_url) {
+          setPreviewUrl(project.banner_url.startsWith("http") ? project.banner_url : `${API_URL}${project.banner_url}`);
+        }
+      } else {
+        toast.error("Mission introuvable");
+        navigate("/business/projects");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erreur de chargement");
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -181,7 +222,8 @@ const NewProjectPage = ({ user }) => {
       return;
     }
 
-    if (!stats?.selected_pack) {
+    // Skip pack validation for edit mode
+    if (!isEditMode && !stats?.selected_pack) {
       toast.error("Vous devez d'abord choisir un pack");
       navigate("/billing");
       return;
@@ -189,27 +231,31 @@ const NewProjectPage = ({ user }) => {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/api/projects`, {
-        method: "POST",
+      const url = isEditMode 
+        ? `${API_URL}/api/projects/${projectId}` 
+        : `${API_URL}/api/projects`;
+      
+      const response = await fetch(url, {
+        method: isEditMode ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           ...form,
-          pack_id: stats.selected_pack,
+          pack_id: stats?.selected_pack,
           budget: parseInt(form.budget) || 0,
           target_creators: parseInt(form.target_creators) || 1,
         }),
       });
 
       if (response.ok) {
-        toast.success("Projet créé avec succès !");
-        navigate("/business");
+        toast.success(isEditMode ? "Mission mise à jour !" : "Mission créée avec succès !");
+        navigate("/business/projects");
       } else {
         const error = await response.json();
-        toast.error(error.detail || "Erreur lors de la création");
+        toast.error(error.detail || "Erreur lors de l'opération");
       }
     } catch (error) {
-      toast.error("Erreur lors de la création");
+      toast.error("Erreur lors de l'opération");
     } finally {
       setSubmitting(false);
     }
@@ -239,15 +285,19 @@ const NewProjectPage = ({ user }) => {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/business")}
+            onClick={() => navigate("/business/projects")}
             className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
             data-testid="back-btn"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">Nouveau projet</h1>
-            <p className="text-gray-500 text-xs sm:text-sm">Créez une mission pour les créateurs</p>
+            <h1 className="font-heading text-lg sm:text-xl font-bold text-gray-900">
+              {isEditMode ? "Modifier la mission" : "Nouvelle mission"}
+            </h1>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              {isEditMode ? "Modifiez les détails de votre mission" : "Créez une mission pour les créateurs"}
+            </p>
           </div>
         </div>
       </div>
@@ -608,7 +658,7 @@ const NewProjectPage = ({ user }) => {
           >
             <Button
               variant="outline"
-              onClick={() => navigate("/business")}
+              onClick={() => navigate("/business/projects")}
               className="flex-1 sm:flex-none border-gray-200"
             >
               Annuler
@@ -624,7 +674,7 @@ const NewProjectPage = ({ user }) => {
               ) : (
                 <CheckCircle className="w-5 h-5 mr-2" />
               )}
-              Publier le projet
+              {isEditMode ? "Enregistrer les modifications" : "Publier la mission"}
             </Button>
           </motion.div>
 

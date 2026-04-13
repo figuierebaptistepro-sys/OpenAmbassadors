@@ -19,7 +19,6 @@ import { Progress } from "../components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
 import { toast } from "sonner";
-import CreatorCardManager from "../components/CreatorCardManager";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -80,6 +79,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
@@ -103,39 +103,16 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Handle Premium subscription
-  const handleSubscribe = async (packageId = "creator_premium_monthly") => {
-    setSubscribing(true);
-    try {
-      const response = await fetch(`${API_URL}/api/stripe/create-checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          package_id: packageId,
-          origin_url: window.location.origin
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.detail || "Erreur lors de la création du paiement");
-      }
-      
-      // Redirect to Stripe Checkout
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("URL de paiement non reçue");
-      }
-    } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error(error.message || "Erreur lors de l'abonnement");
-    } finally {
-      setSubscribing(false);
-    }
-  };
+  
+// Handle Premium subscription (redirect - no fetch)
+const handleSubscribe = (packageId = "creator_premium_monthly") => {
+  setSubscribing(true);
+
+  const origin = encodeURIComponent(window.location.origin);
+  const pkg = encodeURIComponent(packageId);
+
+  window.location.href = `${API_URL}/api/stripe/redirect-checkout?package_id=${pkg}&origin_url=${origin}`;
+};
 
   // Upload photo de profil
   const handlePictureUpload = async (e) => {
@@ -199,10 +176,11 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
 
   const fetchData = async () => {
     try {
-      const [profileRes, statsRes, walletRes] = await Promise.all([
+      const [profileRes, statsRes, walletRes, poolsRes] = await Promise.all([
         fetch(`${API_URL}/api/creators/me/profile`, { credentials: "include" }),
         fetch(`${API_URL}/api/stats/creator`, { credentials: "include" }),
         fetch(`${API_URL}/api/wallet`, { credentials: "include" }),
+        fetch(`${API_URL}/api/pools/active`, { credentials: "include" }),
       ]);
       if (profileRes.ok) {
         const data = await profileRes.json();
@@ -223,6 +201,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
       }
       if (statsRes.ok) setStats(await statsRes.json());
       if (walletRes.ok) setWallet(await walletRes.json());
+      if (poolsRes.ok) setPools(await poolsRes.json());
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -718,14 +697,87 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
               </Card>
             </motion.div>
 
-            {/* Creator Card Manager */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <CreatorCardManager user={user} />
-            </motion.div>
+            {/* Campagnes Pool - Section Centrale */}
+            {pools.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+              >
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="px-4 pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-gray-900 text-sm">Campagnes Pool</CardTitle>
+                          <p className="text-xs text-gray-500">{pools.length} campagnes disponibles</p>
+                        </div>
+                      </div>
+                      <Link to="/pool">
+                        <Button variant="outline" size="sm" className="border-gray-200 text-xs">
+                          Voir tout <ChevronRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {pools.slice(0, 3).map((pool) => (
+                        <Link
+                          key={pool.pool_id}
+                          to="/pool"
+                          className="group block"
+                        >
+                          <div className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
+                            {/* Banner */}
+                            <div className="h-24 bg-gray-100 relative">
+                              {pool.brief?.banner_url ? (
+                                <img src={pool.brief.banner_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                                  <Briefcase className="w-8 h-8 text-gray-300" />
+                                </div>
+                              )}
+                              <Badge className="absolute top-2 left-2 bg-white/90 text-gray-700 text-[10px] border-0">
+                                {pool.mode === "CPM" ? `CPM ${pool.cpm_rate}€` : "Pool"}
+                              </Badge>
+                            </div>
+                            {/* Content */}
+                            <div className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-1">
+                                  {pool.brand?.logo_url ? (
+                                    <img src={pool.brand.logo_url} alt="" className="w-full h-full object-contain" />
+                                  ) : (
+                                    <span className="text-xs font-bold text-gray-400">
+                                      {(pool.brand?.name || "P")[0]}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{pool.brand?.name}</p>
+                                  <p className="text-[10px] text-gray-500">{pool.brand?.industry}</p>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 line-clamp-1 mb-2">{pool.brief?.key_message}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-500">{pool.budget_remaining}€ restant</span>
+                                {pool.has_max_payout && pool.max_payout_per_creator && (
+                                  <span className="text-xs font-semibold text-green-600">Gain max {pool.max_payout_per_creator}€</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Portfolio */}
             <Card className="border-0 shadow-sm">
@@ -797,6 +849,36 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Creator Card Manager - Coming Soon */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-0 shadow-sm opacity-75">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <LinkIcon className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-heading font-semibold text-gray-900 text-sm">Creator Card</h3>
+                          <Badge className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5">Soon</Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">Votre page publique type lien en bio</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4 text-center">
+                    <p className="text-gray-500 text-xs">Cette fonctionnalité arrive bientôt !</p>
+                    <p className="text-gray-400 text-[10px] mt-1">Créez votre page personnalisée avec vos offres et liens</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Sidebar */}
@@ -880,6 +962,7 @@ const CreatorDashboard = ({ user, onUserUpdate }) => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 space-y-2">
                 {[
+                  { icon: Trophy, label: "Voir les campagnes Pool", path: "/pool" },
                   { icon: Briefcase, label: "Voir les missions", path: "/projects" },
                   { icon: BookOpen, label: "Formations", path: "/learn" },
                   { icon: Award, label: "Mon profil public", path: `/creators/${user?.user_id}` },

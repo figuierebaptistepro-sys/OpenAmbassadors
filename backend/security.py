@@ -106,15 +106,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
         # Content Security Policy (adjust based on your needs)
-        # Updated to support Google OAuth properly
+        # Updated to support Google OAuth and HelpCrunch chat widget
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.gstatic.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.gstatic.com https://embed.helpcrunch.com https://*.helpcrunch.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://embed.helpcrunch.com https://*.helpcrunch.com; "
+            "font-src 'self' https://fonts.gstatic.com https://embed.helpcrunch.com https://*.helpcrunch.com; "
             "img-src 'self' data: https: blob:; "
             "connect-src 'self' https: wss:; "
-            "frame-src https://accounts.google.com https://www.youtube.com https://*.google.com; "
+            "media-src 'self' https://*.helpcrunch.com; "
+            "frame-src https://accounts.google.com https://www.youtube.com https://*.google.com https://embed.helpcrunch.com https://*.helpcrunch.com; "
             "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp

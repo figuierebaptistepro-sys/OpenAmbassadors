@@ -215,7 +215,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     </div>
                     
                     <div style="text-align: center; margin: 25px 0;">
-                        <a href="https://modern-creator-card.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
+                        <a href="https://influence-pool-bugs.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px;">
                             Se connecter maintenant →
                         </a>
                     </div>
@@ -247,7 +247,7 @@ async def send_welcome_email(email: str, name: str, user_type: str):
                     {"Vous pouvez maintenant parcourir les missions et postuler aux projets qui vous intéressent." if user_type == "creator" else "Vous pouvez maintenant publier des projets et trouver des créateurs talentueux."}
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://modern-creator-card.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <a href="https://influence-pool-bugs.preview.emergentagent.com" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                         Accéder à mon compte
                     </a>
                 </div>
@@ -280,7 +280,7 @@ async def send_new_application_email(business_email: str, business_name: str, pr
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://modern-creator-card.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://influence-pool-bugs.preview.emergentagent.com/business/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les candidatures
                 </a>
             </div>
@@ -335,7 +335,7 @@ async def send_application_status_email(creator_email: str, creator_name: str, p
             </p>
             {info_box}
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://modern-creator-card.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://influence-pool-bugs.preview.emergentagent.com/projects" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir les missions
                 </a>
             </div>
@@ -384,7 +384,7 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
                 </p>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://modern-creator-card.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://influence-pool-bugs.preview.emergentagent.com/wallet" style="background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Voir mon portefeuille
                 </a>
             </div>
@@ -479,6 +479,11 @@ class CreatorProfile(BaseModel):
     
     # Portfolio
     portfolio_videos: List[dict] = []  # [{url, title, views, platform}]
+    portfolio_photos: List[dict] = []  # [{url, caption, type}] - type: product, backstage, lifestyle, instagram
+    
+    # Creator headline/tagline
+    tagline: Optional[str] = None  # Short 1-line pitch
+    response_time: Optional[str] = None  # "< 1h", "< 24h", "2-3 jours"
     
     # Rates
     min_rate: Optional[int] = None
@@ -518,6 +523,9 @@ class CreatorProfileUpdate(BaseModel):
     brands_worked: Optional[List[str]] = None
     results: Optional[str] = None
     portfolio_videos: Optional[List[dict]] = None
+    portfolio_photos: Optional[List[dict]] = None
+    tagline: Optional[str] = None
+    response_time: Optional[str] = None
     min_rate: Optional[int] = None
     max_rate: Optional[int] = None
     available: Optional[bool] = None
@@ -686,6 +694,34 @@ class Review(BaseModel):
     comment: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ==================== COLLABORATION REQUEST MODELS ====================
+
+class CollaborationRequestCreate(BaseModel):
+    creator_id: str
+    content_types: List[str] = []  # UGC, Ads, etc.
+    platforms: List[str] = []  # TikTok, Instagram, YouTube
+    budget_range: Optional[str] = None  # "500-1000", "1000-2500", etc.
+    deadline: Optional[str] = None
+    brief: str  # Description du projet
+    deliverables: Optional[str] = None  # Ce qui est attendu
+    additional_info: Optional[str] = None
+
+class CollaborationRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    request_id: str = Field(default_factory=lambda: f"collab_{uuid.uuid4().hex[:12]}")
+    creator_id: str
+    business_id: str
+    business_name: Optional[str] = None
+    content_types: List[str] = []
+    platforms: List[str] = []
+    budget_range: Optional[str] = None
+    deadline: Optional[str] = None
+    brief: str
+    deliverables: Optional[str] = None
+    additional_info: Optional[str] = None
+    status: str = "pending"  # pending, accepted, declined, expired
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== HELPER FUNCTIONS ====================
 
 def generate_otp():
@@ -833,7 +869,7 @@ class ResetPasswordRequest(BaseModel):
 
 async def send_password_reset_email(email: str, name: str, reset_token: str):
     """Send password reset email"""
-    reset_url = f"https://modern-creator-card.preview.emergentagent.com/reset-password?token={reset_token}"
+    reset_url = f"https://influence-pool-bugs.preview.emergentagent.com/reset-password?token={reset_token}"
     await send_email(
         to=email,
         subject="🔐 Réinitialisation de votre mot de passe",
@@ -968,7 +1004,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
                 Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://modern-creator-card.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="https://influence-pool-bugs.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
                     Se connecter
                 </a>
             </div>
@@ -1916,6 +1952,9 @@ async def get_creator(user_id: str):
         profile["picture"] = user.get("picture")
         profile["banner"] = user.get("banner")
         profile["is_premium"] = user.get("is_premium", False)
+        # Add portfolio photos from user collection
+        if user.get("portfolio_photos"):
+            profile["portfolio_photos"] = user.get("portfolio_photos")
     
     # Get reviews
     reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).to_list(50)
@@ -1926,6 +1965,24 @@ async def get_creator(user_id: str):
     profile["portfolio_status"] = "complete" if video_count >= 3 else "incomplete"
     
     return profile
+
+@api_router.get("/creators/{user_id}/reviews")
+async def get_creator_reviews(user_id: str):
+    """Get all reviews for a specific creator"""
+    reviews = await db.reviews.find({"creator_id": user_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with business info
+    for review in reviews:
+        business = await db.users.find_one({"user_id": review.get("business_id")}, {"_id": 0, "name": 1})
+        business_profile = await db.business_profiles.find_one({"user_id": review.get("business_id")}, {"_id": 0, "company_name": 1})
+        review["business_name"] = business_profile.get("company_name") if business_profile else (business.get("name") if business else "Entreprise")
+        
+        # Get project title if available
+        if review.get("project_id"):
+            project = await db.projects.find_one({"project_id": review["project_id"]}, {"_id": 0, "title": 1})
+            review["project_title"] = project.get("title") if project else None
+    
+    return reviews
 
 @api_router.get("/creators/me/profile")
 async def get_my_creator_profile(user: dict = Depends(get_current_user)):
@@ -2040,6 +2097,306 @@ async def delete_portfolio_video(video_index: int, user: dict = Depends(get_curr
     )
     
     return {"message": "Video deleted", "deleted": deleted_video}
+
+@api_router.post("/creators/me/photos")
+async def add_portfolio_photo(request: Request, user: dict = Depends(get_current_user)):
+    """Add a photo to creator's portfolio"""
+    body = await request.json()
+    url = body.get("url")
+    caption = body.get("caption", "")
+    photo_type = body.get("type", "product")  # product, backstage, lifestyle, instagram
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    photo_entry = {
+        "url": url,
+        "caption": caption,
+        "type": photo_type,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$push": {"portfolio_photos": photo_entry}}
+    )
+    
+    if result.modified_count == 0:
+        profile = CreatorProfile(user_id=user["user_id"], portfolio_photos=[photo_entry])
+        await db.creator_profiles.insert_one(profile.model_dump())
+    
+    return {"message": "Photo added", "photo": photo_entry}
+
+@api_router.delete("/creators/me/photos/{photo_index}")
+async def delete_portfolio_photo(photo_index: int, user: dict = Depends(get_current_user)):
+    """Delete a photo from creator's portfolio by index"""
+    profile = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    photos = profile.get("portfolio_photos", [])
+    
+    if photo_index < 0 or photo_index >= len(photos):
+        raise HTTPException(status_code=400, detail="Invalid photo index")
+    
+    deleted_photo = photos.pop(photo_index)
+    
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"portfolio_photos": photos}}
+    )
+    
+    return {"message": "Photo deleted", "deleted": deleted_photo}
+
+# ==================== FAVORITES ====================
+
+@api_router.post("/favorites/{creator_id}")
+async def add_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Add a creator to user's favorites"""
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Add to favorites (upsert)
+    await db.favorites.update_one(
+        {"user_id": user["user_id"], "creator_id": creator_id},
+        {"$set": {
+            "user_id": user["user_id"],
+            "creator_id": creator_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Ajouté aux favoris", "creator_id": creator_id}
+
+@api_router.delete("/favorites/{creator_id}")
+async def remove_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Remove a creator from user's favorites"""
+    result = await db.favorites.delete_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Favori non trouvé")
+    
+    return {"message": "Retiré des favoris", "creator_id": creator_id}
+
+@api_router.get("/favorites")
+async def get_favorites(user: dict = Depends(get_current_user)):
+    """Get user's favorite creators"""
+    favorites = await db.favorites.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Get creator details
+    creator_ids = [f["creator_id"] for f in favorites]
+    creators = []
+    
+    for cid in creator_ids:
+        creator = await db.users.find_one({"user_id": cid}, {"_id": 0, "password": 0})
+        if creator:
+            profile = await db.creator_profiles.find_one({"user_id": cid}, {"_id": 0})
+            if profile:
+                creator.update(profile)
+            creators.append(creator)
+    
+    return creators
+
+@api_router.get("/favorites/check/{creator_id}")
+async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)):
+    """Check if a creator is in user's favorites"""
+    favorite = await db.favorites.find_one({
+        "user_id": user["user_id"],
+        "creator_id": creator_id
+    })
+    
+    return {"is_favorite": favorite is not None}
+
+# ==================== COLLABORATION REQUESTS ====================
+
+@api_router.post("/collaboration-requests")
+async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
+    """Create a collaboration request from a business to a creator"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Seules les entreprises peuvent envoyer des demandes")
+    
+    # Check if business is subscribed
+    if not user.get("is_subscribed") and not user.get("is_premium"):
+        raise HTTPException(status_code=403, detail="Abonnement requis pour contacter les créateurs")
+    
+    # Get business profile for name
+    business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    business_name = business_profile.get("company_name") if business_profile else user.get("name", "Entreprise")
+    
+    # Check if creator exists
+    creator = await db.users.find_one({"user_id": data.creator_id}, {"_id": 0})
+    if not creator:
+        raise HTTPException(status_code=404, detail="Créateur non trouvé")
+    
+    # Create request
+    collab_request = CollaborationRequest(
+        creator_id=data.creator_id,
+        business_id=user["user_id"],
+        business_name=business_name,
+        content_types=data.content_types,
+        platforms=data.platforms,
+        budget_range=data.budget_range,
+        deadline=data.deadline,
+        brief=data.brief,
+        deliverables=data.deliverables,
+        additional_info=data.additional_info
+    )
+    
+    await db.collaboration_requests.insert_one(collab_request.model_dump())
+    
+    # Create or get conversation with creator
+    conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
+    existing_conv = await db.conversations.find_one({
+        "$or": [
+            {"participants": [user["user_id"], data.creator_id]},
+            {"participants": [data.creator_id, user["user_id"]]}
+        ]
+    })
+    
+    if existing_conv:
+        conversation_id = existing_conv["conversation_id"]
+    else:
+        # Create new conversation
+        new_conv = {
+            "conversation_id": conversation_id,
+            "participants": [user["user_id"], data.creator_id],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_message": None
+        }
+        await db.conversations.insert_one(new_conv)
+    
+    # Format collaboration message
+    objective_labels = {
+        "notoriete": "Notoriété",
+        "ads": "Ads", 
+        "ugc": "UGC",
+        "micro-trottoir": "Micro-trottoir",
+        "autre": "Autre"
+    }
+    objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
+    
+    collab_message = f"""📋 **Nouvelle demande de collaboration**
+
+💰 **Budget**: {data.budget_range or 'Non spécifié'}
+🎯 **Objectif**: {objective_label}
+📅 **Deadline**: {data.deadline or 'Flexible'}
+📢 **Diffusion**: {data.deliverables or 'Non spécifié'}
+
+📝 **Brief**:
+{data.brief}
+
+{f'📦 Infos supplémentaires: {data.additional_info}' if data.additional_info else ''}
+
+---
+*Vous pouvez accepter, refuser ou négocier cette demande.*"""
+    
+    # Create message in conversation
+    message_id = f"msg_{uuid.uuid4().hex[:12]}"
+    message = {
+        "message_id": message_id,
+        "conversation_id": conversation_id,
+        "sender_id": user["user_id"],
+        "content": collab_message,
+        "message_type": "collaboration_request",
+        "collaboration_request_id": collab_request.request_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read": False
+    }
+    await db.messages.insert_one(message)
+    
+    # Update conversation last message
+    await db.conversations.update_one(
+        {"conversation_id": conversation_id},
+        {"$set": {
+            "last_message": {
+                "content": "📋 Nouvelle demande de collaboration",
+                "sender_id": user["user_id"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            },
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Create notification for creator
+    await create_notification(
+        user_id=data.creator_id,
+        notif_type="collaboration_request",
+        title="Nouvelle demande de collaboration",
+        message=f"{business_name} souhaite collaborer avec vous !",
+        icon="💼",
+        link=f"/messages?conversation={conversation_id}",
+        data={"request_id": collab_request.request_id, "business_name": business_name, "conversation_id": conversation_id}
+    )
+    
+    return {"message": "Demande envoyée", "request_id": collab_request.request_id, "conversation_id": conversation_id}
+
+@api_router.get("/collaboration-requests/creator")
+async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests for a creator"""
+    requests = await db.collaboration_requests.find(
+        {"creator_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.get("/collaboration-requests/business")
+async def get_business_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Get all collaboration requests sent by a business"""
+    requests = await db.collaboration_requests.find(
+        {"business_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+@api_router.patch("/collaboration-requests/{request_id}/status")
+async def update_collaboration_request_status(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update collaboration request status (accept/decline)"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    if new_status not in ["accepted", "declined"]:
+        raise HTTPException(status_code=400, detail="Status invalide")
+    
+    collab_request = await db.collaboration_requests.find_one({"request_id": request_id}, {"_id": 0})
+    
+    if not collab_request:
+        raise HTTPException(status_code=404, detail="Demande non trouvée")
+    
+    # Only creator can update status
+    if collab_request["creator_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Non autorisé")
+    
+    await db.collaboration_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    # Notify business
+    creator_name = user.get("name", "Un créateur")
+    status_text = "accepté" if new_status == "accepted" else "décliné"
+    
+    await create_notification(
+        user_id=collab_request["business_id"],
+        notif_type="collaboration_response",
+        title=f"Demande {status_text}",
+        message=f"{creator_name} a {status_text} votre demande de collaboration",
+        icon="✅" if new_status == "accepted" else "❌",
+        link="/business/requests",
+        data={"request_id": request_id}
+    )
+    
+    return {"message": f"Demande {status_text}"}
 
 # ==================== BUSINESS ROUTES ====================
 
@@ -2228,6 +2585,40 @@ async def get_business_project_detail(project_id: str, user: dict = Depends(get_
     
     project["applications"] = enriched_applications
     return project
+
+@api_router.put("/projects/{project_id}")
+async def update_project(project_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update a project (business owner only)"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Réservé aux entreprises")
+    
+    project = await db.projects.find_one({"project_id": project_id, "business_id": user["user_id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    
+    body = await request.json()
+    
+    # Fields that can be updated
+    update_fields = {}
+    allowed_fields = [
+        "title", "description", "brief", "content_type", "budget",
+        "target_creators", "duration", "deadline", "location", 
+        "remote_ok", "requirements", "deliverables", "incubator_only", "banner_url"
+    ]
+    
+    for field in allowed_fields:
+        if field in body:
+            update_fields[field] = body[field]
+    
+    if update_fields:
+        update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.projects.update_one(
+            {"project_id": project_id},
+            {"$set": update_fields}
+        )
+    
+    updated_project = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    return updated_project
 
 @api_router.put("/projects/business/{project_id}/application/{creator_id}")
 async def update_application_status(project_id: str, creator_id: str, request: Request, user: dict = Depends(get_current_user)):
@@ -4034,11 +4425,12 @@ async def create_stripe_checkout(request: Request, checkout_request: stripe_paym
     )
 
 @api_router.get("/stripe/status/{session_id}")
-async def get_stripe_status(session_id: str, current_user: dict = Depends(get_current_user)):
+async def get_stripe_status(request: Request, session_id: str, current_user: dict = Depends(get_current_user)):
     """Check payment status"""
     return await stripe_payments.check_payment_status(
         session_id=session_id,
-        user_id=current_user.get("user_id")
+        user_id=current_user.get("user_id"),
+        request=request
     )
 
 @api_router.post("/webhook/stripe")
@@ -4046,17 +4438,276 @@ async def stripe_webhook(request: Request):
     """Handle Stripe webhooks"""
     return await stripe_payments.handle_stripe_webhook(request)
 
+@api_router.post("/stripe/pool-checkout")
+async def create_pool_checkout(request: Request, checkout_request: stripe_payments.CreatePoolCheckoutRequest, current_user: dict = Depends(get_current_user)):
+    """Create Stripe checkout session for pool campaign"""
+    return await stripe_payments.create_pool_checkout_session(
+        request=request,
+        checkout_request=checkout_request,
+        user_id=current_user.get("user_id"),
+        user_email=current_user.get("email")
+    )
+
+@api_router.get("/stripe/pool-status/{session_id}")
+async def get_pool_payment_status(request: Request, session_id: str, current_user: dict = Depends(get_current_user)):
+    """Check pool payment status and create pool if paid"""
+    return await stripe_payments.check_pool_payment_and_create(
+        session_id=session_id,
+        user_id=current_user.get("user_id"),
+        request=request
+    )
+
+# ==================== INFLUENCE POOLS ROUTES ====================
+import influence_pools
+
+@api_router.post("/pools")
+async def create_pool(pool_data: influence_pools.CreatePoolRequest, user: dict = Depends(get_current_user)):
+    """Create a new influence pool campaign (Business only)"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can create pools")
+    
+    try:
+        pool = await influence_pools.create_pool(db, user, pool_data)
+        return pool
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/pools")
+async def list_pools(user: dict = Depends(get_current_user)):
+    """List pools - Active pools for creators, Own pools for businesses"""
+    if user.get("user_type") == "business":
+        pools = await influence_pools.get_business_pools(db, user["user_id"])
+    else:
+        pools = await influence_pools.get_active_pools(db)
+    return pools
+
+@api_router.get("/pools/active")
+async def list_active_pools(limit: int = 50):
+    """List all active pools (public endpoint for arena)"""
+    pools = await influence_pools.get_active_pools(db, limit)
+    return pools
+
+# IMPORTANT: These /pools/my/* routes MUST come BEFORE /pools/{pool_id} to avoid "my" being treated as pool_id
+@api_router.get("/pools/my/applications")
+async def get_my_pool_applications(user: dict = Depends(get_current_user)):
+    """Get all pool applications for the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view applications")
+    
+    applications = await influence_pools.get_creator_applications(db, user["user_id"])
+    return applications
+
+@api_router.get("/pools/my/participations")
+async def get_my_participations(user: dict = Depends(get_current_user)):
+    """Get all pools the creator has joined"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view participations")
+    
+    participations = await influence_pools.get_creator_participations(db, user["user_id"])
+    return participations
+
+@api_router.get("/pools/my/submissions")
+async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get all submissions by the creator"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view submissions")
+    
+    submissions = await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
+    return submissions
+
+@api_router.get("/pools/{pool_id}")
+async def get_pool(pool_id: str, user: dict = Depends(get_current_user)):
+    """Get pool details"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    # Get participation and application status for creators
+    participation = None
+    application = None
+    if user.get("user_type") == "creator":
+        participation = await db.pool_participations.find_one(
+            {"pool_id": pool_id, "creator_id": user["user_id"]},
+            {"_id": 0}
+        )
+        if not participation:
+            application = await db.pool_applications.find_one(
+                {"pool_id": pool_id, "creator_id": user["user_id"]},
+                {"_id": 0}
+            )
+    
+    # Return UI-formatted data based on user type
+    if user.get("user_type") == "business":
+        return {
+            **pool,
+            "ui_summary": influence_pools.get_ui_business_summary(pool)
+        }
+    else:
+        return {
+            **pool,
+            "ui_arena": influence_pools.get_ui_creator_arena(pool, participation),
+            "participation": participation,
+            "application": application
+        }
+
+@api_router.get("/pools/{pool_id}/applications")
+async def get_pool_applications(pool_id: str, user: dict = Depends(get_current_user)):
+    """Get all applications for a pool (Business owner only)"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    if user.get("user_type") != "business" or pool["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    applications = await influence_pools.get_pool_applications(db, pool_id)
+    return applications
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/approve")
+async def approve_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Approve a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can approve applications")
+    
+    try:
+        result = await influence_pools.approve_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/pools/{pool_id}/applications/{application_id}/reject")
+async def reject_pool_application(pool_id: str, application_id: str, user: dict = Depends(get_current_user)):
+    """Reject a creator's application to join a pool"""
+    if user.get("user_type") != "business":
+        raise HTTPException(status_code=403, detail="Only businesses can reject applications")
+    
+    try:
+        result = await influence_pools.reject_application(db, pool_id, application_id, user["user_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/pools/{pool_id}/leaderboard")
+async def get_pool_leaderboard(pool_id: str, limit: int = 20):
+    """Get pool leaderboard"""
+    leaderboard = await influence_pools.get_pool_leaderboard(db, pool_id, limit)
+    return leaderboard
+
+@api_router.get("/pools/{pool_id}/submissions")
+async def get_pool_submissions(pool_id: str, user: dict = Depends(get_current_user)):
+    """Get all submissions for a pool (Business owner only)"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    if user.get("user_type") == "business" and pool["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    submissions = await influence_pools.get_pool_submissions(db, pool_id)
+    return submissions
+
+@api_router.get("/pools/{pool_id}/payouts")
+async def get_pool_payouts(pool_id: str, user: dict = Depends(get_current_user)):
+    """Calculate and get payouts for all participants (Business owner only)"""
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    
+    if user.get("user_type") == "business" and pool["business_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    payouts = await influence_pools.calculate_pool_payouts(db, pool_id)
+    return payouts
+
+@api_router.post("/pools/{pool_id}/join")
+async def join_pool(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Creator joins a pool (or applies if requires_approval)"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can join pools")
+    
+    # Get optional message from request body
+    message = None
+    try:
+        body = await request.json()
+        message = body.get("message")
+    except:
+        pass
+    
+    try:
+        result = await influence_pools.join_pool(db, user, pool_id, message)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/pools/{pool_id}/submit")
+async def submit_content(pool_id: str, submission: influence_pools.SubmitContentRequest, user: dict = Depends(get_current_user)):
+    """Creator submits content for a pool"""
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can submit content")
+    
+    # Ensure pool_id matches
+    submission.pool_id = pool_id
+    
+    try:
+        result = await influence_pools.submit_content(db, user, submission)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.put("/pools/{pool_id}/status")
+async def update_pool_status(pool_id: str, request: Request, user: dict = Depends(get_current_user)):
+    pool = await influence_pools.get_pool_by_id(db, pool_id)
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+
+    is_admin = user.get("email") in ADMIN_EMAILS
+    is_owner = user.get("user_type") == "business" and pool.get("business_id") == user.get("user_id")
+
+    if not is_admin and not is_owner:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    body = await request.json()
+    new_status = body.get("status")
+
+    if new_status not in [s.value for s in influence_pools.PoolStatus]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    await db.influence_pools.update_one(
+        {"pool_id": pool_id},
+        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    return {"pool_id": pool_id, "status": new_status}
+
+
+@api_router.get("/pools/my/participations")
+async def get_my_participations(user: dict = Depends(get_current_user)):
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view participations")
+
+    return await influence_pools.get_creator_participations(db, user["user_id"])
+
+
+@api_router.get("/pools/my/submissions")
+async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    if user.get("user_type") != "creator":
+        raise HTTPException(status_code=403, detail="Only creators can view submissions")
+
+    return await influence_pools.get_creator_submissions(db, user["user_id"], pool_id)
+
+    return RedirectResponse(url=result["url"], status_code=303)
+
 # Include router
 app.include_router(api_router)
 
 # Add Security Headers Middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS Configuration - More restrictive
+# CORS Configuration - Include production domains
 cors_origins = os.environ.get('CORS_ORIGINS', '')
 if not cors_origins:
-    logging.warning("CORS_ORIGINS not set - using restrictive default")
-    cors_origins = "https://modern-creator-card.preview.emergentagent.com"
+    logging.warning("CORS_ORIGINS not set - using default with production domains")
+    cors_origins = "https://influence-pool-bugs.preview.emergentagent.com,https://app.openambassadors.com,https://openambassadors.com,https://www.openambassadors.com"
 
 app.add_middleware(
     CORSMiddleware,

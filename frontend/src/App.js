@@ -11,13 +11,16 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 
+// Components
+// HelpCrunch is now handled directly in index.html - no React component needed
+
 // Pages
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SelectTypePage from "./pages/SelectTypePage";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
-import CreatorProfile from "./pages/CreatorProfile";
+import CreatorProfileV2 from "./pages/CreatorProfileV2";
 import BrowseCreators from "./pages/BrowseCreators";
 import LearnPage from "./pages/LearnPage";
 import ArticlePage from "./pages/ArticlePage";
@@ -35,7 +38,13 @@ import ExternalReviewPage from "./pages/ExternalReviewPage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
 import CreatorCardManagePage from "./pages/CreatorCardManagePage";
-import PricingPage, { PaymentSuccessPage, PaymentCancelPage } from "./pages/PricingPage";
+import ArenaPage from "./pages/ArenaPage";
+import PoolDetailPage from "./pages/PoolDetailPage";
+import CreatePoolPage from "./pages/CreatePoolPage";
+import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
+import BusinessPoolsPage from "./pages/BusinessPoolsPage";
+import PoolPaymentSuccessPage from "./pages/PoolPaymentSuccessPage";
+import MyFavoritesPage from "./pages/MyFavoritesPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -199,7 +208,7 @@ const ProtectedRoute = ({ children, requireType = false }) => {
 };
 
 // App Router
-function AppRouter() {
+function AppRouter({ onUserChange }) {
   const location = useLocation();
 
   if (location.hash?.includes("session_id=")) {
@@ -278,6 +287,27 @@ function AppRouter() {
         }
       />
       
+      {/* Pool Routes (Creators) */}
+      <Route
+        path="/pool"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <ArenaPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pool/:poolId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <PoolDetailPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      {/* Legacy arena routes redirect to pool */}
+      <Route path="/arena" element={<Navigate to="/pool" replace />} />
+      <Route path="/arena/:poolId" element={<Navigate to="/pool" replace />} />
+      
       {/* Business Routes */}
       <Route
         path="/business"
@@ -304,10 +334,58 @@ function AppRouter() {
         }
       />
       <Route
+        path="/business/projects/:projectId/edit"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <NewProjectPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/business/projects/:projectId"
         element={
           <ProtectedRoute requireType>
             {({ user }) => <ProjectApplicationsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessPoolsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/new"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <CreatePoolPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/success"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <PoolPaymentSuccessPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/pools/:poolId"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessPoolDetailPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/favorites"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <MyFavoritesPage user={user} />}
           </ProtectedRoute>
         }
       />
@@ -323,7 +401,7 @@ function AppRouter() {
         path="/creators/:userId"
         element={
           <ProtectedRoute requireType>
-            {({ user }) => <CreatorProfile currentUser={user} />}
+            {({ user }) => <CreatorProfileV2 currentUser={user} />}
           </ProtectedRoute>
         }
       />

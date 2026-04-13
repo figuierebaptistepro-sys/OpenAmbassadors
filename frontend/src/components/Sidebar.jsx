@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2
+  Settings, HelpCircle, Crown, LogOut, Menu, X, MessageCircle, Share2, Heart
 } from "lucide-react";
 
 const LOGO_URL = "/logo-sun.png";
@@ -36,6 +36,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     // { icon: Share2, label: "Creator Card", path: "/creator-card", highlight: true }, // hidden for launch
     // { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount }, // hidden for launch
     // { icon: Briefcase, label: "Missions", path: "/projects" }, // hidden for launch
+    // { icon: Crown, label: "Pool", path: "/pool", highlight: true }, // hidden for launch
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
@@ -43,7 +44,9 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/business" },
     // { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadCount }, // hidden for launch
     { icon: Users, label: "Find Creator", path: "/creators" },
+    { icon: Heart, label: "Mes Favoris", path: "/business/favorites" },
     { icon: Briefcase, label: "Mes Projets", path: "/business/projects" },
+    // { icon: Crown, label: "Pool", path: "/business/pools", highlight: true }, // hidden for launch
     { icon: BookOpen, label: "Learn", path: "/learn" },
   ];
 
