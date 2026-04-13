@@ -645,17 +645,17 @@ const BrowseCreators = ({ user }) => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
                               {creator.available && (
-                                <Badge className="bg-green-100 text-green-700 text-xs">Disponible</Badge>
+                                <Badge className="bg-green-100 text-green-700 text-xs flex-shrink-0">Disponible</Badge>
                               )}
                               {creator.content_types?.slice(0, 2).map(type => (
-                                <Badge key={type} variant="outline" className="text-xs border-gray-200">
+                                <Badge key={type} variant="outline" className="text-xs border-gray-200 flex-shrink-0">
                                   {type}
                                 </Badge>
                               ))}
                               {creator.portfolio_videos?.length > 0 && (
-                                <Badge variant="outline" className="text-xs border-gray-200">
+                                <Badge variant="outline" className="text-xs border-gray-200 flex-shrink-0">
                                   <Video className="w-3 h-3 mr-1" />
                                   {creator.portfolio_videos.length}
                                 </Badge>
