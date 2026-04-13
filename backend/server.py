@@ -2228,8 +2228,8 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
 
     # Get business profile for name
     business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
-    business_name = business_profile.get("company_name") if business_profile else user.get("name", "Entreprise")
     business_email = user.get("email", "")
+    business_name = (business_profile.get("company_name") if business_profile else None) or user.get("name") or business_email or "Entreprise"
 
     # Check if creator exists
     creator = await db.users.find_one({"user_id": data.creator_id}, {"_id": 0})
@@ -2237,7 +2237,7 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         raise HTTPException(status_code=404, detail="Créateur non trouvé")
 
     creator_profile = await db.creator_profiles.find_one({"user_id": data.creator_id}, {"_id": 0})
-    creator_name = creator_profile.get("name") if creator_profile else creator.get("name", "Créateur")
+    creator_name = (creator_profile.get("name") if creator_profile else None) or creator.get("name") or "Créateur"
 
     # Save request in DB
     collab_request = CollaborationRequest(
