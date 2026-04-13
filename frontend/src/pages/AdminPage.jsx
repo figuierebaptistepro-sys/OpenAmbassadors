@@ -6,7 +6,7 @@ import {
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
   Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock, Gift,
   Star, Bell, Activity, BarChart3, Send, UserPlus, DollarSign, Percent,
-  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash, Settings
+  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash, Settings, Inbox
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -69,7 +69,8 @@ const AdminPage = ({ user }) => {
   const [affiliates, setAffiliates] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
-  
+  const [demandes, setDemandes] = useState([]);
+
   // Global search
   const [globalSearch, setGlobalSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -149,6 +150,7 @@ const AdminPage = ({ user }) => {
     if (activeTab === "affiliates") fetchAffiliates();
     if (activeTab === "reviews") fetchReviews();
     if (activeTab === "activity") fetchActivityLogs();
+    if (activeTab === "demandes") fetchDemandes();
   }, [activeTab, userTypeFilter, userStatusFilter, withdrawalStatusFilter, projectStatusFilter, reportStatusFilter, reviewSourceFilter]);
 
   // ==================== FETCH FUNCTIONS ====================
@@ -381,6 +383,25 @@ const AdminPage = ({ user }) => {
     try {
       const response = await fetch(`${API_URL}/api/admin/activity-logs?limit=50`, { credentials: "include" });
       if (response.ok) setActivityLogs(await response.json());
+    } catch (error) { console.error("Error:", error); }
+  };
+
+  const fetchDemandes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/collaboration-requests`, { credentials: "include" });
+      if (response.ok) setDemandes(await response.json());
+    } catch (error) { console.error("Error:", error); }
+  };
+
+  const updateDemandeStatus = async (requestId, status) => {
+    try {
+      await fetch(`${API_URL}/api/admin/collaboration-requests/${requestId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status })
+      });
+      fetchDemandes();
     } catch (error) { console.error("Error:", error); }
   };
 
@@ -691,6 +712,12 @@ const AdminPage = ({ user }) => {
             </TabsTrigger>
             <TabsTrigger value="activity" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Activity className="w-4 h-4 mr-1" />Activité
+            </TabsTrigger>
+            <TabsTrigger value="demandes" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+              <Inbox className="w-4 h-4 mr-1" />Demandes
+              {demandes.filter(d => d.status === "pending").length > 0 && (
+                <Badge className="ml-1 bg-primary text-white text-xs">{demandes.filter(d => d.status === "pending").length}</Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -1279,6 +1306,68 @@ const AdminPage = ({ user }) => {
                   </div>
                 ) : (
                   <div className="text-center py-12"><Activity className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">Aucune activité récente</p></div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ==================== DEMANDES TAB ==================== */}
+          <TabsContent value="demandes" className="space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-gray-900">Demandes de collaboration ({demandes.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {demandes.length === 0 ? (
+                  <div className="text-center py-12"><Inbox className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">Aucune demande pour l'instant</p></div>
+                ) : (
+                  <div className="space-y-3">
+                    {demandes.map((d) => (
+                      <div key={d.request_id} className="border border-gray-100 rounded-xl p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-gray-900">{d.business_name || "Entreprise"}</p>
+                            <p className="text-xs text-gray-500">{d.business_email}</p>
+                          </div>
+                          <Badge className={`text-xs flex-shrink-0 ${
+                            d.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                            d.status === "accepted" ? "bg-green-100 text-green-700" :
+                            d.status === "declined" ? "bg-red-100 text-red-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            {d.status === "pending" ? "En attente" : d.status === "accepted" ? "Acceptée" : d.status === "declined" ? "Refusée" : d.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>→</span>
+                          <span className="font-medium">{d.creator_name}</span>
+                          {d.budget_range && <Badge variant="outline" className="text-xs">{d.budget_range}</Badge>}
+                          {d.content_types?.[0] && <Badge variant="outline" className="text-xs">{d.content_types[0]}</Badge>}
+                        </div>
+                        {d.brief && <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 line-clamp-3">{d.brief}</p>}
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(d.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                          {d.deadline && <span>• Deadline: {d.deadline}</span>}
+                        </div>
+                        {d.status === "pending" && (
+                          <div className="flex gap-2 pt-1">
+                            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white text-xs" onClick={() => updateDemandeStatus(d.request_id, "accepted")}>
+                              <CheckCircle className="w-3 h-3 mr-1" /> Lien fait
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs border-red-200 text-red-600 hover:bg-red-50" onClick={() => updateDemandeStatus(d.request_id, "declined")}>
+                              <XCircle className="w-3 h-3 mr-1" /> Refuser
+                            </Button>
+                            <a href={`mailto:${d.business_email}`} target="_blank" rel="noreferrer">
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <Mail className="w-3 h-3 mr-1" /> Répondre
+                              </Button>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>

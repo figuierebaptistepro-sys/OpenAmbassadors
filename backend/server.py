@@ -2340,6 +2340,33 @@ async def update_collaboration_request_status(request_id: str, request: Request,
     
     return {"message": f"Demande {status_text}"}
 
+@api_router.get("/admin/collaboration-requests")
+async def get_all_collaboration_requests(user: dict = Depends(get_current_user)):
+    """Admin: get all collaboration requests"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    requests = await db.collaboration_requests.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    # Enrich with creator name
+    for req in requests:
+        creator_profile = await db.creator_profiles.find_one({"user_id": req.get("creator_id")}, {"_id": 0, "name": 1})
+        req["creator_name"] = creator_profile.get("name") if creator_profile else req.get("creator_id", "")
+        business_profile = await db.business_profiles.find_one({"user_id": req.get("business_id")}, {"_id": 0, "company_name": 1})
+        business_user = await db.users.find_one({"user_id": req.get("business_id")}, {"_id": 0, "email": 1})
+        req["business_email"] = business_user.get("email") if business_user else ""
+        if not req.get("business_name") and business_profile:
+            req["business_name"] = business_profile.get("company_name", "")
+    return requests
+
+@api_router.patch("/admin/collaboration-requests/{request_id}/status")
+async def admin_update_collaboration_status(request_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: update collaboration request status"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    new_status = body.get("status")
+    await db.collaboration_requests.update_one({"request_id": request_id}, {"$set": {"status": new_status}})
+    return {"message": "Statut mis à jour"}
+
 # ==================== BUSINESS ROUTES ====================
 
 @api_router.get("/business/me/profile")
