@@ -2222,8 +2222,9 @@ async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)
 @api_router.post("/collaboration-requests")
 async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
     """Create a collaboration request from a business to a creator - routed to admin"""
-    if user.get("user_type") != "business":
-        raise HTTPException(status_code=403, detail="Seules les entreprises peuvent envoyer des demandes")
+    is_admin = user.get("email") in ADMIN_EMAILS
+    if user.get("user_type") == "creator" and not is_admin:
+        raise HTTPException(status_code=403, detail="Les créateurs ne peuvent pas envoyer de demandes de collaboration")
 
     # Get business profile for name
     business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
@@ -2296,13 +2297,15 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
                     })
 
                 msg_content = (
-                    f"Demande de {business_name} ({business_email}) pour {creator_name}\n\n"
+                    f"Marque : {business_name}\n"
+                    f"Email : {business_email}\n"
+                    f"Créateur demandé : {creator_name}\n\n"
                     f"Budget : {data.budget_range or 'Non spécifié'}\n"
                     f"Objectif : {objective_label}\n"
                     f"Deadline : {data.deadline or 'Flexible'}\n"
                     f"Diffusion : {data.deliverables or 'Non spécifié'}\n\n"
                     f"Brief :\n{data.brief}"
-                    + (f"\n\nInfos supplémentaires : {data.additional_info}" if data.additional_info else "")
+                    + (f"\n\nInfos : {data.additional_info}" if data.additional_info else "")
                 )
 
                 message_id = f"msg_{uuid.uuid4().hex[:12]}"
