@@ -1670,6 +1670,18 @@ const AdminPage = ({ user }) => {
                   ))}
                 </div>
               </div>
+              {selectedUser.user_type === "creator" && (
+                <div className="pt-2 space-y-2">
+                  <p className="text-gray-500 text-xs">Visibilité Find Creator</p>
+                  <Button size="sm" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5" onClick={async () => {
+                    const r = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/ensure-profile`, { method: "POST", credentials: "include" });
+                    const d = await r.json();
+                    toast.success(d.created ? "Profil créateur créé — visible dans Find Creator" : "Profil déjà existant");
+                  }}>
+                    <UserCheck className="w-4 h-4 mr-2" />Forcer la création du profil créateur
+                  </Button>
+                </div>
+              )}
               <div className="pt-4 border-t border-gray-100 space-y-2">
                 <p className="text-gray-500 text-xs">Actions dangereuses</p>
                 <div className="flex gap-2">
