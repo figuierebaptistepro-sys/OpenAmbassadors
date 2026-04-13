@@ -50,6 +50,20 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [agencyCampaigns, setAgencyCampaigns] = useState([]);
+
+  const AGENCY_STATUSES = [
+    { key: "brief_recu", label: "Brief reçu" },
+    { key: "casting", label: "Casting" },
+    { key: "tournage", label: "Tournage" },
+    { key: "montage", label: "Montage" },
+    { key: "livraison", label: "Livraison des fichiers" },
+    { key: "termine", label: "Terminé" },
+  ];
+  const AGENCY_FORMULAS = [
+    { key: "12_videos", label: "12 vidéos / mois", videos: 12 },
+    { key: "20_videos", label: "20 vidéos / mois", videos: 20 },
+  ];
 
   const [editForm, setEditForm] = useState({
     company_name: "", description: "", business_type: "",
@@ -58,7 +72,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
   useEffect(() => {
     fetchData();
+    if (user?.is_agency_client) fetchAgencyCampaigns();
   }, []);
+
+  const fetchAgencyCampaigns = async () => {
+    try {
+      const r = await fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" });
+      if (r.ok) setAgencyCampaigns(await r.json());
+    } catch (e) { console.error(e); }
+  };
 
   // Upload photo de profil/logo
   const handlePictureUpload = async (e) => {
@@ -250,6 +272,79 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             Nouveau projet
           </Button>
         </div>
+
+        {/* ===== AGENCY CLIENT CAMPAIGNS ===== */}
+        {user?.is_agency_client && (
+          <div className="mb-6">
+            <h2 className="font-heading text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              Mes campagnes
+            </h2>
+            {agencyCampaigns.length === 0 ? (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="py-8 text-center text-sm text-gray-400">
+                  Aucune campagne en cours. Ton équipe OpenAmbassadors te préparera ça très vite !
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {agencyCampaigns.map((c) => {
+                  const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
+                  const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
+                  return (
+                    <Card key={c.campaign_id} className="border-0 shadow-sm">
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-semibold text-sm">{c.title}</p>
+                          <Badge className="bg-primary/10 text-primary text-xs ml-2 flex-shrink-0">
+                            {AGENCY_STATUSES[currentIdx]?.label || c.status}
+                          </Badge>
+                        </div>
+                        {c.description && <p className="text-xs text-gray-500 mb-3">{c.description}</p>}
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
+                          {formula && <span className="font-medium text-primary">📦 {formula.label}</span>}
+                          {c.creator_name && <span>🎬 {c.creator_name}</span>}
+                        </div>
+                        {/* Videos delivered */}
+                        {formula && (
+                          <div className="mb-3 space-y-1">
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Vidéos livrées</span>
+                              <span className="font-semibold">{c.videos_delivered || 0} / {formula.videos}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2">
+                              <div className="bg-green-500 h-2 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, ((c.videos_delivered || 0) / formula.videos) * 100)}%` }} />
+                            </div>
+                          </div>
+                        )}
+                        {/* Progress bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
+                            <span>{Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / AGENCY_STATUSES.length) * 100}%` }} />
+                          </div>
+                          <p className="text-xs text-primary font-medium">{AGENCY_STATUSES[currentIdx]?.label}</p>
+                        </div>
+                        {/* Steps */}
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {AGENCY_STATUSES.map((s, i) => (
+                            <span key={s.key} className={`text-xs px-2 py-0.5 rounded-full ${i <= currentIdx ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-400"}`}>
+                              {s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Content */}
