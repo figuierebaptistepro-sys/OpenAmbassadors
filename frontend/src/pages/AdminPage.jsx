@@ -529,6 +529,16 @@ const AdminPage = ({ user }) => {
     } catch (error) { toast.error("Erreur"); }
   };
 
+  const handleToggleAgencyClient = async (userId) => {
+    try {
+      const r = await fetch(`${API_URL}/api/admin/agency/clients/${userId}/toggle`, {
+        method: "PATCH", credentials: "include"
+      });
+      if (r.ok) { const d = await r.json(); toast.success(d.is_agency_client ? "Client agence activé" : "Client agence désactivé"); fetchUsers(); fetchAgencyClients(); }
+      else toast.error("Erreur");
+    } catch (e) { toast.error("Erreur"); }
+  };
+
   const handleTogglePremium = async (userId, isPremium) => {
     try {
       const response = await fetch(`${API_URL}/api/admin/users/${userId}/premium`, {
@@ -1261,6 +1271,7 @@ const AdminPage = ({ user }) => {
                             <p className="font-medium text-gray-900 text-sm">{u.name || "Sans nom"}</p>
                             {u.is_banned && <Badge className="bg-red-500 text-white text-xs"><Ban className="w-3 h-3 mr-1" />Banni</Badge>}
                             {u.is_premium && <Badge className="bg-gradient-to-r from-primary to-pink-500 text-white text-xs"><Crown className="w-3 h-3 mr-1" />Premium</Badge>}
+                            {u.is_agency_client && <Badge className="bg-orange-100 text-orange-700 text-xs"><Building2 className="w-3 h-3 mr-1" />Agence</Badge>}
                             <Badge className={`text-xs ${u.user_type === "creator" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{u.user_type === "creator" ? "Créateur" : "Entreprise"}</Badge>
                           </div>
                           <p className="text-gray-500 text-xs">{u.email}</p>
@@ -1268,6 +1279,7 @@ const AdminPage = ({ user }) => {
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline" onClick={() => { setSelectedUser(u); setUserDialogOpen(true); }} className="border-gray-200"><Eye className="w-4 h-4" /></Button>
                           {u.user_type === "creator" && <Button size="sm" variant={u.is_premium ? "default" : "outline"} onClick={() => handleTogglePremium(u.user_id, !u.is_premium)} className={u.is_premium ? "bg-primary" : "border-gray-200"}><Crown className="w-4 h-4" /></Button>}
+                          {u.user_type !== "creator" && <Button size="sm" variant={u.is_agency_client ? "default" : "outline"} onClick={() => handleToggleAgencyClient(u.user_id)} className={u.is_agency_client ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-gray-200"} title={u.is_agency_client ? "Retirer client agence" : "Passer en client agence"}><Building2 className="w-4 h-4" /></Button>}
                         </div>
                       </div>
                     ))}
