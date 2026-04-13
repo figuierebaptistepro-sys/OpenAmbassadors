@@ -50,6 +50,16 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [agencyCampaigns, setAgencyCampaigns] = useState([]);
+
+  const AGENCY_STATUSES = [
+    { key: "brief_recu", label: "Brief reçu" },
+    { key: "recherche_createur", label: "Recherche créateur" },
+    { key: "createur_trouve", label: "Créateur trouvé" },
+    { key: "en_production", label: "Contenu en production" },
+    { key: "livraison", label: "Livraison" },
+    { key: "termine", label: "Terminé" },
+  ];
 
   const [editForm, setEditForm] = useState({
     company_name: "", description: "", business_type: "",
@@ -116,6 +126,11 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
       if (creatorsRes.ok) setCreators(await creatorsRes.json());
       if (packsRes.ok) setPacks(await packsRes.json());
       if (projectsRes.ok) setProjects(await projectsRes.json());
+      // Fetch agency campaigns if agency client
+      try {
+        const campRes = await fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" });
+        if (campRes.ok) setAgencyCampaigns(await campRes.json());
+      } catch (e) {}
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -251,10 +266,70 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
           </Button>
         </div>
 
+        {/* ===== AGENCY CLIENT CAMPAIGNS ===== */}
+        {user?.is_agency_client && (
+          <div className="mb-6">
+            <h2 className="font-heading text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              Mes campagnes
+            </h2>
+            {agencyCampaigns.length === 0 ? (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="py-8 text-center text-sm text-gray-400">
+                  Aucune campagne en cours. Ton équipe OpenAmbassadors te préparera ça très vite !
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {agencyCampaigns.map((c) => {
+                  const statusList = AGENCY_STATUSES;
+                  const currentIdx = statusList.findIndex(s => s.key === c.status);
+                  return (
+                    <Card key={c.campaign_id} className="border-0 shadow-sm">
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-semibold text-sm">{c.title}</p>
+                          <Badge className="bg-primary/10 text-primary text-xs ml-2 flex-shrink-0">
+                            {statusList[currentIdx]?.label || c.status}
+                          </Badge>
+                        </div>
+                        {c.description && <p className="text-xs text-gray-500 mb-3">{c.description}</p>}
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
+                          {c.budget && <span>💰 {c.budget}</span>}
+                          {c.creator_name && <span>🎬 {c.creator_name}</span>}
+                        </div>
+                        {/* Progress bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>Étape {currentIdx + 1}/{statusList.length}</span>
+                            <span>{Math.round(((currentIdx + 1) / statusList.length) * 100)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / statusList.length) * 100}%` }} />
+                          </div>
+                          <p className="text-xs text-primary font-medium">{statusList[currentIdx]?.label}</p>
+                        </div>
+                        {/* Steps */}
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {statusList.map((s, i) => (
+                            <span key={s.key} className={`text-xs px-2 py-0.5 rounded-full ${i <= currentIdx ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-400"}`}>
+                              {s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4">
-            
+
             {/* Section 1: Créer un projet */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">

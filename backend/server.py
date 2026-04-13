@@ -694,6 +694,39 @@ class Review(BaseModel):
     comment: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ==================== AGENCY MODELS ====================
+
+AGENCY_STATUSES = [
+    {"key": "brief_recu",           "label": "Brief reçu"},
+    {"key": "recherche_createur",   "label": "Recherche créateur"},
+    {"key": "createur_trouve",      "label": "Créateur trouvé"},
+    {"key": "en_production",        "label": "Contenu en production"},
+    {"key": "livraison",            "label": "Livraison"},
+    {"key": "termine",              "label": "Terminé"},
+]
+
+class AgencyCampaign(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    campaign_id: str = Field(default_factory=lambda: f"camp_{uuid.uuid4().hex[:12]}")
+    client_id: str
+    title: str
+    description: Optional[str] = None
+    budget: Optional[str] = None
+    creator_id: Optional[str] = None
+    creator_name: Optional[str] = None
+    status: str = "brief_recu"
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AgencyInvitation(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    token: str = Field(default_factory=lambda: uuid.uuid4().hex)
+    created_by: str
+    used: bool = False
+    used_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== COLLABORATION REQUEST MODELS ====================
 
 class CollaborationRequestCreate(BaseModel):
@@ -853,6 +886,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     ref_code: Optional[str] = None  # Code de parrainage
+    invite_token: Optional[str] = None  # Agency invitation token
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -1122,7 +1156,21 @@ async def register_user(request: Request, data: RegisterRequest, response: Respo
                 logging.info(f"[AFFILIATE] User {user_id} referred by {referrer_id}")
         except Exception as e:
             logging.error(f"[AFFILIATE] Error processing referral: {e}")
-    
+
+    # Handle agency invitation token
+    if data.invite_token:
+        try:
+            inv = await db.agency_invitations.find_one({"token": data.invite_token, "used": False}, {"_id": 0})
+            if inv:
+                await db.users.update_one({"user_id": user_id}, {"$set": {"is_agency_client": True}})
+                await db.agency_invitations.update_one(
+                    {"token": data.invite_token},
+                    {"$set": {"used": True, "used_by": user_id}}
+                )
+                logging.info(f"[AGENCY] User {user_id} registered as agency client via invitation")
+        except Exception as e:
+            logging.error(f"[AGENCY] Error processing invitation: {e}")
+
     # Create session
     session_token = generate_secure_token(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
@@ -2430,6 +2478,114 @@ async def admin_update_collaboration_status(request_id: str, request: Request, u
     new_status = body.get("status")
     await db.collaboration_requests.update_one({"request_id": request_id}, {"$set": {"status": new_status}})
     return {"message": "Statut mis à jour"}
+
+# ==================== AGENCY ROUTES ====================
+
+@api_router.post("/admin/agency/invitations")
+async def create_agency_invitation(user: dict = Depends(get_current_user)):
+    """Generate an agency client invitation link"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    invitation = AgencyInvitation(created_by=user["user_id"])
+    await db.agency_invitations.insert_one(invitation.model_dump())
+    return {"token": invitation.token}
+
+@api_router.get("/admin/agency/invitations")
+async def list_agency_invitations(user: dict = Depends(get_current_user)):
+    """List all agency invitations"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    invitations = await db.agency_invitations.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return invitations
+
+@api_router.post("/admin/agency/campaigns")
+async def create_agency_campaign(request: Request, user: dict = Depends(get_current_user)):
+    """Create a campaign for an agency client"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    campaign = AgencyCampaign(
+        client_id=body["client_id"],
+        title=body["title"],
+        description=body.get("description"),
+        budget=body.get("budget"),
+        creator_id=body.get("creator_id"),
+        creator_name=body.get("creator_name"),
+        notes=body.get("notes"),
+        status=body.get("status", "brief_recu"),
+    )
+    await db.agency_campaigns.insert_one(campaign.model_dump())
+    return campaign.model_dump()
+
+@api_router.get("/admin/agency/campaigns")
+async def get_all_agency_campaigns(user: dict = Depends(get_current_user)):
+    """Get all agency campaigns"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    campaigns = await db.agency_campaigns.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    # Enrich with client info
+    for c in campaigns:
+        client = await db.users.find_one({"user_id": c["client_id"]}, {"_id": 0})
+        c["client_name"] = client.get("name") if client else c["client_id"]
+        c["client_email"] = client.get("email") if client else ""
+    return campaigns
+
+@api_router.patch("/admin/agency/campaigns/{campaign_id}")
+async def update_agency_campaign(campaign_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update a campaign (status, notes, creator, etc.)"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.agency_campaigns.update_one({"campaign_id": campaign_id}, {"$set": body})
+    return {"message": "Campagne mise à jour"}
+
+@api_router.delete("/admin/agency/campaigns/{campaign_id}")
+async def delete_agency_campaign(campaign_id: str, user: dict = Depends(get_current_user)):
+    """Delete a campaign"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    await db.agency_campaigns.delete_one({"campaign_id": campaign_id})
+    return {"message": "Campagne supprimée"}
+
+@api_router.get("/admin/agency/clients")
+async def get_agency_clients(user: dict = Depends(get_current_user)):
+    """Get all agency clients"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    clients = await db.users.find({"is_agency_client": True}, {"_id": 0}).to_list(500)
+    return clients
+
+@api_router.patch("/admin/agency/clients/{user_id}/toggle")
+async def toggle_agency_client(user_id: str, user: dict = Depends(get_current_user)):
+    """Toggle is_agency_client flag on a user"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    target = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    new_val = not target.get("is_agency_client", False)
+    await db.users.update_one({"user_id": user_id}, {"$set": {"is_agency_client": new_val}})
+    return {"is_agency_client": new_val}
+
+@api_router.get("/agency/my-campaigns")
+async def get_my_agency_campaigns(user: dict = Depends(get_current_user)):
+    """Get campaigns for the logged-in agency client"""
+    campaigns = await db.agency_campaigns.find({"client_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return campaigns
+
+@api_router.get("/agency/statuses")
+async def get_agency_statuses():
+    """Get all possible campaign statuses"""
+    return AGENCY_STATUSES
+
+@api_router.post("/auth/check-invitation")
+async def check_invitation(request: Request):
+    """Verify an invitation token is valid"""
+    body = await request.json()
+    token = body.get("token")
+    inv = await db.agency_invitations.find_one({"token": token, "used": False}, {"_id": 0})
+    return {"valid": inv is not None}
 
 @api_router.post("/admin/register-id")
 async def register_admin_id(user: dict = Depends(get_current_user)):
