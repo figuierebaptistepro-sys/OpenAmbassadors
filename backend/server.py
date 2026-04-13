@@ -2221,24 +2221,24 @@ async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)
 
 @api_router.post("/collaboration-requests")
 async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
-    """Create a collaboration request from a business to a creator"""
+    """Create a collaboration request from a business to a creator - routed to admin"""
     if user.get("user_type") != "business":
         raise HTTPException(status_code=403, detail="Seules les entreprises peuvent envoyer des demandes")
-    
-    # Check if business is subscribed
-    if not user.get("is_subscribed") and not user.get("is_premium"):
-        raise HTTPException(status_code=403, detail="Abonnement requis pour contacter les créateurs")
-    
+
     # Get business profile for name
     business_profile = await db.business_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     business_name = business_profile.get("company_name") if business_profile else user.get("name", "Entreprise")
-    
+    business_email = user.get("email", "")
+
     # Check if creator exists
     creator = await db.users.find_one({"user_id": data.creator_id}, {"_id": 0})
     if not creator:
         raise HTTPException(status_code=404, detail="Créateur non trouvé")
-    
-    # Create request
+
+    creator_profile = await db.creator_profiles.find_one({"user_id": data.creator_id}, {"_id": 0})
+    creator_name = creator_profile.get("name") if creator_profile else creator.get("name", "Créateur")
+
+    # Save request in DB
     collab_request = CollaborationRequest(
         creator_id=data.creator_id,
         business_id=user["user_id"],
@@ -2251,95 +2251,37 @@ async def create_collaboration_request(data: CollaborationRequestCreate, user: d
         deliverables=data.deliverables,
         additional_info=data.additional_info
     )
-    
     await db.collaboration_requests.insert_one(collab_request.model_dump())
-    
-    # Create or get conversation with creator
-    conversation_id = f"conv_{uuid.uuid4().hex[:12]}"
-    existing_conv = await db.conversations.find_one({
-        "$or": [
-            {"participants": [user["user_id"], data.creator_id]},
-            {"participants": [data.creator_id, user["user_id"]]}
-        ]
-    })
-    
-    if existing_conv:
-        conversation_id = existing_conv["conversation_id"]
-    else:
-        # Create new conversation
-        new_conv = {
-            "conversation_id": conversation_id,
-            "participants": [user["user_id"], data.creator_id],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "last_message": None
-        }
-        await db.conversations.insert_one(new_conv)
-    
-    # Format collaboration message
+
+    # Format email to admin
     objective_labels = {
-        "notoriete": "Notoriété",
-        "ads": "Ads", 
-        "ugc": "UGC",
-        "micro-trottoir": "Micro-trottoir",
-        "autre": "Autre"
+        "notoriete": "Notoriété", "ads": "Ads", "ugc": "UGC",
+        "micro-trottoir": "Micro-trottoir", "autre": "Autre"
     }
     objective_label = objective_labels.get(data.content_types[0] if data.content_types else "", "Non spécifié")
-    
-    collab_message = f"""📋 **Nouvelle demande de collaboration**
 
-💰 **Budget**: {data.budget_range or 'Non spécifié'}
-🎯 **Objectif**: {objective_label}
-📅 **Deadline**: {data.deadline or 'Flexible'}
-📢 **Diffusion**: {data.deliverables or 'Non spécifié'}
+    admin_email_html = f"""
+    <h2>🎯 Nouvelle demande de collaboration</h2>
+    <p><strong>Entreprise :</strong> {business_name} ({business_email})</p>
+    <p><strong>Créateur visé :</strong> {creator_name}</p>
+    <hr>
+    <p><strong>Budget :</strong> {data.budget_range or 'Non spécifié'}</p>
+    <p><strong>Objectif :</strong> {objective_label}</p>
+    <p><strong>Deadline :</strong> {data.deadline or 'Flexible'}</p>
+    <p><strong>Diffusion :</strong> {data.deliverables or 'Non spécifié'}</p>
+    <p><strong>Brief :</strong><br>{data.brief.replace(chr(10), '<br>')}</p>
+    {f'<p><strong>Infos supplémentaires :</strong> {data.additional_info}</p>' if data.additional_info else ''}
+    <hr>
+    <p><em>Répondez directement à {business_email} pour faire le lien.</em></p>
+    """
 
-📝 **Brief**:
-{data.brief}
-
-{f'📦 Infos supplémentaires: {data.additional_info}' if data.additional_info else ''}
-
----
-*Vous pouvez accepter, refuser ou négocier cette demande.*"""
-    
-    # Create message in conversation
-    message_id = f"msg_{uuid.uuid4().hex[:12]}"
-    message = {
-        "message_id": message_id,
-        "conversation_id": conversation_id,
-        "sender_id": user["user_id"],
-        "content": collab_message,
-        "message_type": "collaboration_request",
-        "collaboration_request_id": collab_request.request_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "read": False
-    }
-    await db.messages.insert_one(message)
-    
-    # Update conversation last message
-    await db.conversations.update_one(
-        {"conversation_id": conversation_id},
-        {"$set": {
-            "last_message": {
-                "content": "📋 Nouvelle demande de collaboration",
-                "sender_id": user["user_id"],
-                "created_at": datetime.now(timezone.utc).isoformat()
-            },
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
+    await send_email(
+        to="figuierebaptistepro@gmail.com",
+        subject=f"🎯 Nouvelle demande : {business_name} → {creator_name}",
+        html=admin_email_html
     )
-    
-    # Create notification for creator
-    await create_notification(
-        user_id=data.creator_id,
-        notif_type="collaboration_request",
-        title="Nouvelle demande de collaboration",
-        message=f"{business_name} souhaite collaborer avec vous !",
-        icon="💼",
-        link=f"/messages?conversation={conversation_id}",
-        data={"request_id": collab_request.request_id, "business_name": business_name, "conversation_id": conversation_id}
-    )
-    
-    return {"message": "Demande envoyée", "request_id": collab_request.request_id, "conversation_id": conversation_id}
+
+    return {"message": "Demande transmise à notre équipe", "request_id": collab_request.request_id}
 
 @api_router.get("/collaboration-requests/creator")
 async def get_creator_collaboration_requests(user: dict = Depends(get_current_user)):

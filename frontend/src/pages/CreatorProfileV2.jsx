@@ -240,21 +240,12 @@ const CreatorProfileV2 = ({ currentUser }) => {
         })
       });
       if (response.ok) {
-        const data = await response.json();
-        toast.success("Demande envoyée ! Redirection vers la conversation...");
+        toast.success("Demande envoyée ! Notre équipe vous contactera sous 24h pour faire le lien avec le créateur.");
         setCollaborationDialogOpen(false);
         setCollabForm({ budget_range: "", objective: "", diffusion_type: "", deadline: "", brief: "", product_sent: "", shipping_address: "" });
-        // Redirect to conversation
-        setTimeout(() => {
-          navigate(`/messages?conversation=${data.conversation_id}`);
-        }, 1000);
       } else {
         const error = await response.json();
-        if (error.detail?.includes("Abonnement")) {
-          navigate("/billing", { state: { reason: "contact_creator", creatorName: creator?.name } });
-        } else {
-          toast.error(error.detail || "Erreur lors de l'envoi");
-        }
+        toast.error(error.detail || "Erreur lors de l'envoi");
       }
     } catch (error) {
       toast.error("Erreur de connexion");
@@ -703,9 +694,9 @@ const CreatorProfileV2 = ({ currentUser }) => {
       <Dialog open={collaborationDialogOpen} onOpenChange={setCollaborationDialogOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl p-0">
           <div className="sticky top-0 bg-white z-10 px-6 pt-6 pb-4 border-b border-gray-100">
-            <DialogTitle className="text-xl font-bold">Demander une collaboration</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Envoyer une demande</DialogTitle>
             <DialogDescription className="text-gray-500 text-sm mt-1">
-              Envoyez votre brief à {creator?.name}
+              Notre équipe fera le lien avec {creator?.name} sous 24h
             </DialogDescription>
           </div>
 
