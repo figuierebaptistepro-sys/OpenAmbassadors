@@ -18,9 +18,26 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
+
             # Install FFmpeg if not present
             if ! command -v ffmpeg &> /dev/null; then
               sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
             fi
+
+            # Install mongodump if not present
+            if ! command -v mongodump &> /dev/null; then
+              wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+              echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+              sudo apt-get update -q && sudo apt-get install -y -q mongodb-database-tools
+            fi
+
             /home/ubuntu/deploy_frontend.sh
             /home/ubuntu/deploy_backend.sh
+
+            # Setup daily backup cron (2h UTC = 4h Paris)
+            BACKUP_SCRIPT="/home/ubuntu/backup_mongo.py"
+            sudo cp /home/ubuntu/openambassadors/backend/backup_mongo.py "$BACKUP_SCRIPT"
+            sudo chmod +x "$BACKUP_SCRIPT"
+            # Add cron if not already present
+            (crontab -l 2>/dev/null | grep -v backup_mongo; echo "0 2 * * * cd /home/ubuntu/openambassadors/backend && /usr/bin/python3 $BACKUP_SCRIPT >> /home/ubuntu/backup.log 2>&1") | crontab -
+            echo "✅ Backup cron configured"

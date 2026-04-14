@@ -5422,6 +5422,21 @@ async def get_my_submissions(pool_id: Optional[str] = None, user: dict = Depends
 # Include router
 app.include_router(api_router)
 
+# ── Health check endpoint (used by uptime monitoring) ──
+@app.get("/health")
+async def health_check():
+    """Public health check — monitored by UptimeRobot every 5 min"""
+    checks = {"api": "ok", "database": "error", "storage": "ok"}
+    try:
+        await db.command("ping")
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"error: {str(e)}"
+    if not s3_client:
+        checks["storage"] = "unconfigured"
+    overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+    return {"status": overall, "checks": checks, "version": "1.0"}
+
 # Add Security Headers Middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 
