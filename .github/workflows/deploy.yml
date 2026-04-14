@@ -34,45 +34,10 @@ jobs:
             /home/ubuntu/deploy_frontend.sh
             /home/ubuntu/deploy_backend.sh
 
-            # Setup daily MongoDB backup (writes script inline — no repo path dependency)
+            # Setup daily MongoDB backup (base64-encoded to avoid YAML heredoc issues)
             BACKUP_SCRIPT="/home/ubuntu/backup_mongo.py"
-            cat > "$BACKUP_SCRIPT" << 'PYEOF'
-#!/usr/bin/env python3
-import os, sys, subprocess, tarfile, tempfile, logging, boto3
-from datetime import datetime
-from pathlib import Path
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-log = logging.getLogger("backup")
-MONGO_URL = os.environ.get("MONGO_URL")
-R2_ENDPOINT = os.environ.get("R2_ENDPOINT")
-R2_ACCESS_KEY = os.environ.get("R2_ACCESS_KEY_ID")
-R2_SECRET_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
-R2_BUCKET = os.environ.get("R2_BUCKET_NAME")
-if not MONGO_URL:
-    log.error("MONGO_URL non définie"); sys.exit(1)
-date_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-archive_name = f"backup_{date_str}.tar.gz"
-with tempfile.TemporaryDirectory() as tmpdir:
-    dump_dir = os.path.join(tmpdir, "dump")
-    archive_path = os.path.join(tmpdir, archive_name)
-    r = subprocess.run(["mongodump", f"--uri={MONGO_URL}", f"--out={dump_dir}"], capture_output=True, text=True, timeout=300)
-    if r.returncode != 0: log.error(f"mongodump failed: {r.stderr}"); sys.exit(1)
-    with tarfile.open(archive_path, "w:gz") as tar:
-        tar.add(dump_dir, arcname="dump")
-    size_mb = Path(archive_path).stat().st_size / 1024 / 1024
-    log.info(f"Archive: {archive_name} ({size_mb:.1f} MB)")
-    if all([R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET]):
-        s3 = boto3.client("s3", endpoint_url=R2_ENDPOINT, aws_access_key_id=R2_ACCESS_KEY, aws_secret_access_key=R2_SECRET_KEY, region_name="auto")
-        with open(archive_path, "rb") as f:
-            s3.put_object(Bucket=R2_BUCKET, Key=f"backups/{archive_name}", Body=f.read(), ContentType="application/gzip")
-        resp = s3.list_objects_v2(Bucket=R2_BUCKET, Prefix="backups/")
-        old = sorted(resp.get("Contents", []), key=lambda x: x["LastModified"])[:-7]
-        for o in old: s3.delete_object(Bucket=R2_BUCKET, Key=o["Key"]); log.info(f"Deleted: {o['Key']}")
-        log.info(f"✅ Backup uploadé: backups/{archive_name}")
-    else:
-        log.warning("R2 non configuré — backup local uniquement dans /tmp")
-PYEOF
+            echo 'IyEvdXNyL2Jpbi9lbnYgcHl0aG9uMwppbXBvcnQgb3MsIHN5cywgc3VicHJvY2VzcywgdGFyZmlsZSwgdGVtcGZpbGUsIGxvZ2dpbmcsIGJvdG8zCmZyb20gZGF0ZXRpbWUgaW1wb3J0IGRhdGV0aW1lCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApsb2dnaW5nLmJhc2ljQ29uZmlnKGxldmVsPWxvZ2dpbmcuSU5GTywgZm9ybWF0PSIlKGFzY3RpbWUpcyAlKGxldmVsbmFtZSlzICUobWVzc2FnZSlzIikKbG9nID0gbG9nZ2luZy5nZXRMb2dnZXIoImJhY2t1cCIpCk1PTkdPX1VSTCA9IG9zLmVudmlyb24uZ2V0KCJNT05HT19VUkwiKQpSMl9FTkRQT0lOVCA9IG9zLmVudmlyb24uZ2V0KCJSMl9FTkRQT0lOVCIpClIyX0FDQ0VTU19LRVkgPSBvcy5lbnZpcm9uLmdldCgiUjJfQUNDRVNTX0tFWV9JRCIpClIyX1NFQ1JFVF9LRVkgPSBvcy5lbnZpcm9uLmdldCgiUjJfU0VDUkVUX0FDQ0VTU19LRVkiKQpSMl9CVUNLRVQgPSBvcy5lbnZpcm9uLmdldCgiUjJfQlVDS0VUX05BTUUiKQppZiBub3QgTU9OR09fVVJMOgogICAgbG9nLmVycm9yKCJNT05HT19VUkwgbm9uIGRlZmluaWUiKTsgc3lzLmV4aXQoMSkKZGF0ZV9zdHIgPSBkYXRldGltZS51dGNub3coKS5zdHJmdGltZSgiJVklbSVkXyVIJU0lUyIpCmFyY2hpdmVfbmFtZSA9IGYiYmFja3VwX3tkYXRlX3N0cn0udGFyLmd6Igp3aXRoIHRlbXBmaWxlLlRlbXBvcmFyeURpcmVjdG9yeSgpIGFzIHRtcGRpcjoKICAgIGR1bXBfZGlyID0gb3MucGF0aC5qb2luKHRtcGRpciwgImR1bXAiKQogICAgYXJjaGl2ZV9wYXRoID0gb3MucGF0aC5qb2luKHRtcGRpciwgYXJjaGl2ZV9uYW1lKQogICAgciA9IHN1YnByb2Nlc3MucnVuKFsibW9uZ29kdW1wIiwgZiItLXVyaT17TU9OR09fVVJMfSIsIGYiLS1vdXQ9e2R1bXBfZGlyfSJdLCBjYXB0dXJlX291dHB1dD1UcnVlLCB0ZXh0PVRydWUsIHRpbWVvdXQ9MzAwKQogICAgaWYgci5yZXR1cm5jb2RlICE9IDA6IGxvZy5lcnJvcihmIm1vbmdvZHVtcCBmYWlsZWQ6IHtyLnN0ZGVycn0iKTsgc3lzLmV4aXQoMSkKICAgIHdpdGggdGFyZmlsZS5vcGVuKGFyY2hpdmVfcGF0aCwgInc6Z3oiKSBhcyB0YXI6CiAgICAgICAgdGFyLmFkZChkdW1wX2RpciwgYXJjbmFtZT0iZHVtcCIpCiAgICBzaXplX21iID0gUGF0aChhcmNoaXZlX3BhdGgpLnN0YXQoKS5zdF9zaXplIC8gMTAyNCAvIDEwMjQKICAgIGxvZy5pbmZvKGYiQXJjaGl2ZToge2FyY2hpdmVfbmFtZX0gKHtzaXplX21iOi4xZn0gTUIpIikKICAgIGlmIGFsbChbUjJfRU5EUE9JTlQsIFIyX0FDQ0VTU19LRVksIFIyX1NFQ1JFVF9LRVksIFIyX0JVQ0tFVF0pOgogICAgICAgIHMzID0gYm90bzMuY2xpZW50KCJzMyIsIGVuZHBvaW50X3VybD1SMl9FTkRQT0lOVCwgYXdzX2FjY2Vzc19rZXlfaWQ9UjJfQUNDRVNTX0tFWSwgYXdzX3NlY3JldF9hY2Nlc3Nfa2V5PVIyX1NFQ1JFVF9LRVksIHJlZ2lvbl9uYW1lPSJhdXRvIikKICAgICAgICB3aXRoIG9wZW4oYXJjaGl2ZV9wYXRoLCAicmIiKSBhcyBmOgogICAgICAgICAgICBzMy5wdXRfb2JqZWN0KEJ1Y2tldD1SMl9CVUNLRVQsIEtleT1mImJhY2t1cHMve2FyY2hpdmVfbmFtZX0iLCBCb2R5PWYucmVhZCgpLCBDb250ZW50VHlwZT0iYXBwbGljYXRpb24vZ3ppcCIpCiAgICAgICAgcmVzcCA9IHMzLmxpc3Rfb2JqZWN0c192MihCdWNrZXQ9UjJfQlVDS0VULCBQcmVmaXg9ImJhY2t1cHMvIikKICAgICAgICBvbGQgPSBzb3J0ZWQocmVzcC5nZXQoIkNvbnRlbnRzIiwgW10pLCBrZXk9bGFtYmRhIHg6IHhbIkxhc3RNb2RpZmllZCJdKVs6LTddCiAgICAgICAgZm9yIG8gaW4gb2xkOiBzMy5kZWxldGVfb2JqZWN0KEJ1Y2tldD1SMl9CVUNLRVQsIEtleT1vWyJLZXkiXSk7IGxvZy5pbmZvKGYiRGVsZXRlZDoge29bJ0tleSddfSIpCiAgICAgICAgbG9nLmluZm8oIkJhY2t1cCB1cGxvYWRlOiBiYWNrdXBzLyIgKyBhcmNoaXZlX25hbWUpCiAgICBlbHNlOgogICAgICAgIGxvZy53YXJuaW5nKCJSMiBub24gY29uZmlndXJlIC0gYmFja3VwIGxvY2FsIHVuaXF1ZW1lbnQgZGFucyAvdG1wIikK' | base64 -d > "$BACKUP_SCRIPT"
             chmod +x "$BACKUP_SCRIPT"
             # Enregistrer le cron (une seule fois)
             (crontab -l 2>/dev/null | grep -v backup_mongo; echo "0 2 * * * /usr/bin/python3 $BACKUP_SCRIPT >> /home/ubuntu/backup.log 2>&1") | crontab -
-            echo "✅ Backup cron configured"
+            echo "Backup cron configured"
