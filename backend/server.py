@@ -1936,9 +1936,17 @@ async def upload_portfolio_media(
                 tmp_thumb = os.path.join(tmpdir, "thumb.jpg")
                 with open(tmp_video, "wb") as f:
                     f.write(contents)
+                # Probe duration to pick a safe seek time
+                probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                     "-of", "default=noprint_wrappers=1:nokey=1", tmp_video],
+                    capture_output=True, text=True, timeout=10
+                )
+                duration = float(probe.stdout.strip()) if probe.returncode == 0 and probe.stdout.strip() else 10.0
+                seek = min(1.0, duration * 0.1)
                 result = subprocess.run(
-                    ["ffmpeg", "-i", tmp_video, "-ss", "00:00:01", "-vframes", "1",
-                     "-vf", "scale=480:-1", "-q:v", "3", tmp_thumb, "-y"],
+                    ["ffmpeg", "-ss", str(seek), "-i", tmp_video, "-vframes", "1",
+                     "-vf", "scale='min(480,iw)':-2", "-q:v", "3", tmp_thumb, "-y"],
                     capture_output=True, timeout=30
                 )
                 if result.returncode == 0 and os.path.exists(tmp_thumb):

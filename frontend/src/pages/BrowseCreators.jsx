@@ -96,22 +96,25 @@ const createMarkerIcon = (isPremium) => {
   });
 };
 
-/* ── VideoCard: vidéo comme thumbnail (seekée à 1s) + play au hover ── */
+/* ── VideoCard: thumbnail statique (si dispo) OU frame vidéo + play au hover ── */
 const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const [hovered, setHovered] = useState(false);
   const [inView, setInView] = useState(false);
   const [frameReady, setFrameReady] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef(null);
   const cardRef = useRef(null);
 
+  const hasThumbnail = !!video.thumbnail;
   const isVideo = video.url && (
     video.url.includes('.mp4') || video.url.includes('.mov') ||
     video.url.includes('.webm') || video.type === 'uploaded'
   );
   const videoSrc = isVideo ? getImageUrl(video.url) : null;
 
-  // Charge la vidéo uniquement quand la carte entre dans le viewport
+  // Charge la vidéo dans le viewport — seulement si pas de thumbnail statique
   useEffect(() => {
+    if (hasThumbnail) return; // thumbnail statique dispo → pas besoin de charger la vidéo
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         setInView(true);
@@ -120,11 +123,10 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
     }, { threshold: 0.1 });
     if (cardRef.current) observer.observe(cardRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [hasThumbnail]);
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      // Seek à 10% de la durée (ou 1.5s max) pour montrer un vrai passage
+    if (videoRef.current && !hovered) {
       videoRef.current.currentTime = Math.min(1.5, (videoRef.current.duration || 10) * 0.1);
     }
   };
@@ -136,18 +138,26 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const handleMouseEnter = () => {
     setHovered(true);
     if (videoRef.current) {
+      if (hasThumbnail) {
+        // Vidéo pas encore dans le DOM — on l'active maintenant
+        setInView(true);
+      }
       videoRef.current.play().catch(() => {});
     }
   };
 
   const handleMouseLeave = () => {
     setHovered(false);
+    setVideoReady(false);
     if (videoRef.current) {
       videoRef.current.pause();
-      // Retour au frame thumbnail
-      videoRef.current.currentTime = Math.min(1.5, (videoRef.current.duration || 10) * 0.1);
+      if (!hasThumbnail) {
+        videoRef.current.currentTime = Math.min(1.5, (videoRef.current.duration || 10) * 0.1);
+      }
     }
   };
+
+  const showVideo = hovered && (hasThumbnail ? videoReady : true);
 
   return (
     <div
@@ -158,30 +168,33 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
       onMouseLeave={handleMouseLeave}
       data-testid={`video-card-${index}`}
     >
-      {/* Fallback affiché tant que la frame vidéo n'est pas prête */}
-      {!frameReady && (
-        <div className="absolute inset-0">
-          {video.thumbnail ? (
-            <img src={getImageUrl(video.thumbnail)} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
-          )}
+      {/* Thumbnail statique (nouvelles vidéos avec FFmpeg) — zéro charge réseau */}
+      {hasThumbnail && (
+        <div className={`absolute inset-0 transition-opacity duration-200 ${showVideo ? 'opacity-0' : 'opacity-100'}`}>
+          <img src={getImageUrl(video.thumbnail)} alt="" loading="lazy" className="w-full h-full object-cover" />
         </div>
       )}
 
-      {/* Vidéo : preload="metadata" uniquement si dans le viewport.
-          Sert à la fois de thumbnail (pausée à 1.5s) et de preview au hover. */}
-      {isVideo && inView && (
+      {/* Fallback gradient si pas de thumbnail et frame pas encore prête */}
+      {!hasThumbnail && !frameReady && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+      )}
+
+      {/* Vidéo : pour thumbnail (seekée) si pas de thumb statique, et toujours pour le hover */}
+      {isVideo && (hasThumbnail ? inView : inView) && (
         <video
           ref={videoRef}
           src={videoSrc}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={hasThumbnail ? "none" : "metadata"}
           onLoadedMetadata={handleLoadedMetadata}
           onSeeked={handleSeeked}
-          className="absolute inset-0 w-full h-full object-cover"
+          onCanPlay={() => { if (hovered) setVideoReady(true); }}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+            hasThumbnail ? (showVideo ? 'opacity-100' : 'opacity-0') : 'opacity-100'
+          }`}
         />
       )}
 
