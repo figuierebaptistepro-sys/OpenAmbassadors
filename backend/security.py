@@ -51,8 +51,8 @@ def get_client_ip(request: Request) -> str:
     # Fallback to direct client IP
     return request.client.host if request.client else "unknown"
 
-# Initialize rate limiter with custom key function
-limiter = Limiter(key_func=get_client_ip)
+# Initialize rate limiter — global default: 200 req/min per IP
+limiter = Limiter(key_func=get_client_ip, default_limits=["200/minute"])
 
 # Rate limit configurations
 RATE_LIMITS = {
@@ -62,8 +62,12 @@ RATE_LIMITS = {
     "auth_otp_verify": "5/minute",      # 5 OTP verify attempts per minute
     "auth_forgot_password": "3/minute", # 3 reset requests per minute
     "auth_reset_password": "5/minute",  # 5 reset attempts per minute
-    "api_general": "100/minute",        # 100 requests per minute for general API
-    "upload": "10/minute",              # 10 uploads per minute
+    "auth_request_access": "3/minute",  # 3 access requests per minute
+    "auth_check_invitation": "10/minute",
+    "upload_media": "10/minute",        # 10 uploads per minute
+    "upload_portfolio": "5/minute",     # 5 video uploads per minute (heavy)
+    "collaboration_request": "10/minute",
+    "project_apply": "10/minute",
 }
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:

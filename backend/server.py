@@ -1851,6 +1851,7 @@ async def logout(request: Request, response: Response):
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out"}
 
+@limiter.limit(RATE_LIMITS["auth_request_access"])
 @api_router.post("/auth/request-access")
 async def request_access(request: Request):
     """Request access to the platform"""
@@ -1881,6 +1882,7 @@ ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-ms
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB for images
 MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB for videos
 
+@limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/profile-picture")
 async def upload_profile_picture(
     file: UploadFile = File(...),
@@ -1914,6 +1916,7 @@ async def upload_profile_picture(
     
     return {"message": "Photo de profil mise à jour", "picture_url": picture_url}
 
+@limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/banner")
 async def upload_banner(
     file: UploadFile = File(...),
@@ -1962,6 +1965,7 @@ async def get_banner(filename: str):
         raise HTTPException(status_code=404, detail="Image non trouvée")
     return FileResponse(filepath)
 
+@limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/project-banner")
 async def upload_project_banner(
     file: UploadFile = File(...),
@@ -1997,6 +2001,7 @@ async def get_project_banner(filename: str):
         raise HTTPException(status_code=404, detail="Image non trouvée")
     return FileResponse(filepath)
 
+@limiter.limit(RATE_LIMITS["upload_portfolio"])
 @api_router.post("/upload/portfolio")
 async def upload_portfolio_media(
     file: UploadFile = File(...),
@@ -2467,8 +2472,9 @@ async def check_favorite(creator_id: str, user: dict = Depends(get_current_user)
 
 # ==================== COLLABORATION REQUESTS ====================
 
+@limiter.limit(RATE_LIMITS["collaboration_request"])
 @api_router.post("/collaboration-requests")
-async def create_collaboration_request(data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
+async def create_collaboration_request(request: Request, data: CollaborationRequestCreate, user: dict = Depends(get_current_user)):
     """Create a collaboration request from a business to a creator - routed to admin"""
     is_admin = user.get("email") in ADMIN_EMAILS
     if user.get("user_type") == "creator" and not is_admin:
@@ -3022,6 +3028,7 @@ async def client_script_action(campaign_id: str, script_id: str, request: Reques
     ))
     return {"message": "Action enregistrée"}
 
+@limiter.limit(RATE_LIMITS["auth_check_invitation"])
 @api_router.post("/auth/check-invitation")
 async def check_invitation(request: Request):
     """Verify an invitation token is valid"""
@@ -3332,8 +3339,9 @@ async def update_application_status(project_id: str, creator_id: str, request: R
     
     return {"message": "Statut mis à jour"}
 
+@limiter.limit(RATE_LIMITS["project_apply"])
 @api_router.post("/projects/{project_id}/apply")
-async def apply_to_project(project_id: str, user: dict = Depends(get_current_user)):
+async def apply_to_project(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """Creator applies to a project"""
     project = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
     if not project:
