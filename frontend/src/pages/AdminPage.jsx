@@ -1568,13 +1568,14 @@ const AdminPage = ({ user }) => {
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Créateur attitré</label>
-                        <Select value={campaignForm.creator_id} onValueChange={(v) => {
-                          const creator = agencyCreatorsList.find(c => c.user_id === v);
-                          setCampaignForm(f => ({ ...f, creator_id: v, creator_name: creator?.name || "" }));
+                        <Select value={campaignForm.creator_id || "__none__"} onValueChange={(v) => {
+                          const actualId = v === "__none__" ? "" : v;
+                          const creator = agencyCreatorsList.find(c => c.user_id === actualId);
+                          setCampaignForm(f => ({ ...f, creator_id: actualId, creator_name: creator?.name || "" }));
                         }}>
                           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Choisir un créateur" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Aucun créateur</SelectItem>
+                            <SelectItem value="__none__">Aucun créateur</SelectItem>
                             {agencyCreatorsList.map(c => (
                               <SelectItem key={c.user_id} value={c.user_id}>
                                 {c.name || c.email}
