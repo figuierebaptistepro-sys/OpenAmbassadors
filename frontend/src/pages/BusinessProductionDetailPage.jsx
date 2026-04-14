@@ -125,7 +125,7 @@ const BusinessProductionDetailPage = ({ user }) => {
             </button>
           </div>
 
-          <div className="px-4 sm:px-6 lg:px-8 pt-5 pb-16 flex items-start justify-between gap-6">
+          <div className="px-4 sm:px-6 lg:px-8 pt-5 pb-12 flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/20 text-white px-3 py-1 rounded-full mb-3 backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -174,27 +174,18 @@ const BusinessProductionDetailPage = ({ user }) => {
         </div>
 
         {/* ── CONTENT ── */}
-        <div className="px-4 sm:px-6 lg:px-8 -mt-6 pb-10">
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-10">
 
           {/* Tabs bar — pulled up over hero */}
           <Tabs defaultValue="avancement" className="w-full">
-            <TabsList className="w-full bg-white shadow-lg rounded-2xl mb-6 p-1">
-              <TabsTrigger
-                value="avancement"
-                className="flex-1 rounded-xl text-sm font-medium data-[state=active]:bg-[#FF2E63] data-[state=active]:text-white data-[state=active]:shadow"
-              >
+            <TabsList className="w-full bg-white shadow-sm rounded-2xl mb-6 p-1 border border-gray-100">
+              <TabsTrigger value="avancement" className="flex-1 rounded-xl text-sm font-medium">
                 Avancement
               </TabsTrigger>
-              <TabsTrigger
-                value="scripts"
-                className="flex-1 rounded-xl text-sm font-medium data-[state=active]:bg-[#FF2E63] data-[state=active]:text-white data-[state=active]:shadow"
-              >
+              <TabsTrigger value="scripts" className="flex-1 rounded-xl text-sm font-medium">
                 Scripts {scripts.length > 0 && `(${scripts.length})`}
               </TabsTrigger>
-              <TabsTrigger
-                value="videos"
-                className="flex-1 rounded-xl text-sm font-medium data-[state=active]:bg-[#FF2E63] data-[state=active]:text-white data-[state=active]:shadow"
-              >
+              <TabsTrigger value="videos" className="flex-1 rounded-xl text-sm font-medium">
                 Vidéos
               </TabsTrigger>
             </TabsList>
