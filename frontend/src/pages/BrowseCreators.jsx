@@ -99,6 +99,7 @@ const createMarkerIcon = (isPremium) => {
 /* ── VideoCard: frame auto-capturée + preview vidéo au hover ── */
 const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const [hovered, setHovered] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [thumbSrc, setThumbSrc] = useState(
     video.thumbnail ? getImageUrl(video.thumbnail) : null
   );
@@ -146,18 +147,21 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const handleMouseEnter = () => {
     setHovered(true);
     if (videoRef.current) {
-      // src déjà défini, preload="none" → play() déclenche le chargement
       videoRef.current.play().catch(() => {});
     }
   };
 
   const handleMouseLeave = () => {
     setHovered(false);
+    setVideoReady(false);
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
   };
+
+  // Le thumbnail reste visible jusqu'à ce que la vidéo ait des données
+  const showVideo = hovered && videoReady;
 
   return (
     <div
@@ -168,8 +172,8 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
       onMouseLeave={handleMouseLeave}
       data-testid={`video-card-${index}`}
     >
-      {/* Thumbnail (frame capturée ou fallback) */}
-      <div className={`absolute inset-0 transition-opacity duration-200 ${hovered ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Thumbnail (frame capturée ou fallback) — reste visible jusqu'au canplay */}
+      <div className={`absolute inset-0 transition-opacity duration-200 ${showVideo ? 'opacity-0' : 'opacity-100'}`}>
         {thumbSrc ? (
           <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
         ) : video.creator?.picture ? (
@@ -179,7 +183,7 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
         )}
       </div>
 
-      {/* Vidéo — src toujours défini, preload="none" = zéro charge tant qu'on ne hover pas */}
+      {/* Vidéo — src toujours défini, preload="none", visible seulement quand prête */}
       {isVideo && (
         <video
           ref={videoRef}
@@ -188,12 +192,13 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
           loop
           playsInline
           preload="none"
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+          onCanPlay={() => setVideoReady(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${showVideo ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
 
       {/* Play overlay — disparaît quand la vidéo joue */}
-      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${hovered && isVideo ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${showVideo ? 'opacity-0' : 'opacity-100'}`}>
         <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-black/70 transition-all">
           <Play className="w-5 h-5 text-white fill-white ml-0.5" />
         </div>
