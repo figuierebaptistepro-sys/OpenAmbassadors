@@ -34,10 +34,45 @@ jobs:
             /home/ubuntu/deploy_frontend.sh
             /home/ubuntu/deploy_backend.sh
 
-            # Setup daily backup cron (2h UTC = 4h Paris)
+            # Setup daily MongoDB backup (writes script inline — no repo path dependency)
             BACKUP_SCRIPT="/home/ubuntu/backup_mongo.py"
-            sudo cp /home/ubuntu/openambassadors/backend/backup_mongo.py "$BACKUP_SCRIPT"
-            sudo chmod +x "$BACKUP_SCRIPT"
-            # Add cron if not already present
-            (crontab -l 2>/dev/null | grep -v backup_mongo; echo "0 2 * * * cd /home/ubuntu/openambassadors/backend && /usr/bin/python3 $BACKUP_SCRIPT >> /home/ubuntu/backup.log 2>&1") | crontab -
+            cat > "$BACKUP_SCRIPT" << 'PYEOF'
+#!/usr/bin/env python3
+import os, sys, subprocess, tarfile, tempfile, logging, boto3
+from datetime import datetime
+from pathlib import Path
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("backup")
+MONGO_URL = os.environ.get("MONGO_URL")
+R2_ENDPOINT = os.environ.get("R2_ENDPOINT")
+R2_ACCESS_KEY = os.environ.get("R2_ACCESS_KEY_ID")
+R2_SECRET_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+R2_BUCKET = os.environ.get("R2_BUCKET_NAME")
+if not MONGO_URL:
+    log.error("MONGO_URL non définie"); sys.exit(1)
+date_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+archive_name = f"backup_{date_str}.tar.gz"
+with tempfile.TemporaryDirectory() as tmpdir:
+    dump_dir = os.path.join(tmpdir, "dump")
+    archive_path = os.path.join(tmpdir, archive_name)
+    r = subprocess.run(["mongodump", f"--uri={MONGO_URL}", f"--out={dump_dir}"], capture_output=True, text=True, timeout=300)
+    if r.returncode != 0: log.error(f"mongodump failed: {r.stderr}"); sys.exit(1)
+    with tarfile.open(archive_path, "w:gz") as tar:
+        tar.add(dump_dir, arcname="dump")
+    size_mb = Path(archive_path).stat().st_size / 1024 / 1024
+    log.info(f"Archive: {archive_name} ({size_mb:.1f} MB)")
+    if all([R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET]):
+        s3 = boto3.client("s3", endpoint_url=R2_ENDPOINT, aws_access_key_id=R2_ACCESS_KEY, aws_secret_access_key=R2_SECRET_KEY, region_name="auto")
+        with open(archive_path, "rb") as f:
+            s3.put_object(Bucket=R2_BUCKET, Key=f"backups/{archive_name}", Body=f.read(), ContentType="application/gzip")
+        resp = s3.list_objects_v2(Bucket=R2_BUCKET, Prefix="backups/")
+        old = sorted(resp.get("Contents", []), key=lambda x: x["LastModified"])[:-7]
+        for o in old: s3.delete_object(Bucket=R2_BUCKET, Key=o["Key"]); log.info(f"Deleted: {o['Key']}")
+        log.info(f"✅ Backup uploadé: backups/{archive_name}")
+    else:
+        log.warning("R2 non configuré — backup local uniquement dans /tmp")
+PYEOF
+            chmod +x "$BACKUP_SCRIPT"
+            # Enregistrer le cron (une seule fois)
+            (crontab -l 2>/dev/null | grep -v backup_mongo; echo "0 2 * * * /usr/bin/python3 $BACKUP_SCRIPT >> /home/ubuntu/backup.log 2>&1") | crontab -
             echo "✅ Backup cron configured"
