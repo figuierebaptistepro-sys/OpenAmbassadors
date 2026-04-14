@@ -45,6 +45,7 @@ import BusinessPoolDetailPage from "./pages/BusinessPoolDetailPage";
 import BusinessPoolsPage from "./pages/BusinessPoolsPage";
 import PoolPaymentSuccessPage from "./pages/PoolPaymentSuccessPage";
 import MyFavoritesPage from "./pages/MyFavoritesPage";
+import BusinessProductionDetailPage from "./pages/BusinessProductionDetailPage";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -346,6 +347,14 @@ function AppRouter({ onUserChange }) {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <ProjectApplicationsPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/productions/:campaign_id"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <BusinessProductionDetailPage user={user} />}
           </ProtectedRoute>
         }
       />

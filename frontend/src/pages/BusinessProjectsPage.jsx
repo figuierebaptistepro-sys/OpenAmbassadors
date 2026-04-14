@@ -187,7 +187,7 @@ const BusinessProjectsPage = ({ user }) => {
                 const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
                 const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
                 return (
-                  <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden">
+                  <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden cursor-pointer" onClick={() => navigate(`/business/productions/${c.campaign_id}`)}>
                     {/* Hero rose brand — clean, no overlap */}
                     <div className="p-5" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
                       <div className="flex items-start justify-between gap-3">
@@ -270,6 +270,12 @@ const BusinessProjectsPage = ({ user }) => {
                         {c.client_notes && (
                           <p className="text-xs text-gray-500 italic line-clamp-1 flex-1">💬 {c.client_notes}</p>
                         )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/business/productions/${c.campaign_id}`); }}
+                          className="text-xs font-semibold text-[#FF2E63] hover:underline flex items-center gap-1 shrink-0"
+                        >
+                          Voir les détails <ArrowRight className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
                   </div>
