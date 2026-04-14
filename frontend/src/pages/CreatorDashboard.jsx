@@ -273,12 +273,12 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
       await ffmpeg.exec([
         "-i", inputName,
         "-c:v", "libx264",
-        "-crf", "28",
-        "-preset", "ultrafast",   // 3-5x plus rapide que "fast" dans WASM
+        "-crf", "26",             // qualité légèrement meilleure (23=haute, 28=basse)
+        "-preset", "ultrafast",
         "-tune", "fastdecode",
-        "-vf", "scale=-2:720",
+        "-vf", "scale=-2:1080",   // 1080p max (était 720p)
         "-c:a", "aac",
-        "-b:a", "96k",
+        "-b:a", "128k",
         "-movflags", "+faststart",
         outputName
       ]);
