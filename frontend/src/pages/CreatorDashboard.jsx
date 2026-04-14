@@ -273,10 +273,10 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
       await ffmpeg.exec([
         "-i", inputName,
         "-c:v", "libx264",
-        "-crf", "26",             // qualité légèrement meilleure (23=haute, 28=basse)
+        "-crf", "23",             // qualité quasi-native (défaut H.264 = visually lossless)
         "-preset", "ultrafast",
         "-tune", "fastdecode",
-        "-vf", "scale=-2:1080",   // 1080p max (était 720p)
+        "-vf", "scale=-2:1080",   // 1080p max
         "-c:a", "aac",
         "-b:a", "128k",
         "-movflags", "+faststart",
@@ -323,8 +323,8 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
     const originalSize = file.size;
 
     try {
-      // Compression si le fichier fait plus de 10MB
-      if (file.size > 10 * 1024 * 1024) {
+      // Compression uniquement si > 80MB (sinon upload original = qualité native)
+      if (file.size > 80 * 1024 * 1024) {
         setUploadStatus("compressing");
         toast.info("Compression en cours...");
         
