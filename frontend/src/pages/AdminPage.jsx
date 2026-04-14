@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Users, Briefcase, CreditCard, Shield, CheckCircle, XCircle, Clock,
-  Euro, TrendingUp, Crown, Building2, UserCheck, UserX, Eye, ChevronRight,
+  Euro, TrendingUp, Crown, Building2, UserCheck, UserX, Eye, EyeOff, ChevronRight,
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
   Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock, Gift,
   Star, Bell, Activity, BarChart3, Send, UserPlus, DollarSign, Percent,
@@ -557,6 +557,19 @@ const AdminPage = ({ user }) => {
       });
       if (response.ok) { toast.success(isPremium ? "Premium activé !" : "Premium désactivé"); fetchUsers(); }
     } catch (error) { toast.error("Erreur"); }
+  };
+
+  const handleToggleVisibility = async (userId) => {
+    try {
+      const r = await fetch(`${API_URL}/api/admin/users/${userId}/toggle-visibility`, {
+        method: "PATCH", credentials: "include"
+      });
+      if (r.ok) {
+        const data = await r.json();
+        toast.success(data.is_visible ? "Créateur visible dans Find Creator" : "Créateur masqué de Find Creator");
+        fetchUsers();
+      }
+    } catch { toast.error("Erreur"); }
   };
 
   const handleBanUser = async () => {
@@ -1288,7 +1301,15 @@ const AdminPage = ({ user }) => {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline" onClick={() => { setSelectedUser(u); setUserDialogOpen(true); }} className="border-gray-200"><Eye className="w-4 h-4" /></Button>
-                          {u.user_type === "creator" && <Button size="sm" variant={u.is_premium ? "default" : "outline"} onClick={() => handleTogglePremium(u.user_id, !u.is_premium)} className={u.is_premium ? "bg-primary" : "border-gray-200"}><Crown className="w-4 h-4" /></Button>}
+                          {u.user_type === "creator" && <Button size="sm" variant={u.is_premium ? "default" : "outline"} onClick={() => handleTogglePremium(u.user_id, !u.is_premium)} className={u.is_premium ? "bg-primary" : "border-gray-200"} title={u.is_premium ? "Retirer premium" : "Activer premium"}><Crown className="w-4 h-4" /></Button>}
+                          {u.user_type === "creator" && (
+                            <Button size="sm" variant="outline"
+                              onClick={() => handleToggleVisibility(u.user_id)}
+                              className={u.profile?.is_visible === false ? "border-red-300 text-red-500 hover:bg-red-50" : "border-green-300 text-green-600 hover:bg-green-50"}
+                              title={u.profile?.is_visible === false ? "Rendre visible dans Find Creator" : "Masquer de Find Creator"}>
+                              {u.profile?.is_visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </Button>
+                          )}
                           {u.user_type !== "creator" && <Button size="sm" variant={u.is_agency_client ? "default" : "outline"} onClick={() => handleToggleAgencyClient(u.user_id)} className={u.is_agency_client ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-gray-200"} title={u.is_agency_client ? "Retirer client agence" : "Passer en client agence"}><Building2 className="w-4 h-4" /></Button>}
                         </div>
                       </div>

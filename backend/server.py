@@ -3710,6 +3710,16 @@ async def admin_ensure_creator_profile(user_id: str, user: dict = Depends(get_ad
     await db.creator_profiles.insert_one(profile_dict)
     return {"message": "Profil créateur créé", "created": True, "was_visible": None}
 
+@api_router.patch("/admin/users/{user_id}/toggle-visibility")
+async def admin_toggle_creator_visibility(user_id: str, user: dict = Depends(get_admin_user)):
+    """Admin: Toggle is_visible on creator_profiles"""
+    profile = await db.creator_profiles.find_one({"user_id": user_id}, {"_id": 0})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profil créateur introuvable")
+    new_val = not profile.get("is_visible", True)
+    await db.creator_profiles.update_one({"user_id": user_id}, {"$set": {"is_visible": new_val}})
+    return {"is_visible": new_val}
+
 @api_router.get("/admin/users/{user_id}/profile-status")
 async def admin_get_profile_status(user_id: str, user: dict = Depends(get_admin_user)):
     """Admin: Diagnostic — returns raw creator_profile state for a user"""
