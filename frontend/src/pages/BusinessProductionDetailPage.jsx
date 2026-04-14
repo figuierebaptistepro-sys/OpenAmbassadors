@@ -113,10 +113,9 @@ const BusinessProductionDetailPage = ({ user }) => {
     <AppLayout user={user}>
       <div className="bg-[#F6F7FB] min-h-screen">
 
-        {/* ── FULL-WIDTH HERO ── */}
+        {/* ── HERO ── */}
         <div className="relative" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
-          {/* Back button */}
-          <div className="px-4 sm:px-8 pt-4">
+          <div className="px-4 sm:px-6 lg:px-8 pt-4">
             <button
               onClick={() => navigate("/business/projects")}
               className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors font-medium"
@@ -126,63 +125,56 @@ const BusinessProductionDetailPage = ({ user }) => {
             </button>
           </div>
 
-          {/* Hero content */}
-          <div className="px-4 sm:px-8 pt-5 pb-16">
-            <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
-              <div className="flex-1 min-w-0">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/20 text-white px-3 py-1 rounded-full mb-3 backdrop-blur-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  {status.label}
-                </span>
-                <h1 className="font-heading font-bold text-white text-2xl sm:text-3xl leading-tight mb-2">
-                  {campaign.title}
-                </h1>
-                {campaign.description && (
-                  <p className="text-white/70 text-sm leading-relaxed max-w-lg">{campaign.description}</p>
-                )}
-                {formula && (
-                  <p className="text-white/60 text-xs mt-2 flex items-center gap-1">
-                    <Package className="w-3 h-3" />{formula.label}
-                  </p>
-                )}
-              </div>
-              {/* Creator */}
-              {campaign.creator_name && (
-                <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
-                  {campaign.creator_picture ? (
-                    <img
-                      src={campaign.creator_picture.startsWith("http") ? campaign.creator_picture : `${API_URL}${campaign.creator_picture}`}
-                      alt={campaign.creator_name}
-                      className="w-20 h-20 rounded-2xl object-cover border-2 border-white/40 shadow-xl"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow-xl">
-                      <span className="text-white font-bold text-3xl">{campaign.creator_name[0]?.toUpperCase()}</span>
-                    </div>
-                  )}
-                  <span className="text-white font-semibold text-sm">{campaign.creator_name}</span>
-                  <span className="text-white/60 text-[10px]">Créateur attitré</span>
-                </div>
+          <div className="px-4 sm:px-6 lg:px-8 pt-5 pb-16 flex items-start justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/20 text-white px-3 py-1 rounded-full mb-3 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                {status.label}
+              </span>
+              <h1 className="font-heading font-bold text-white text-2xl sm:text-3xl leading-tight mb-2">
+                {campaign.title}
+              </h1>
+              {campaign.description && (
+                <p className="text-white/70 text-sm leading-relaxed">{campaign.description}</p>
+              )}
+              {formula && (
+                <p className="text-white/60 text-xs mt-2 flex items-center gap-1">
+                  <Package className="w-3 h-3" />{formula.label}
+                </p>
               )}
             </div>
+            {campaign.creator_name && (
+              <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
+                {campaign.creator_picture ? (
+                  <img
+                    src={campaign.creator_picture.startsWith("http") ? campaign.creator_picture : `${API_URL}${campaign.creator_picture}`}
+                    alt={campaign.creator_name}
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-white/40 shadow-xl"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow-xl">
+                    <span className="text-white font-bold text-3xl">{campaign.creator_name[0]?.toUpperCase()}</span>
+                  </div>
+                )}
+                <span className="text-white font-semibold text-sm">{campaign.creator_name}</span>
+                <span className="text-white/60 text-[10px]">Créateur attitré</span>
+              </div>
+            )}
           </div>
 
-          {/* Progress bar at very bottom of hero */}
-          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length} — {status.label}</span>
-                <span>{stepPct}%</span>
-              </div>
-              <div className="w-full bg-white/20 rounded-full h-1.5">
-                <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
-              </div>
+          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-8 pb-4">
+            <div className="flex justify-between text-[10px] text-white/60 mb-1">
+              <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length} — {status.label}</span>
+              <span>{stepPct}%</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-1.5">
+              <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
             </div>
           </div>
         </div>
 
-        {/* ── CONTENT AREA ── */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 -mt-6 pb-10">
+        {/* ── CONTENT ── */}
+        <div className="px-4 sm:px-6 lg:px-8 -mt-6 pb-10">
 
           {/* Tabs bar — pulled up over hero */}
           <Tabs defaultValue="avancement" className="w-full">
