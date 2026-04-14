@@ -304,14 +304,14 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                   const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
 
                   return (
-                    <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden">
-                      {/* ── HERO HEADER ── */}
-                      <div className={`relative ${status.color} p-6 pb-14`}>
-                        {/* dark overlay for readability */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-transparent" />
+                    <div key={c.campaign_id} className="rounded-2xl shadow-lg overflow-hidden">
+                      {/* ── HERO HEADER — brand pink ── */}
+                      <div className="relative p-6 pb-14" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/25 via-transparent to-transparent" />
                         <div className="relative z-10 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <span className="inline-block text-xs font-semibold bg-white/20 text-white px-2.5 py-0.5 rounded-full mb-2 backdrop-blur-sm">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
                               {status.label}
                             </span>
                             <h3 className="font-heading font-bold text-white text-xl leading-tight mb-1">{c.title}</h3>
@@ -340,40 +340,20 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                             </div>
                           )}
                         </div>
+                        {/* Progress bar overlaid at hero bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 px-6 pb-3">
+                          <div className="flex justify-between text-[10px] text-white/60 mb-1">
+                            <span>Progression</span>
+                            <span>{stepPct}% — Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
+                          </div>
+                          <div className="w-full bg-white/20 rounded-full h-1.5">
+                            <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
+                          </div>
+                        </div>
                       </div>
 
                       {/* ── WHITE BODY pulls up over hero ── */}
-                      <div className="bg-white -mt-8 rounded-t-3xl px-5 pt-5 pb-4">
-                        {/* Progress row */}
-                        <div className="grid grid-cols-2 gap-3 mb-5">
-                          {formula && (
-                            <div className="bg-gray-50 rounded-xl p-3">
-                              <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                                  <PlayCircle className="w-3 h-3 text-green-500" /> Vidéos livrées
-                                </span>
-                                <span className="text-xs font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${videosPct}%` }} />
-                              </div>
-                              <p className="text-xs text-gray-400 mt-1">{videosPct}% livré</p>
-                            </div>
-                          )}
-                          <div className={`${formula ? "" : "col-span-2"} bg-gray-50 rounded-xl p-3`}>
-                            <div className="flex justify-between items-center mb-1.5">
-                              <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3 text-primary" /> Production
-                              </span>
-                              <span className="text-xs font-bold text-gray-900">{currentIdx + 1}/{AGENCY_STATUSES.length}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div className={`h-2 rounded-full transition-all ${status.color}`} style={{ width: `${stepPct}%` }} />
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">{stepPct}% complété</p>
-                          </div>
-                        </div>
-
+                      <div className="bg-white -mt-6 rounded-t-3xl px-5 pt-5 pb-4">
                         {/* Stepper */}
                         <div className="flex items-start overflow-x-auto pb-2 gap-0 mb-4">
                           {AGENCY_STATUSES.map((s, i) => {
@@ -382,26 +362,45 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                             return (
                               <div key={s.key} className="flex items-start flex-shrink-0">
                                 <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-all
-                                    ${done ? `${status.color} text-white` : active ? `${status.color} text-white ring-4 ring-offset-2 ring-current/30` : "bg-gray-100 text-gray-400"}`}>
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-all border-2 ${
+                                    done ? "bg-[#FF2E63] border-[#FF2E63] text-white" :
+                                    active ? "bg-white border-[#FF2E63] text-[#FF2E63] shadow-md ring-4 ring-[#FF2E63]/10" :
+                                    "bg-gray-100 border-gray-200 text-gray-400"
+                                  }`}>
                                     {done ? <Check className="w-4 h-4" /> : <span>{i + 1}</span>}
                                   </div>
-                                  <span className={`text-center leading-tight px-0.5 ${active ? "text-xs font-bold text-gray-900" : done ? "text-xs text-gray-400" : "text-xs text-gray-300"}`} style={{fontSize:"10px"}}>{s.label}</span>
+                                  <span className={`text-center leading-tight px-0.5 ${active ? "font-bold text-[#FF2E63]" : done ? "text-gray-400" : "text-gray-300"}`} style={{fontSize:"10px"}}>{s.label}</span>
                                 </div>
                                 {i < AGENCY_STATUSES.length - 1 && (
-                                  <div className={`h-0.5 w-6 mt-4 flex-shrink-0 ${i < currentIdx ? status.color : "bg-gray-200"}`} />
+                                  <div className={`h-0.5 w-6 mt-4 flex-shrink-0 rounded-full ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
                                 )}
                               </div>
                             );
                           })}
                         </div>
 
+                        {/* Videos progress */}
+                        {formula && (
+                          <div className="bg-[#FFF1F5] rounded-xl p-3 mb-3">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs text-[#FF2E63] font-medium flex items-center gap-1">
+                                <PlayCircle className="w-3 h-3" /> Vidéos livrées
+                              </span>
+                              <span className="text-xs font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
+                            </div>
+                            <div className="w-full bg-white rounded-full h-2">
+                              <div className="h-2 rounded-full transition-all" style={{ width: `${videosPct}%`, background: "#FF2E63" }} />
+                            </div>
+                            <p className="text-xs text-[#FF2E63]/70 mt-1">{videosPct}% livré</p>
+                          </div>
+                        )}
+
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                           {c.client_notes ? (
                             <p className="text-xs text-gray-500 italic flex-1 mr-3 line-clamp-1">💬 {c.client_notes}</p>
                           ) : <span />}
-                          <Button size="sm" className={`${status.color} text-white hover:opacity-90 text-xs`}
+                          <Button size="sm" className="bg-[#FF2E63] hover:bg-[#FF5C8A] text-white text-xs"
                             onClick={() => setSelectedCampaign(c)}>
                             Voir les détails <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                           </Button>

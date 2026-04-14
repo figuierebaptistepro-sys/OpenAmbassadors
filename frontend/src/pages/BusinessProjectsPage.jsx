@@ -152,85 +152,6 @@ const BusinessProjectsPage = ({ user }) => {
 
       <div className="p-4 sm:p-6 lg:p-8">
 
-        {/* ===== AGENCY CAMPAIGNS ===== */}
-        {user?.is_agency_client && agencyCampaigns.length > 0 && (
-          <div className="mb-8">
-            <h2 className="font-heading text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Film className="w-4 h-4 text-primary" />
-              Productions en cours
-              <span className="text-xs font-normal text-gray-400 ml-1">({agencyCampaigns.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {agencyCampaigns.map((c) => {
-                const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
-                const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
-                const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
-                const videosDelivered = c.videos_delivered || 0;
-                const videosTotal = formula?.videos || 0;
-                const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
-                const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
-                return (
-                  <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden cursor-pointer" onClick={() => navigate("/")}>
-                    {/* Hero */}
-                    <div className={`relative ${status.color} p-5 pb-12`}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/25 to-transparent" />
-                      <div className="relative z-10 flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <span className="inline-block text-xs font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full mb-1.5 backdrop-blur-sm">{status.label}</span>
-                          <h3 className="font-heading font-bold text-white text-base leading-tight">{c.title}</h3>
-                          {formula && <p className="text-white/70 text-xs mt-1 flex items-center gap-1"><Package className="w-3 h-3" />{formula.label}</p>}
-                        </div>
-                        {c.creator_name && (
-                          <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                            {c.creator_picture ? (
-                              <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
-                                alt={c.creator_name} className="w-12 h-12 rounded-xl object-cover border-2 border-white/30 shadow" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-white/20 border-2 border-white/20 flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">{c.creator_name[0]?.toUpperCase()}</span>
-                              </div>
-                            )}
-                            <span className="text-white/80 text-xs font-medium truncate max-w-[56px]">{c.creator_name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {/* White body */}
-                    <div className="bg-white -mt-6 rounded-t-2xl px-4 pt-4 pb-3">
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {formula && (
-                          <div className="bg-gray-50 rounded-lg p-2.5">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-gray-500 flex items-center gap-1"><PlayCircle className="w-3 h-3 text-green-500" />Vidéos</span>
-                              <span className="font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${videosPct}%` }} />
-                            </div>
-                          </div>
-                        )}
-                        <div className={`${formula ? "" : "col-span-2"} bg-gray-50 rounded-lg p-2.5`}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-500 flex items-center gap-1"><CheckCircle className="w-3 h-3 text-primary" />Étape</span>
-                            <span className="font-bold text-gray-900">{currentIdx + 1}/{AGENCY_STATUSES.length}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div className={`h-1.5 rounded-full ${status.color}`} style={{ width: `${stepPct}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.light}`}>{stepPct}% complété</span>
-                        <span className="text-xs text-gray-400 flex items-center gap-1">Voir le détail <ArrowRight className="w-3 h-3" /></span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
@@ -247,6 +168,129 @@ const BusinessProjectsPage = ({ user }) => {
             </Card>
           ))}
         </div>
+
+        {/* ===== AGENCY CAMPAIGNS — treated as projects ===== */}
+        {user?.is_agency_client && agencyCampaigns.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-heading text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <Film className="w-4 h-4 text-primary" />
+              Productions Studiosavora
+              <span className="text-xs font-normal text-gray-400">({agencyCampaigns.length})</span>
+            </h2>
+            <div className="space-y-4">
+              {agencyCampaigns.map((c) => {
+                const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
+                const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
+                const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
+                const videosDelivered = c.videos_delivered || 0;
+                const videosTotal = formula?.videos || 0;
+                const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
+                const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
+                return (
+                  <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden">
+                    {/* Hero rose brand */}
+                    <div className="relative p-5 pb-14" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-transparent" />
+                      <div className="relative z-10 flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          {/* Status pill */}
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                            {status.label}
+                          </span>
+                          <h3 className="font-heading font-bold text-white text-lg leading-tight">{c.title}</h3>
+                          {c.description && <p className="text-white/70 text-xs mt-1 line-clamp-1">{c.description}</p>}
+                          {formula && (
+                            <p className="text-white/70 text-xs mt-1.5 flex items-center gap-1">
+                              <Package className="w-3 h-3" />{formula.label}
+                            </p>
+                          )}
+                        </div>
+                        {/* Creator avatar */}
+                        {c.creator_name && (
+                          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                            {c.creator_picture ? (
+                              <img
+                                src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                                alt={c.creator_name}
+                                className="w-14 h-14 rounded-2xl object-cover border-2 border-white/40 shadow-lg"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow-lg">
+                                <span className="text-white font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
+                              </div>
+                            )}
+                            <span className="text-white/80 text-xs font-medium truncate max-w-[64px]">{c.creator_name}</span>
+                            <span className="text-white/50 text-[10px]">Créateur attitré</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Progress bar overlaid at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 px-5 pb-3">
+                        <div className="flex justify-between text-[10px] text-white/70 mb-1">
+                          <span>{stepPct}% complété</span>
+                          <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
+                        </div>
+                        <div className="w-full bg-white/20 rounded-full h-1.5">
+                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                    {/* White body */}
+                    <div className="bg-white -mt-2 rounded-t-3xl px-5 pt-4 pb-4">
+                      {/* Timeline steps */}
+                      <div className="flex items-center gap-0 mb-4 overflow-x-auto pb-1">
+                        {AGENCY_STATUSES.map((s, i) => {
+                          const done = i < currentIdx;
+                          const active = i === currentIdx;
+                          return (
+                            <div key={s.key} className="flex items-center flex-shrink-0">
+                              <div className="flex flex-col items-center gap-1">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all ${
+                                  done ? "bg-[#FF2E63] border-[#FF2E63] text-white" :
+                                  active ? "bg-white border-[#FF2E63] text-[#FF2E63] shadow-md" :
+                                  "bg-gray-100 border-gray-200 text-gray-400"
+                                }`}>
+                                  {done ? <Check className="w-3 h-3" /> : i + 1}
+                                </div>
+                                <span className={`text-[9px] font-medium text-center leading-tight max-w-[44px] ${active ? "text-[#FF2E63]" : done ? "text-gray-500" : "text-gray-300"}`}>
+                                  {s.label.split(" ")[0]}
+                                </span>
+                              </div>
+                              {i < AGENCY_STATUSES.length - 1 && (
+                                <div className={`h-0.5 w-5 mx-0.5 mb-4 rounded-full ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Bottom row */}
+                      <div className="flex items-center gap-3">
+                        {formula && (
+                          <div className="flex-1 bg-[#FFF1F5] rounded-xl p-3">
+                            <div className="flex justify-between text-xs mb-1.5">
+                              <span className="text-[#FF2E63] font-medium flex items-center gap-1"><PlayCircle className="w-3 h-3" />Vidéos livrées</span>
+                              <span className="font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
+                            </div>
+                            <div className="w-full bg-white rounded-full h-2">
+                              <div className="h-2 rounded-full" style={{ width: `${videosPct}%`, background: "#FF2E63" }} />
+                            </div>
+                          </div>
+                        )}
+                        {c.client_notes && (
+                          <div className="flex-1 bg-gray-50 rounded-xl p-3 text-xs text-gray-600 line-clamp-2">
+                            <span className="font-semibold text-gray-700 block mb-0.5">Note</span>
+                            {c.client_notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Projects List */}
         {projects.length > 0 ? (
