@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -94,6 +94,94 @@ const createMarkerIcon = (isPremium) => {
     iconAnchor: [18, 36],
     popupAnchor: [0, -36],
   });
+};
+
+/* ── VideoCard: thumbnail statique + preview vidéo au hover ── */
+const VideoCard = ({ video, index, onClick, getImageUrl }) => {
+  const [hovered, setHovered] = useState(false);
+  const videoRef = useRef(null);
+  const isVideo = video.url && (
+    video.url.includes('.mp4') || video.url.includes('.mov') || video.url.includes('.webm') || video.type === 'uploaded'
+  );
+
+  const handleMouseEnter = () => {
+    setHovered(true);
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <div
+      className="relative aspect-[9/16] bg-gray-900 cursor-pointer group overflow-hidden"
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-testid={`video-card-${index}`}
+    >
+      {/* Thumbnail statique (visible par défaut) */}
+      <div className={`absolute inset-0 transition-opacity duration-300 ${hovered && isVideo ? 'opacity-0' : 'opacity-100'}`}>
+        {video.thumbnail ? (
+          <img src={getImageUrl(video.thumbnail)} alt="" loading="lazy" className="w-full h-full object-cover" />
+        ) : video.creator?.picture ? (
+          <img src={getImageUrl(video.creator.picture)} alt="" loading="lazy" className="w-full h-full object-cover opacity-60 scale-110" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
+        )}
+      </div>
+
+      {/* Vraie vidéo — chargée uniquement au hover */}
+      {isVideo && (
+        <video
+          ref={videoRef}
+          src={hovered ? getImageUrl(video.url) : undefined}
+          muted
+          loop
+          playsInline
+          preload="none"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+        />
+      )}
+
+      {/* Play overlay — disparaît au hover si vidéo */}
+      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${hovered && isVideo ? 'opacity-0' : 'opacity-100'}`}>
+        <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-black/70 transition-all">
+          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+        </div>
+      </div>
+
+      {/* Creator info */}
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+        <Link
+          to={`/creators/${video.creator.user_id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-2"
+        >
+          <div className="w-6 h-6 rounded-full bg-gray-600 overflow-hidden flex-shrink-0 border border-white/30">
+            {video.creator.picture ? (
+              <img src={getImageUrl(video.creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">
+                {(video.creator.name || "C")[0]}
+              </div>
+            )}
+          </div>
+          <span className="text-white text-xs font-medium truncate flex-1">
+            {video.creator.name || "Créateur"}
+          </span>
+          {video.creator.is_premium && <Crown className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />}
+        </Link>
+      </div>
+    </div>
+  );
 };
 
 const BrowseCreators = ({ user }) => {
@@ -706,61 +794,13 @@ const BrowseCreators = ({ user }) => {
               {allVideos.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-0.5">
                   {allVideos.map((video, index) => (
-                    <div
+                    <VideoCard
                       key={index}
-                      className="relative aspect-[9/16] bg-gray-900 cursor-pointer group overflow-hidden"
+                      video={video}
+                      index={index}
                       onClick={() => setSelectedVideo(video)}
-                      data-testid={`video-card-${index}`}
-                    >
-                      {/* Static thumbnail — no video element, zero network cost */}
-                      {video.thumbnail ? (
-                        <img
-                          src={getImageUrl(video.thumbnail)}
-                          alt=""
-                          loading="lazy"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : video.creator?.picture ? (
-                        <img
-                          src={getImageUrl(video.creator.picture)}
-                          alt=""
-                          loading="lazy"
-                          className="w-full h-full object-cover opacity-60 scale-110"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
-                      )}
-
-                      {/* Play overlay — always visible, bigger on hover */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-black/70 transition-all">
-                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                        </div>
-                      </div>
-
-                      {/* Creator info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                        <Link
-                          to={`/creators/${video.creator.user_id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-2"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-gray-600 overflow-hidden flex-shrink-0 border border-white/30">
-                            {video.creator.picture ? (
-                              <img src={getImageUrl(video.creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">
-                                {(video.creator.name || "C")[0]}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-white text-xs font-medium truncate flex-1">
-                            {video.creator.name || "Créateur"}
-                          </span>
-                          {video.creator.is_premium && <Crown className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />}
-                        </Link>
-                      </div>
-                    </div>
+                      getImageUrl={getImageUrl}
+                    />
                   ))}
                 </div>
               ) : (
