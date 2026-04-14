@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Briefcase, Plus, Edit, Eye, Users, Euro, Clock, CheckCircle,
-  AlertCircle, Crown, MapPin, ChevronRight, MoreVertical, Trash2, Bell, BellRing
+  AlertCircle, Crown, MapPin, ChevronRight, MoreVertical, Trash2, Bell, BellRing,
+  Film, Package, PlayCircle, ArrowRight, Check
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -27,9 +28,23 @@ const STATUS_CONFIG = {
   pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700", dot: "bg-yellow-500" },
 };
 
+const AGENCY_STATUSES = [
+  { key: "brief_recu",  label: "Brief reçu",            color: "bg-slate-500",   light: "bg-slate-100 text-slate-700" },
+  { key: "casting",     label: "Casting",               color: "bg-blue-500",    light: "bg-blue-100 text-blue-700" },
+  { key: "tournage",    label: "Tournage",              color: "bg-orange-500",  light: "bg-orange-100 text-orange-700" },
+  { key: "montage",     label: "Montage",               color: "bg-purple-500",  light: "bg-purple-100 text-purple-700" },
+  { key: "livraison",   label: "Livraison des fichiers", color: "bg-green-500",   light: "bg-green-100 text-green-700" },
+  { key: "termine",     label: "Terminé",               color: "bg-emerald-600", light: "bg-emerald-100 text-emerald-700" },
+];
+const AGENCY_FORMULAS = [
+  { key: "12_videos", label: "12 vidéos / mois", videos: 12 },
+  { key: "20_videos", label: "20 vidéos / mois", videos: 20 },
+];
+
 const BusinessProjectsPage = ({ user }) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
+  const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, open: 0, in_progress: 0, completed: 0 });
   const [projectNotifications, setProjectNotifications] = useState({});
@@ -37,7 +52,15 @@ const BusinessProjectsPage = ({ user }) => {
   useEffect(() => {
     fetchProjects();
     fetchNotifications();
+    if (user?.is_agency_client) fetchAgencyCampaigns();
   }, []);
+
+  const fetchAgencyCampaigns = async () => {
+    try {
+      const r = await fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" });
+      if (r.ok) setAgencyCampaigns(await r.json());
+    } catch (e) { console.error(e); }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -128,6 +151,86 @@ const BusinessProjectsPage = ({ user }) => {
       </div>
 
       <div className="p-4 sm:p-6 lg:p-8">
+
+        {/* ===== AGENCY CAMPAIGNS ===== */}
+        {user?.is_agency_client && agencyCampaigns.length > 0 && (
+          <div className="mb-8">
+            <h2 className="font-heading text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Film className="w-4 h-4 text-primary" />
+              Productions en cours
+              <span className="text-xs font-normal text-gray-400 ml-1">({agencyCampaigns.length})</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {agencyCampaigns.map((c) => {
+                const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
+                const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
+                const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
+                const videosDelivered = c.videos_delivered || 0;
+                const videosTotal = formula?.videos || 0;
+                const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
+                const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
+                return (
+                  <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden cursor-pointer" onClick={() => navigate("/")}>
+                    {/* Hero */}
+                    <div className={`relative ${status.color} p-5 pb-12`}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/25 to-transparent" />
+                      <div className="relative z-10 flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="inline-block text-xs font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full mb-1.5 backdrop-blur-sm">{status.label}</span>
+                          <h3 className="font-heading font-bold text-white text-base leading-tight">{c.title}</h3>
+                          {formula && <p className="text-white/70 text-xs mt-1 flex items-center gap-1"><Package className="w-3 h-3" />{formula.label}</p>}
+                        </div>
+                        {c.creator_name && (
+                          <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                            {c.creator_picture ? (
+                              <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                                alt={c.creator_name} className="w-12 h-12 rounded-xl object-cover border-2 border-white/30 shadow" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-white/20 border-2 border-white/20 flex items-center justify-center">
+                                <span className="text-white font-bold text-lg">{c.creator_name[0]?.toUpperCase()}</span>
+                              </div>
+                            )}
+                            <span className="text-white/80 text-xs font-medium truncate max-w-[56px]">{c.creator_name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* White body */}
+                    <div className="bg-white -mt-6 rounded-t-2xl px-4 pt-4 pb-3">
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {formula && (
+                          <div className="bg-gray-50 rounded-lg p-2.5">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-gray-500 flex items-center gap-1"><PlayCircle className="w-3 h-3 text-green-500" />Vidéos</span>
+                              <span className="font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${videosPct}%` }} />
+                            </div>
+                          </div>
+                        )}
+                        <div className={`${formula ? "" : "col-span-2"} bg-gray-50 rounded-lg p-2.5`}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-500 flex items-center gap-1"><CheckCircle className="w-3 h-3 text-primary" />Étape</span>
+                            <span className="font-bold text-gray-900">{currentIdx + 1}/{AGENCY_STATUSES.length}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div className={`h-1.5 rounded-full ${status.color}`} style={{ width: `${stepPct}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.light}`}>{stepPct}% complété</span>
+                        <span className="text-xs text-gray-400 flex items-center gap-1">Voir le détail <ArrowRight className="w-3 h-3" /></span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[

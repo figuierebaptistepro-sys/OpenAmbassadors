@@ -293,7 +293,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                 <p className="text-xs text-gray-400 mt-1">Votre équipe OpenAmbassadors la préparera très vite !</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {agencyCampaigns.map((c) => {
                   const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
                   const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
@@ -304,114 +304,106 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                   const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
 
                   return (
-                    <div key={c.campaign_id} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                      {/* Color bar */}
-                      <div className={`h-1.5 w-full ${status.color}`} />
-
-                      <div className="p-5">
-                        {/* Top row: title + status + creator */}
-                        <div className="flex items-start gap-4 mb-5">
+                    <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden">
+                      {/* ── HERO HEADER ── */}
+                      <div className={`relative ${status.color} p-6 pb-14`}>
+                        {/* dark overlay for readability */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-transparent" />
+                        <div className="relative z-10 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <h3 className="font-heading font-bold text-gray-900 text-base">{c.title}</h3>
-                              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${status.light}`}>{status.label}</span>
-                            </div>
-                            {c.description && <p className="text-sm text-gray-500 leading-relaxed">{c.description}</p>}
+                            <span className="inline-block text-xs font-semibold bg-white/20 text-white px-2.5 py-0.5 rounded-full mb-2 backdrop-blur-sm">
+                              {status.label}
+                            </span>
+                            <h3 className="font-heading font-bold text-white text-xl leading-tight mb-1">{c.title}</h3>
+                            {c.description && <p className="text-white/70 text-sm leading-relaxed line-clamp-2">{c.description}</p>}
                             {formula && (
                               <div className="flex items-center gap-1.5 mt-2">
-                                <Package className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-xs font-medium text-primary">{formula.label}</span>
+                                <Package className="w-3.5 h-3.5 text-white/80" />
+                                <span className="text-white/80 text-xs font-medium">{formula.label}</span>
                               </div>
                             )}
                           </div>
-
-                          {/* Creator card */}
+                          {/* Creator avatar — top right */}
                           {c.creator_name && (
-                            <div className="flex-shrink-0 flex flex-col items-center gap-1.5 bg-gray-50 rounded-xl px-4 py-3 min-w-[100px]">
+                            <div className="flex-shrink-0 flex flex-col items-center gap-1">
                               {c.creator_picture ? (
                                 <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
-                                  alt={c.creator_name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                                  alt={c.creator_name}
+                                  className="w-16 h-16 rounded-2xl object-cover border-2 border-white/40 shadow-lg" />
                               ) : (
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-primary font-bold text-lg">{c.creator_name[0]?.toUpperCase()}</span>
+                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center shadow-lg">
+                                  <span className="text-white font-bold text-2xl">{c.creator_name[0]?.toUpperCase()}</span>
                                 </div>
                               )}
-                              <p className="text-xs font-semibold text-gray-700 text-center leading-tight">{c.creator_name}</p>
-                              <p className="text-xs text-gray-400">Créateur attitré</p>
-                              {c.creator_id && (
-                                <button onClick={() => navigate(`/creators/${c.creator_id}`)}
-                                  className="text-xs text-primary hover:underline flex items-center gap-0.5 mt-0.5">
-                                  Voir profil <ExternalLink className="w-2.5 h-2.5" />
-                                </button>
-                              )}
+                              <span className="text-white/90 text-xs font-semibold text-center leading-tight max-w-[70px] truncate">{c.creator_name}</span>
+                              <span className="text-white/60 text-xs">Créateur attitré</span>
                             </div>
                           )}
                         </div>
+                      </div>
 
-                        {/* Progress grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                          {/* Videos delivered */}
+                      {/* ── WHITE BODY pulls up over hero ── */}
+                      <div className="bg-white -mt-8 rounded-t-3xl px-5 pt-5 pb-4">
+                        {/* Progress row */}
+                        <div className="grid grid-cols-2 gap-3 mb-5">
                           {formula && (
-                            <div className="bg-gray-50 rounded-xl p-3.5">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
-                                  <PlayCircle className="w-3.5 h-3.5 text-green-500" />Vidéos livrées
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                  <PlayCircle className="w-3 h-3 text-green-500" /> Vidéos livrées
                                 </span>
-                                <span className="text-sm font-bold text-gray-900">{videosDelivered}<span className="text-gray-400 font-normal">/{videosTotal}</span></span>
+                                <span className="text-xs font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${videosPct}%` }} />
                               </div>
-                              <p className="text-xs text-gray-400 mt-1.5">{videosPct}% livré</p>
+                              <p className="text-xs text-gray-400 mt-1">{videosPct}% livré</p>
                             </div>
                           )}
-
-                          {/* Production step */}
-                          <div className="bg-gray-50 rounded-xl p-3.5">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
-                                <CheckCircle className="w-3.5 h-3.5 text-primary" />Étape de production
+                          <div className={`${formula ? "" : "col-span-2"} bg-gray-50 rounded-xl p-3`}>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-primary" /> Production
                               </span>
-                              <span className="text-sm font-bold text-gray-900">{currentIdx + 1}<span className="text-gray-400 font-normal">/{AGENCY_STATUSES.length}</span></span>
+                              <span className="text-xs font-bold text-gray-900">{currentIdx + 1}/{AGENCY_STATUSES.length}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div className={`h-2 rounded-full transition-all ${status.color}`} style={{ width: `${stepPct}%` }} />
                             </div>
-                            <p className="text-xs text-gray-400 mt-1.5">{stepPct}% complété</p>
+                            <p className="text-xs text-gray-400 mt-1">{stepPct}% complété</p>
                           </div>
                         </div>
 
-                        {/* Step stepper */}
-                        <div className="flex items-center gap-0 mb-4 overflow-x-auto pb-1">
+                        {/* Stepper */}
+                        <div className="flex items-start overflow-x-auto pb-2 gap-0 mb-4">
                           {AGENCY_STATUSES.map((s, i) => {
                             const done = i < currentIdx;
                             const active = i === currentIdx;
                             return (
-                              <div key={s.key} className="flex items-center flex-shrink-0">
-                                <div className={`flex flex-col items-center gap-1`}>
-                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
-                                    ${done ? `${status.color} text-white` : active ? `${status.color} text-white ring-4 ring-offset-1` : "bg-gray-200 text-gray-400"}`
-                                    .replace("ring-4 ring-offset-1", active ? "ring-4 ring-offset-1" : "")}>
-                                    {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                              <div key={s.key} className="flex items-start flex-shrink-0">
+                                <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-all
+                                    ${done ? `${status.color} text-white` : active ? `${status.color} text-white ring-4 ring-offset-2 ring-current/30` : "bg-gray-100 text-gray-400"}`}>
+                                    {done ? <Check className="w-4 h-4" /> : <span>{i + 1}</span>}
                                   </div>
-                                  <span className={`text-xs whitespace-nowrap ${active ? "font-semibold text-gray-800" : done ? "text-gray-500" : "text-gray-400"}`}>{s.label}</span>
+                                  <span className={`text-center leading-tight px-0.5 ${active ? "text-xs font-bold text-gray-900" : done ? "text-xs text-gray-400" : "text-xs text-gray-300"}`} style={{fontSize:"10px"}}>{s.label}</span>
                                 </div>
                                 {i < AGENCY_STATUSES.length - 1 && (
-                                  <div className={`h-0.5 w-6 sm:w-10 mx-1 mb-4 flex-shrink-0 ${i < currentIdx ? status.color : "bg-gray-200"}`} />
+                                  <div className={`h-0.5 w-6 mt-4 flex-shrink-0 ${i < currentIdx ? status.color : "bg-gray-200"}`} />
                                 )}
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* Action */}
+                        {/* Footer */}
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          {c.client_notes && (
-                            <p className="text-xs text-gray-500 italic flex-1 mr-4">💬 {c.client_notes}</p>
-                          )}
-                          <Button size="sm" variant="outline" className="ml-auto border-gray-200 text-gray-700 hover:border-primary hover:text-primary"
+                          {c.client_notes ? (
+                            <p className="text-xs text-gray-500 italic flex-1 mr-3 line-clamp-1">💬 {c.client_notes}</p>
+                          ) : <span />}
+                          <Button size="sm" className={`${status.color} text-white hover:opacity-90 text-xs`}
                             onClick={() => setSelectedCampaign(c)}>
-                            Voir les détails <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
+                            Voir les détails <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                           </Button>
                         </div>
                       </div>
