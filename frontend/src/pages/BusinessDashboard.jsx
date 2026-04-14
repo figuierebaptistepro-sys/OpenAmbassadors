@@ -309,104 +309,92 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
                   return (
                     <div key={c.campaign_id} className="rounded-2xl shadow-lg overflow-hidden">
-                      {/* ── HERO HEADER — brand pink ── */}
-                      <div className="relative p-6 pb-14" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/25 via-transparent to-transparent" />
-                        <div className="relative z-10 flex items-start justify-between gap-3">
+                      {/* ── HERO — clean, no overlapping elements ── */}
+                      <div className="relative p-5" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
+                        <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm">
-                              <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                               {status.label}
                             </span>
-                            <h3 className="font-heading font-bold text-white text-xl leading-tight mb-1">{c.title}</h3>
-                            {c.description && <p className="text-white/70 text-sm leading-relaxed line-clamp-2">{c.description}</p>}
+                            <h3 className="font-heading font-bold text-white text-xl leading-tight">{c.title}</h3>
                             {formula && (
-                              <div className="flex items-center gap-1.5 mt-2">
-                                <Package className="w-3.5 h-3.5 text-white/80" />
-                                <span className="text-white/80 text-xs font-medium">{formula.label}</span>
-                              </div>
+                              <p className="text-white/70 text-xs mt-1.5 flex items-center gap-1">
+                                <Package className="w-3 h-3" />{formula.label}
+                              </p>
                             )}
                           </div>
-                          {/* Creator avatar — top right */}
+                          {/* Creator avatar */}
                           {c.creator_name && (
                             <div className="flex-shrink-0 flex flex-col items-center gap-1">
                               {c.creator_picture ? (
-                                <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                                <img
+                                  src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
                                   alt={c.creator_name}
-                                  className="w-16 h-16 rounded-2xl object-cover border-2 border-white/40 shadow-lg" />
+                                  className="w-14 h-14 rounded-2xl object-cover border-2 border-white/50 shadow-lg"
+                                />
                               ) : (
-                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center shadow-lg">
-                                  <span className="text-white font-bold text-2xl">{c.creator_name[0]?.toUpperCase()}</span>
+                                <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow-lg">
+                                  <span className="text-white font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
                                 </div>
                               )}
-                              <span className="text-white/90 text-xs font-semibold text-center leading-tight max-w-[70px] truncate">{c.creator_name}</span>
-                              <span className="text-white/60 text-xs">Créateur attitré</span>
+                              <span className="text-white/90 text-[10px] font-semibold truncate max-w-[60px] text-center">{c.creator_name}</span>
                             </div>
                           )}
                         </div>
-                        {/* Progress bar overlaid at hero bottom */}
-                        <div className="absolute bottom-0 left-0 right-0 px-6 pb-3">
-                          <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                            <span>Progression</span>
-                            <span>{stepPct}% — Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
-                          </div>
-                          <div className="w-full bg-white/20 rounded-full h-1.5">
-                            <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
-                          </div>
-                        </div>
                       </div>
 
-                      {/* ── WHITE BODY pulls up over hero ── */}
-                      <div className="bg-white -mt-6 rounded-t-3xl px-5 pt-5 pb-4">
+                      {/* ── WHITE BODY — clean separation ── */}
+                      <div className="bg-white px-5 pt-4 pb-4">
+                        {/* Progress bar */}
+                        <div className="mb-4">
+                          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                            <span className="font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3 text-[#FF2E63]" /> Progression</span>
+                            <span className="font-bold text-gray-900">{stepPct}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2.5">
+                            <div className="h-2.5 rounded-full transition-all" style={{ width: `${stepPct}%`, background: "linear-gradient(90deg, #FF2E63, #FF5C8A)" }} />
+                          </div>
+                        </div>
+
                         {/* Stepper */}
-                        <div className="flex items-start overflow-x-auto pb-2 gap-0 mb-4">
+                        <div className="flex items-start overflow-x-auto pb-1 mb-4">
                           {AGENCY_STATUSES.map((s, i) => {
                             const done = i < currentIdx;
                             const active = i === currentIdx;
                             return (
-                              <div key={s.key} className="flex items-start flex-shrink-0">
-                                <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-all border-2 ${
+                              <div key={s.key} className="flex items-center flex-shrink-0">
+                                <div className="flex flex-col items-center gap-1">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
                                     done ? "bg-[#FF2E63] border-[#FF2E63] text-white" :
-                                    active ? "bg-white border-[#FF2E63] text-[#FF2E63] shadow-md ring-4 ring-[#FF2E63]/10" :
+                                    active ? "bg-white border-[#FF2E63] text-[#FF2E63] shadow-sm" :
                                     "bg-gray-100 border-gray-200 text-gray-400"
                                   }`}>
-                                    {done ? <Check className="w-4 h-4" /> : <span>{i + 1}</span>}
+                                    {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
                                   </div>
-                                  <span className={`text-center leading-tight px-0.5 ${active ? "font-bold text-[#FF2E63]" : done ? "text-gray-400" : "text-gray-300"}`} style={{fontSize:"10px"}}>{s.label}</span>
+                                  <span className={`text-center leading-tight max-w-[44px] ${active ? "font-semibold text-[#FF2E63]" : done ? "text-gray-400" : "text-gray-300"}`} style={{ fontSize: "9px" }}>
+                                    {s.label.split(" ")[0]}
+                                  </span>
                                 </div>
                                 {i < AGENCY_STATUSES.length - 1 && (
-                                  <div className={`h-0.5 w-6 mt-4 flex-shrink-0 rounded-full ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
+                                  <div className={`h-px w-5 mx-1 mb-4 ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
                                 )}
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* Videos progress */}
-                        {formula && (
-                          <div className="bg-[#FFF1F5] rounded-xl p-3 mb-3">
-                            <div className="flex justify-between items-center mb-1.5">
-                              <span className="text-xs text-[#FF2E63] font-medium flex items-center gap-1">
-                                <PlayCircle className="w-3 h-3" /> Vidéos livrées
-                              </span>
-                              <span className="text-xs font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
+                        {/* Videos counter + CTA */}
+                        <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                          {formula && (
+                            <div className="flex-1 bg-[#FFF1F5] rounded-xl px-3 py-2 flex items-center justify-between">
+                              <span className="text-xs text-[#FF2E63] flex items-center gap-1"><PlayCircle className="w-3 h-3" /> Vidéos</span>
+                              <span className="text-sm font-bold text-gray-900">{videosDelivered}<span className="text-xs text-gray-400 font-normal">/{videosTotal}</span></span>
                             </div>
-                            <div className="w-full bg-white rounded-full h-2">
-                              <div className="h-2 rounded-full transition-all" style={{ width: `${videosPct}%`, background: "#FF2E63" }} />
-                            </div>
-                            <p className="text-xs text-[#FF2E63]/70 mt-1">{videosPct}% livré</p>
-                          </div>
-                        )}
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          {c.client_notes ? (
-                            <p className="text-xs text-gray-500 italic flex-1 mr-3 line-clamp-1">💬 {c.client_notes}</p>
-                          ) : <span />}
-                          <Button size="sm" className="bg-[#FF2E63] hover:bg-[#FF5C8A] text-white text-xs"
+                          )}
+                          <Button size="sm" className="bg-[#FF2E63] hover:bg-[#FF5C8A] text-white text-xs shrink-0"
                             onClick={() => setSelectedCampaign(c)}>
-                            Voir les détails <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                            Voir les détails <ArrowRight className="w-3 h-3 ml-1" />
                           </Button>
                         </div>
                       </div>

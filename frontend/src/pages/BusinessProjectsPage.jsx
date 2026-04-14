@@ -188,58 +188,53 @@ const BusinessProjectsPage = ({ user }) => {
                 const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
                 return (
                   <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden">
-                    {/* Hero rose brand */}
-                    <div className="relative p-5 pb-14" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-transparent" />
-                      <div className="relative z-10 flex items-start justify-between gap-3">
+                    {/* Hero rose brand — clean, no overlap */}
+                    <div className="p-5" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
+                      <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          {/* Status pill */}
                           <span className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                             {status.label}
                           </span>
                           <h3 className="font-heading font-bold text-white text-lg leading-tight">{c.title}</h3>
-                          {c.description && <p className="text-white/70 text-xs mt-1 line-clamp-1">{c.description}</p>}
                           {formula && (
                             <p className="text-white/70 text-xs mt-1.5 flex items-center gap-1">
                               <Package className="w-3 h-3" />{formula.label}
                             </p>
                           )}
                         </div>
-                        {/* Creator avatar */}
                         {c.creator_name && (
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
                             {c.creator_picture ? (
                               <img
                                 src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
                                 alt={c.creator_name}
-                                className="w-14 h-14 rounded-2xl object-cover border-2 border-white/40 shadow-lg"
+                                className="w-12 h-12 rounded-xl object-cover border-2 border-white/50 shadow"
                               />
                             ) : (
-                              <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow-lg">
-                                <span className="text-white font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
+                              <div className="w-12 h-12 rounded-xl bg-white/20 border-2 border-white/30 flex items-center justify-center shadow">
+                                <span className="text-white font-bold text-lg">{c.creator_name[0]?.toUpperCase()}</span>
                               </div>
                             )}
-                            <span className="text-white/80 text-xs font-medium truncate max-w-[64px]">{c.creator_name}</span>
-                            <span className="text-white/50 text-[10px]">Créateur attitré</span>
+                            <span className="text-white/80 text-[10px] font-medium truncate max-w-[56px]">{c.creator_name}</span>
                           </div>
                         )}
                       </div>
-                      {/* Progress bar overlaid at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 px-5 pb-3">
-                        <div className="flex justify-between text-[10px] text-white/70 mb-1">
-                          <span>{stepPct}% complété</span>
-                          <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
+                    </div>
+                    {/* White body — clean, no overlap */}
+                    <div className="bg-white px-5 pt-4 pb-4">
+                      {/* Progress bar */}
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                          <span className="font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3 text-[#FF2E63]" /> Progression</span>
+                          <span className="font-bold text-gray-900">{stepPct}%</span>
                         </div>
-                        <div className="w-full bg-white/20 rounded-full h-1.5">
-                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${stepPct}%` }} />
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div className="h-2 rounded-full transition-all" style={{ width: `${stepPct}%`, background: "linear-gradient(90deg, #FF2E63, #FF5C8A)" }} />
                         </div>
                       </div>
-                    </div>
-                    {/* White body */}
-                    <div className="bg-white -mt-2 rounded-t-3xl px-5 pt-4 pb-4">
-                      {/* Timeline steps */}
-                      <div className="flex items-center gap-0 mb-4 overflow-x-auto pb-1">
+                      {/* Stepper */}
+                      <div className="flex items-center overflow-x-auto pb-1 mb-3">
                         {AGENCY_STATUSES.map((s, i) => {
                           const done = i < currentIdx;
                           const active = i === currentIdx;
@@ -248,40 +243,32 @@ const BusinessProjectsPage = ({ user }) => {
                               <div className="flex flex-col items-center gap-1">
                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all ${
                                   done ? "bg-[#FF2E63] border-[#FF2E63] text-white" :
-                                  active ? "bg-white border-[#FF2E63] text-[#FF2E63] shadow-md" :
+                                  active ? "bg-white border-[#FF2E63] text-[#FF2E63]" :
                                   "bg-gray-100 border-gray-200 text-gray-400"
                                 }`}>
                                   {done ? <Check className="w-3 h-3" /> : i + 1}
                                 </div>
-                                <span className={`text-[9px] font-medium text-center leading-tight max-w-[44px] ${active ? "text-[#FF2E63]" : done ? "text-gray-500" : "text-gray-300"}`}>
+                                <span className={`text-[9px] text-center leading-tight max-w-[40px] ${active ? "font-semibold text-[#FF2E63]" : done ? "text-gray-400" : "text-gray-300"}`}>
                                   {s.label.split(" ")[0]}
                                 </span>
                               </div>
                               {i < AGENCY_STATUSES.length - 1 && (
-                                <div className={`h-0.5 w-5 mx-0.5 mb-4 rounded-full ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
+                                <div className={`h-px w-4 mx-1 mb-3 ${i < currentIdx ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
                               )}
                             </div>
                           );
                         })}
                       </div>
                       {/* Bottom row */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
                         {formula && (
-                          <div className="flex-1 bg-[#FFF1F5] rounded-xl p-3">
-                            <div className="flex justify-between text-xs mb-1.5">
-                              <span className="text-[#FF2E63] font-medium flex items-center gap-1"><PlayCircle className="w-3 h-3" />Vidéos livrées</span>
-                              <span className="font-bold text-gray-900">{videosDelivered}/{videosTotal}</span>
-                            </div>
-                            <div className="w-full bg-white rounded-full h-2">
-                              <div className="h-2 rounded-full" style={{ width: `${videosPct}%`, background: "#FF2E63" }} />
-                            </div>
+                          <div className="flex-1 bg-[#FFF1F5] rounded-lg px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs text-[#FF2E63] flex items-center gap-1"><PlayCircle className="w-3 h-3" />Vidéos</span>
+                            <span className="text-sm font-bold text-gray-900">{videosDelivered}<span className="text-xs text-gray-400 font-normal">/{videosTotal}</span></span>
                           </div>
                         )}
                         {c.client_notes && (
-                          <div className="flex-1 bg-gray-50 rounded-xl p-3 text-xs text-gray-600 line-clamp-2">
-                            <span className="font-semibold text-gray-700 block mb-0.5">Note</span>
-                            {c.client_notes}
-                          </div>
+                          <p className="text-xs text-gray-500 italic line-clamp-1 flex-1">💬 {c.client_notes}</p>
                         )}
                       </div>
                     </div>
