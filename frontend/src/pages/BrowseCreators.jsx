@@ -612,7 +612,7 @@ const BrowseCreators = ({ user }) => {
                         <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4">
                           <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
                             {creator.picture ? (
-                              <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" />
+                              <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                 <span className="text-xl lg:text-2xl font-bold text-primary">{(creator.name || "C")[0]}</span>
@@ -716,12 +716,12 @@ const BrowseCreators = ({ user }) => {
                       data-testid={`video-card-${index}`}
                     >
                       {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
-                        <video 
+                        <video
                           src={`${getImageUrl(video.url)}#t=0.5`}
                           className="w-full h-full object-cover"
                           muted
                           playsInline
-                          preload="metadata"
+                          preload="none"
                           onLoadedData={(e) => { e.target.currentTime = 0.5; }}
                         />
                       ) : (
@@ -742,7 +742,7 @@ const BrowseCreators = ({ user }) => {
                         >
                           <div className="w-6 h-6 rounded-full bg-gray-600 overflow-hidden flex-shrink-0 border border-white/30">
                             {video.creator.picture ? (
-                              <img src={getImageUrl(video.creator.picture)} alt="" className="w-full h-full object-cover" />
+                              <img src={getImageUrl(video.creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">
                                 {(video.creator.name || "C")[0]}
@@ -794,7 +794,7 @@ const BrowseCreators = ({ user }) => {
                           <div className="flex items-center gap-3 min-w-[200px]">
                             <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                               {creator.picture ? (
-                                <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" />
+                                <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                   <span className="text-lg font-bold text-primary">{(creator.name || "C")[0]}</span>
@@ -942,7 +942,7 @@ const BrowseCreators = ({ user }) => {
           >
             <div className="w-12 h-12 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
               {selectedVideo.creator.picture ? (
-                <img src={getImageUrl(selectedVideo.creator.picture)} alt="" className="w-full h-full object-cover" />
+                <img src={getImageUrl(selectedVideo.creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
                   {(selectedVideo.creator.name || "C")[0]}

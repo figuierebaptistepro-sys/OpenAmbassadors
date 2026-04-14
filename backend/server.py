@@ -2587,16 +2587,22 @@ async def toggle_agency_client(user_id: str, user: dict = Depends(get_current_us
 async def get_my_agency_campaigns(user: dict = Depends(get_current_user)):
     """Get campaigns for the logged-in agency client, enriched with creator info"""
     campaigns = await db.agency_campaigns.find({"client_id": user["user_id"]}, {"_id": 0}).to_list(100)
-    for c in campaigns:
-        if c.get("creator_id"):
-            creator_user = await db.users.find_one({"user_id": c["creator_id"]}, {"_id": 0})
-            creator_profile = await db.creator_profiles.find_one({"user_id": c["creator_id"]}, {"_id": 0})
-            if creator_user:
-                c["creator_name"] = creator_user.get("name") or c.get("creator_name")
-                c["creator_picture"] = creator_user.get("picture")
-            if creator_profile:
-                c["creator_city"] = creator_profile.get("city")
-                c["creator_content_types"] = creator_profile.get("content_types", [])
+    creator_ids = list({c["creator_id"] for c in campaigns if c.get("creator_id")})
+    if creator_ids:
+        users_list = await db.users.find({"user_id": {"$in": creator_ids}}, {"_id": 0}).to_list(len(creator_ids))
+        profiles_list = await db.creator_profiles.find({"user_id": {"$in": creator_ids}}, {"_id": 0}).to_list(len(creator_ids))
+        users_map = {u["user_id"]: u for u in users_list}
+        profiles_map = {p["user_id"]: p for p in profiles_list}
+        for c in campaigns:
+            if c.get("creator_id"):
+                creator_user = users_map.get(c["creator_id"])
+                creator_profile = profiles_map.get(c["creator_id"])
+                if creator_user:
+                    c["creator_name"] = creator_user.get("name") or c.get("creator_name")
+                    c["creator_picture"] = creator_user.get("picture")
+                if creator_profile:
+                    c["creator_city"] = creator_profile.get("city")
+                    c["creator_content_types"] = creator_profile.get("content_types", [])
     campaigns.sort(key=lambda x: x.get("order", 1))
     return campaigns
 

@@ -50,28 +50,25 @@ const BusinessProjectsPage = ({ user }) => {
   const [projectNotifications, setProjectNotifications] = useState({});
 
   useEffect(() => {
-    fetchProjects();
-    fetchNotifications();
-    if (user?.is_agency_client) fetchAgencyCampaigns();
+    fetchAll();
   }, []);
 
-  const fetchAgencyCampaigns = async () => {
+  const fetchAll = async () => {
     try {
-      const r = await fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" });
-      if (r.ok) setAgencyCampaigns(await r.json());
-    } catch (e) { console.error(e); }
-  };
+      const fetches = [
+        fetch(`${API_URL}/api/projects/business`, { credentials: "include" }),
+        fetch(`${API_URL}/api/notifications`, { credentials: "include" }),
+      ];
+      if (user?.is_agency_client) {
+        fetches.push(fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" }));
+      }
 
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/projects/business`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const results = await Promise.allSettled(fetches);
+      const [projectsRes, notifRes, agencyRes] = results;
+
+      if (projectsRes.status === "fulfilled" && projectsRes.value.ok) {
+        const data = await projectsRes.value.json();
         setProjects(data);
-        
-        // Calculate stats
         setStats({
           total: data.length,
           open: data.filter(p => p.status === "open").length,
@@ -79,21 +76,9 @@ const BusinessProjectsPage = ({ user }) => {
           completed: data.filter(p => p.status === "completed").length,
         });
       }
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/notifications`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Group notifications by project_id and count unread
+      if (notifRes.status === "fulfilled" && notifRes.value.ok) {
+        const data = await notifRes.value.json();
         const grouped = {};
         (data.notifications || []).forEach(notif => {
           if (notif.data?.project_id && !notif.is_read && notif.type === "application") {
@@ -103,8 +88,14 @@ const BusinessProjectsPage = ({ user }) => {
         });
         setProjectNotifications(grouped);
       }
+
+      if (agencyRes && agencyRes.status === "fulfilled" && agencyRes.value.ok) {
+        setAgencyCampaigns(await agencyRes.value.json());
+      }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
