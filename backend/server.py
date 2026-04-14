@@ -17,6 +17,7 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import httpx
+import asyncio
 import random
 import subprocess
 import tempfile
@@ -100,21 +101,23 @@ if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
     logging.info(f"Cloudflare R2 client initialized - Public URL: {R2_PUBLIC_URL}")
 
 async def upload_to_r2(file_content: bytes, filename: str, content_type: str, folder: str = "") -> str:
-    """Upload file to Cloudflare R2 and return the public URL"""
+    """Upload file to Cloudflare R2 and return the public URL (runs in thread to avoid blocking event loop)"""
     if not s3_client:
         raise HTTPException(status_code=500, detail="R2 storage not configured")
-    
+
     key = f"{folder}/{filename}" if folder else filename
-    
-    try:
+
+    def _put():
         s3_client.put_object(
             Bucket=R2_BUCKET_NAME,
             Key=key,
             Body=file_content,
-            ContentType=content_type
+            ContentType=content_type,
         )
-        # Return the public R2 URL
         return f"{R2_PUBLIC_URL}/{key}"
+
+    try:
+        return await asyncio.to_thread(_put)
     except Exception as e:
         logging.error(f"R2 upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
@@ -1914,29 +1917,17 @@ async def upload_portfolio_media(
     media_type = "video" if is_video else "image"
     filename = f"{user['user_id']}_{media_type}_{uuid.uuid4().hex[:8]}.{ext}"
 
-    # Upload to R2
-    if s3_client:
-        media_url = await upload_to_r2(contents, filename, file.content_type, "portfolio")
-    else:
-        portfolio_dir = UPLOADS_DIR / "portfolio"
-        portfolio_dir.mkdir(parents=True, exist_ok=True)
-        filepath = portfolio_dir / filename
-        with open(filepath, "wb") as f:
-            f.write(contents)
-        media_url = f"/api/uploads/portfolio/{filename}"
+    uid = uuid.uuid4().hex[:8]
+    thumb_filename = f"{user['user_id']}_thumb_{uid}.jpg"
 
-    # Generate thumbnail for videos via FFmpeg
-    thumbnail_url = None
-    if is_video:
+    def _generate_thumbnail() -> bytes | None:
+        """Extraire une frame via FFmpeg — tourne dans un thread."""
         try:
-            uid = uuid.uuid4().hex[:8]
-            thumb_filename = f"{user['user_id']}_thumb_{uid}.jpg"
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmp_video = os.path.join(tmpdir, f"input.{ext}")
-                tmp_thumb = os.path.join(tmpdir, "thumb.jpg")
+                tmp_thumb  = os.path.join(tmpdir, "thumb.jpg")
                 with open(tmp_video, "wb") as f:
                     f.write(contents)
-                # Probe duration to pick a safe seek time
                 probe = subprocess.run(
                     ["ffprobe", "-v", "error", "-show_entries", "format=duration",
                      "-of", "default=noprint_wrappers=1:nokey=1", tmp_video],
@@ -1951,16 +1942,42 @@ async def upload_portfolio_media(
                 )
                 if result.returncode == 0 and os.path.exists(tmp_thumb):
                     with open(tmp_thumb, "rb") as f:
-                        thumb_bytes = f.read()
-                    if s3_client:
-                        thumbnail_url = await upload_to_r2(thumb_bytes, thumb_filename, "image/jpeg", "portfolio")
-                    else:
-                        portfolio_dir = UPLOADS_DIR / "portfolio"
-                        with open(portfolio_dir / thumb_filename, "wb") as f:
-                            f.write(thumb_bytes)
-                        thumbnail_url = f"/api/uploads/portfolio/{thumb_filename}"
+                        return f.read()
         except Exception as e:
             logging.warning(f"FFmpeg thumbnail failed: {e}")
+        return None
+
+    def _save_local(data: bytes, fname: str) -> str:
+        d = UPLOADS_DIR / "portfolio"
+        d.mkdir(parents=True, exist_ok=True)
+        with open(d / fname, "wb") as f:
+            f.write(data)
+        return f"/api/uploads/portfolio/{fname}"
+
+    # Lancer upload vidéo et génération thumbnail EN PARALLÈLE
+    if s3_client:
+        if is_video:
+            media_url, thumb_bytes = await asyncio.gather(
+                upload_to_r2(contents, filename, file.content_type, "portfolio"),
+                asyncio.to_thread(_generate_thumbnail)
+            )
+        else:
+            media_url = await upload_to_r2(contents, filename, file.content_type, "portfolio")
+            thumb_bytes = None
+    else:
+        media_url = await asyncio.to_thread(_save_local, contents, filename)
+        thumb_bytes = await asyncio.to_thread(_generate_thumbnail) if is_video else None
+
+    # Upload thumbnail si générée
+    thumbnail_url = None
+    if thumb_bytes:
+        try:
+            if s3_client:
+                thumbnail_url = await upload_to_r2(thumb_bytes, thumb_filename, "image/jpeg", "portfolio")
+            else:
+                thumbnail_url = await asyncio.to_thread(_save_local, thumb_bytes, thumb_filename)
+        except Exception as e:
+            logging.warning(f"Thumbnail upload failed: {e}")
 
     return {
         "message": "Fichier uploadé",
