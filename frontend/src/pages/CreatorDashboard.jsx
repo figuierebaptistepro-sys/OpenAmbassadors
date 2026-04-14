@@ -368,8 +368,9 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             url: data.url,
+            thumbnail: data.thumbnail || null,
             title: file.name.replace(/\.[^/.]+$/, ""),
             type: "uploaded"
           }),

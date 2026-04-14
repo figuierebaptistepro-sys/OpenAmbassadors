@@ -18,5 +18,9 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
+            # Install FFmpeg if not present
+            if ! command -v ffmpeg &> /dev/null; then
+              sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+            fi
             /home/ubuntu/deploy_frontend.sh
             /home/ubuntu/deploy_backend.sh

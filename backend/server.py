@@ -18,6 +18,8 @@ import bcrypt
 import jwt
 import httpx
 import random
+import subprocess
+import tempfile
 import string
 import boto3
 from botocore.config import Config
@@ -1911,22 +1913,51 @@ async def upload_portfolio_media(
     ext = file.filename.split(".")[-1] if "." in file.filename else ("mp4" if is_video else "jpg")
     media_type = "video" if is_video else "image"
     filename = f"{user['user_id']}_{media_type}_{uuid.uuid4().hex[:8]}.{ext}"
-    
+
     # Upload to R2
     if s3_client:
         media_url = await upload_to_r2(contents, filename, file.content_type, "portfolio")
     else:
-        # Fallback to local storage
         portfolio_dir = UPLOADS_DIR / "portfolio"
         portfolio_dir.mkdir(parents=True, exist_ok=True)
         filepath = portfolio_dir / filename
         with open(filepath, "wb") as f:
             f.write(contents)
         media_url = f"/api/uploads/portfolio/{filename}"
-    
+
+    # Generate thumbnail for videos via FFmpeg
+    thumbnail_url = None
+    if is_video:
+        try:
+            uid = uuid.uuid4().hex[:8]
+            thumb_filename = f"{user['user_id']}_thumb_{uid}.jpg"
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_video = os.path.join(tmpdir, f"input.{ext}")
+                tmp_thumb = os.path.join(tmpdir, "thumb.jpg")
+                with open(tmp_video, "wb") as f:
+                    f.write(contents)
+                result = subprocess.run(
+                    ["ffmpeg", "-i", tmp_video, "-ss", "00:00:01", "-vframes", "1",
+                     "-vf", "scale=480:-1", "-q:v", "3", tmp_thumb, "-y"],
+                    capture_output=True, timeout=30
+                )
+                if result.returncode == 0 and os.path.exists(tmp_thumb):
+                    with open(tmp_thumb, "rb") as f:
+                        thumb_bytes = f.read()
+                    if s3_client:
+                        thumbnail_url = await upload_to_r2(thumb_bytes, thumb_filename, "image/jpeg", "portfolio")
+                    else:
+                        portfolio_dir = UPLOADS_DIR / "portfolio"
+                        with open(portfolio_dir / thumb_filename, "wb") as f:
+                            f.write(thumb_bytes)
+                        thumbnail_url = f"/api/uploads/portfolio/{thumb_filename}"
+        except Exception as e:
+            logging.warning(f"FFmpeg thumbnail failed: {e}")
+
     return {
         "message": "Fichier uploadé",
         "url": media_url,
+        "thumbnail": thumbnail_url,
         "type": media_type,
         "filename": filename
     }
