@@ -73,7 +73,7 @@ const AdminPage = ({ user }) => {
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [agencyClients, setAgencyClients] = useState([]);
   const [agencyInvitations, setAgencyInvitations] = useState([]);
-  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", video_delivery_link: "", delivery_notes: "" });
+  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", order: 1, video_delivery_link: "", delivery_notes: "" });
   const [newScript, setNewScript] = useState({ title: "", content: "" });
   const [agencyCreatorsList, setAgencyCreatorsList] = useState([]);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
@@ -471,7 +471,7 @@ const AdminPage = ({ user }) => {
         toast.success(editingCampaign ? "Campagne mise à jour" : "Campagne créée");
         setShowCampaignForm(false);
         setEditingCampaign(null);
-        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", video_delivery_link: "", delivery_notes: "" });
+        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", order: 1, video_delivery_link: "", delivery_notes: "" });
         setNewScript({ title: "", content: "" });
         fetchAgencyCampaigns();
       } else { toast.error("Erreur lors de l'enregistrement"); }
@@ -1541,7 +1541,7 @@ const AdminPage = ({ user }) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Campagnes clients ({agencyCampaigns.length})</CardTitle>
-                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" }); setShowCampaignForm(true); }} className="bg-primary text-white">
+                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", order: 1, video_delivery_link: "", delivery_notes: "" }); setShowCampaignForm(true); }} className="bg-primary text-white">
                     <Plus className="w-4 h-4 mr-1" />Nouvelle campagne
                   </Button>
                 </div>
@@ -1603,6 +1603,21 @@ const AdminPage = ({ user }) => {
                             {AGENCY_STATUSES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Mois (ordre)</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3].map(m => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setCampaignForm(f => ({ ...f, order: m }))}
+                              className={`flex-1 h-9 rounded-lg text-sm font-semibold transition-colors ${campaignForm.order === m ? "bg-[#FF2E63] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                            >
+                              Mois {m}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Description</label>
@@ -1713,7 +1728,7 @@ const AdminPage = ({ user }) => {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge className="text-xs bg-primary/10 text-primary">{AGENCY_STATUSES.find(s => s.key === c.status)?.label || c.status}</Badge>
-                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_id: c.creator_id || "", creator_name: c.creator_name || "", notes: c.notes || "", client_notes: c.client_notes || "", status: c.status, video_delivery_link: c.video_delivery_link || "", delivery_notes: c.delivery_notes || "" }); setNewScript({ title: "", content: "" }); setShowCampaignForm(true); }}>
+                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_id: c.creator_id || "", creator_name: c.creator_name || "", notes: c.notes || "", client_notes: c.client_notes || "", status: c.status, order: c.order || 1, video_delivery_link: c.video_delivery_link || "", delivery_notes: c.delivery_notes || "" }); setNewScript({ title: "", content: "" }); setShowCampaignForm(true); }}>
                               <Settings className="w-3 h-3" />
                             </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-red-500 hover:text-red-700" onClick={() => deleteCampaign(c.campaign_id)}>

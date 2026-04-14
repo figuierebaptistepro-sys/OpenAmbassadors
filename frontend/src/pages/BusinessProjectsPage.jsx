@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Briefcase, Plus, Edit, Eye, Users, Euro, Clock, CheckCircle,
   AlertCircle, Crown, MapPin, ChevronRight, MoreVertical, Trash2, Bell, BellRing,
-  Film, Package, PlayCircle, ArrowRight, Check
+  Film, Package, PlayCircle, ArrowRight, Check, Lock
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -177,6 +177,41 @@ const BusinessProjectsPage = ({ user }) => {
               Productions Studiosavora
               <span className="text-xs font-normal text-gray-400">({agencyCampaigns.length})</span>
             </h2>
+
+            {/* Month timeline — only if multiple campaigns */}
+            {agencyCampaigns.length > 1 && (() => {
+              const activeC = agencyCampaigns.find(c => c.status !== "termine") || agencyCampaigns[agencyCampaigns.length - 1];
+              const activeOrder = activeC?.order || 1;
+              return (
+                <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Programme 3 mois</p>
+                  <div className="flex items-center gap-2">
+                    {agencyCampaigns.map((c, i) => {
+                      const isDone = c.status === "termine";
+                      const isActive = c.campaign_id === activeC?.campaign_id;
+                      const isFuture = c.order > activeOrder;
+                      return (
+                        <div key={c.campaign_id} className="flex items-center gap-2 flex-1">
+                          <div className="flex flex-col items-center gap-1 flex-1">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 ${isDone ? "bg-[#FF2E63] border-[#FF2E63] text-white" : isActive ? "bg-[#FF2E63] border-[#FF2E63] text-white" : "bg-gray-100 border-gray-200 text-gray-400"}`}>
+                              {isDone ? <Check className="w-4 h-4" /> : isFuture ? <Lock className="w-4 h-4" /> : c.order}
+                            </div>
+                            <span className={`text-[10px] font-semibold text-center leading-tight ${isDone ? "text-gray-400" : isActive ? "text-[#FF2E63]" : "text-gray-300"}`}>
+                              Mois {c.order}<br />
+                              {isDone ? "✓" : isActive ? "En cours" : "À venir"}
+                            </span>
+                          </div>
+                          {i < agencyCampaigns.length - 1 && (
+                            <div className={`h-px flex-shrink-0 w-8 ${agencyCampaigns[i + 1]?.order <= activeOrder ? "bg-[#FF2E63]" : "bg-gray-200"}`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="space-y-4">
               {agencyCampaigns.map((c) => {
                 const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
@@ -184,7 +219,6 @@ const BusinessProjectsPage = ({ user }) => {
                 const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
                 const videosDelivered = c.videos_delivered || 0;
                 const videosTotal = formula?.videos || 0;
-                const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
                 const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
                 return (
                   <div key={c.campaign_id} className="rounded-2xl shadow-md overflow-hidden cursor-pointer" onClick={() => navigate(`/business/productions/${c.campaign_id}`)}>
@@ -192,10 +226,15 @@ const BusinessProjectsPage = ({ user }) => {
                     <div className="p-5" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            {status.label}
-                          </span>
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 text-white px-2.5 py-1 rounded-full backdrop-blur-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                              {status.label}
+                            </span>
+                            {agencyCampaigns.length > 1 && (
+                              <span className="text-xs font-bold text-white/80 bg-white/15 px-2 py-0.5 rounded-full">Mois {c.order}</span>
+                            )}
+                          </div>
                           <h3 className="font-heading font-bold text-white text-lg leading-tight">{c.title}</h3>
                           {formula && (
                             <p className="text-white/70 text-xs mt-1.5 flex items-center gap-1">

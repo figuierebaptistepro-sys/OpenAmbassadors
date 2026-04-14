@@ -722,6 +722,7 @@ class AgencyCampaign(BaseModel):
     videos_delivered: int = 0
     creator_name: Optional[str] = None
     status: str = "brief_recu"
+    order: int = 1  # Month number (1, 2, 3...)
     notes: Optional[str] = None
     scripts: List[dict] = []  # list of Script objects
     video_delivery_link: Optional[str] = None  # Google Drive link when videos ready
@@ -2585,7 +2586,7 @@ async def toggle_agency_client(user_id: str, user: dict = Depends(get_current_us
 @api_router.get("/agency/my-campaigns")
 async def get_my_agency_campaigns(user: dict = Depends(get_current_user)):
     """Get campaigns for the logged-in agency client, enriched with creator info"""
-    campaigns = await db.agency_campaigns.find({"client_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    campaigns = await db.agency_campaigns.find({"client_id": user["user_id"]}, {"_id": 0}).to_list(100)
     for c in campaigns:
         if c.get("creator_id"):
             creator_user = await db.users.find_one({"user_id": c["creator_id"]}, {"_id": 0})
@@ -2596,6 +2597,7 @@ async def get_my_agency_campaigns(user: dict = Depends(get_current_user)):
             if creator_profile:
                 c["creator_city"] = creator_profile.get("city")
                 c["creator_content_types"] = creator_profile.get("content_types", [])
+    campaigns.sort(key=lambda x: x.get("order", 1))
     return campaigns
 
 @api_router.get("/agency/statuses")
