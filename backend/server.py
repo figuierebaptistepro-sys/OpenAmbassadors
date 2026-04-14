@@ -3655,6 +3655,26 @@ async def admin_get_profile_status(user_id: str, user: dict = Depends(get_admin_
         "passes_visibility_query": passes_query,
     }
 
+@api_router.get("/admin/debug/creators-query")
+async def debug_creators_query(user: dict = Depends(get_admin_user)):
+    """Admin: Run exact same query as /creators and return diagnostic for each profile"""
+    query = {"$or": [{"is_visible": {"$exists": False}}, {"is_visible": True}]}
+    all_profiles = await db.creator_profiles.find(query, {"_id": 0}).sort([("is_premium", -1), ("completion_score", -1)]).to_list(200)
+    result = []
+    for p in all_profiles:
+        u = await db.users.find_one({"user_id": p.get("user_id")}, {"_id": 0})
+        result.append({
+            "user_id": p.get("user_id"),
+            "profile_name": p.get("name"),
+            "user_name": u.get("name") if u else None,
+            "user_found": u is not None,
+            "is_visible": p.get("is_visible"),
+            "is_premium_profile": p.get("is_premium"),
+            "is_premium_user": u.get("is_premium") if u else None,
+            "completion_score": p.get("completion_score", 0),
+        })
+    return {"total_matching_query": len(all_profiles), "profiles": result}
+
 @api_router.put("/admin/users/{user_id}/premium")
 async def admin_toggle_premium(user_id: str, request: Request, user: dict = Depends(get_admin_user)):
     """Admin: Toggle user premium status"""

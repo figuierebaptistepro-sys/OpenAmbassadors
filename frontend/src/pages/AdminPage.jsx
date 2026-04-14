@@ -1770,10 +1770,25 @@ const AdminPage = ({ user }) => {
                       const r = await fetch(`${API_URL}/api/admin/users/${selectedUser.user_id}/profile-status`, { credentials: "include" });
                       if (!r.ok) { toast.error(`Erreur ${r.status}`); return; }
                       const d = await r.json();
-                      toast.info(`Profile: ${d.profile_found ? "trouvé" : "ABSENT"} | is_visible: ${d.is_visible} (${d.is_visible_type}) | name: ${d.name || "null"}`);
+                      toast.info(`Profile: ${d.profile_found ? "trouvé" : "ABSENT"} | is_visible: ${d.is_visible} (${d.is_visible_type}) | user_lookup: ${d.user_lookup_ok} | passes_query: ${d.passes_visibility_query} | name: ${d.name || "null"}`);
                     } catch (e) { toast.error("Erreur réseau"); }
                   }}>
                     Diagnostic profil
+                  </Button>
+                  <Button size="sm" variant="ghost" className="w-full text-xs text-gray-400 hover:text-gray-600" onClick={async () => {
+                    try {
+                      const r = await fetch(`${API_URL}/api/admin/debug/creators-query`, { credentials: "include" });
+                      if (!r.ok) { toast.error(`Erreur ${r.status}`); return; }
+                      const d = await r.json();
+                      const valentin = d.profiles.find(p => p.user_name?.toLowerCase().includes("valentin") || p.profile_name?.toLowerCase().includes("valentin"));
+                      if (valentin) {
+                        toast.success(`Valentin TROUVÉ dans la query! user_found: ${valentin.user_found}, is_visible: ${valentin.is_visible}`);
+                      } else {
+                        toast.error(`Valentin ABSENT de la query. Total profils: ${d.total_matching_query}. Profils: ${d.profiles.map(p => p.user_name || p.profile_name || "?").join(", ")}`);
+                      }
+                    } catch (e) { toast.error("Erreur réseau"); }
+                  }}>
+                    Test query Find Creator
                   </Button>
                 </div>
               )}
