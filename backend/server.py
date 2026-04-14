@@ -5438,7 +5438,7 @@ async def health_check():
     return {"status": overall, "checks": checks, "version": "1.0"}
 
 # ── Sitemap XML — auto-generated from DB ──
-@app.get("/sitemap.xml", response_class=Response)
+@api_router.get("/sitemap.xml", response_class=Response)
 async def sitemap():
     """Dynamic sitemap for Google indexing"""
     from fastapi.responses import Response as FastAPIResponse
@@ -5482,20 +5482,6 @@ async def sitemap():
 </urlset>"""
     return FastAPIResponse(content=xml, media_type="application/xml")
 
-# ── robots.txt ──
-@app.get("/robots.txt", response_class=Response)
-async def robots():
-    from fastapi.responses import PlainTextResponse
-    base = FRONTEND_URL.rstrip("/")
-    content = f"""User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /dashboard
-Disallow: /business/
-Disallow: /api/
-
-Sitemap: {base}/sitemap.xml"""
-    return PlainTextResponse(content=content)
 
 # Add Security Headers Middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)

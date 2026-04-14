@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /business/
+Disallow: /api/
+
+Sitemap: https://app.openambassadors.com/api/sitemap.xml
