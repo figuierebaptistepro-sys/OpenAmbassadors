@@ -24,10 +24,10 @@ jobs:
               sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
             fi
 
-            # Install mongodump if not present
+            # Install mongodump if not present (Ubuntu 22.04+ compatible)
             if ! command -v mongodump &> /dev/null; then
-              wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
-              echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+              curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
+              echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
               sudo apt-get update -q && sudo apt-get install -y -q mongodb-database-tools
             fi
 
