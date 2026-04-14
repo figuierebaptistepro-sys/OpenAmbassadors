@@ -1885,6 +1885,7 @@ MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB for videos
 @limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/profile-picture")
 async def upload_profile_picture(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -1919,6 +1920,7 @@ async def upload_profile_picture(
 @limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/banner")
 async def upload_banner(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -1968,6 +1970,7 @@ async def get_banner(filename: str):
 @limiter.limit(RATE_LIMITS["upload_media"])
 @api_router.post("/upload/project-banner")
 async def upload_project_banner(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -2004,6 +2007,7 @@ async def get_project_banner(filename: str):
 @limiter.limit(RATE_LIMITS["upload_portfolio"])
 @api_router.post("/upload/portfolio")
 async def upload_portfolio_media(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
