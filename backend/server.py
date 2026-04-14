@@ -78,6 +78,8 @@ PROJECTS_DIR = UPLOADS_DIR / "projects"
 PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 BANNERS_DIR.mkdir(parents=True, exist_ok=True)
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+DELIVERY_DIR = UPLOADS_DIR / "delivery"
+DELIVERY_DIR.mkdir(parents=True, exist_ok=True)
 
 # Cloudflare R2 Configuration
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID')
@@ -732,6 +734,7 @@ class AgencyCampaign(BaseModel):
     scripts: List[dict] = []  # list of Script objects
     video_delivery_link: Optional[str] = None  # Google Drive link when videos ready
     delivery_notes: Optional[str] = None
+    delivered_videos: List[dict] = []  # [{video_id, url, thumbnail, filename, size, uploaded_at}]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -2753,6 +2756,105 @@ async def set_campaign_delivery(campaign_id: str, request: Request, user: dict =
         update["delivery_notes"] = body["delivery_notes"]
     await db.agency_campaigns.update_one({"campaign_id": campaign_id}, {"$set": update})
     return {"message": "Livraison mise à jour"}
+
+@api_router.post("/admin/agency/campaigns/{campaign_id}/upload-video")
+async def upload_campaign_video(campaign_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Admin: upload a delivered video for a campaign to R2"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    ALLOWED = {"video/mp4", "video/quicktime", "video/webm"}
+    if file.content_type not in ALLOWED:
+        raise HTTPException(status_code=400, detail="Format non supporté")
+
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024 * 1024:  # 2GB max
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux (max 2GB)")
+
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "mp4"
+    uid = uuid.uuid4().hex[:10]
+    filename = f"delivery_{campaign_id}_{uid}.{ext}"
+    original_filename = file.filename
+
+    def _generate_thumbnail_delivery(data: bytes, ext: str) -> bytes | None:
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_in = os.path.join(tmpdir, f"in.{ext}")
+                tmp_out = os.path.join(tmpdir, "thumb.jpg")
+                with open(tmp_in, "wb") as f:
+                    f.write(data)
+                probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                     "-of", "default=noprint_wrappers=1:nokey=1", tmp_in],
+                    capture_output=True, text=True, timeout=10
+                )
+                duration = float(probe.stdout.strip()) if probe.returncode == 0 and probe.stdout.strip() else 10.0
+                seek = min(1.5, duration * 0.1)
+                r = subprocess.run(
+                    ["ffmpeg", "-ss", str(seek), "-i", tmp_in, "-vframes", "1",
+                     "-vf", "scale='min(640,iw)':-2", "-q:v", "3", tmp_out, "-y"],
+                    capture_output=True, timeout=30
+                )
+                if r.returncode == 0 and os.path.exists(tmp_out):
+                    with open(tmp_out, "rb") as f:
+                        return f.read()
+        except Exception as e:
+            logging.warning(f"Delivery thumbnail failed: {e}")
+        return None
+
+    thumb_filename = f"delivery_thumb_{campaign_id}_{uid}.jpg"
+
+    if s3_client:
+        video_url, thumb_bytes = await asyncio.gather(
+            upload_to_r2(contents, filename, file.content_type, "delivery"),
+            asyncio.to_thread(_generate_thumbnail_delivery, contents, ext)
+        )
+        thumbnail_url = None
+        if thumb_bytes:
+            try:
+                thumbnail_url = await upload_to_r2(thumb_bytes, thumb_filename, "image/jpeg", "delivery")
+            except Exception as e:
+                logging.warning(f"Thumb upload failed: {e}")
+    else:
+        delivery_dir = UPLOADS_DIR / "delivery"
+        delivery_dir.mkdir(parents=True, exist_ok=True)
+        with open(delivery_dir / filename, "wb") as f:
+            f.write(contents)
+        video_url = f"/api/uploads/delivery/{filename}"
+        thumb_bytes = await asyncio.to_thread(_generate_thumbnail_delivery, contents, ext)
+        thumbnail_url = None
+        if thumb_bytes:
+            with open(delivery_dir / thumb_filename, "wb") as f:
+                f.write(thumb_bytes)
+            thumbnail_url = f"/api/uploads/delivery/{thumb_filename}"
+
+    video_entry = {
+        "video_id": f"vid_{uid}",
+        "url": video_url,
+        "thumbnail": thumbnail_url,
+        "filename": original_filename,
+        "size": len(contents),
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$push": {"delivered_videos": video_entry},
+         "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return video_entry
+
+@api_router.delete("/admin/agency/campaigns/{campaign_id}/delivered-videos/{video_id}")
+async def delete_campaign_video(campaign_id: str, video_id: str, user: dict = Depends(get_current_user)):
+    """Admin: remove a delivered video from a campaign"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$pull": {"delivered_videos": {"video_id": video_id}},
+         "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Vidéo supprimée"}
 
 @api_router.patch("/agency/my-campaigns/{campaign_id}/scripts/{script_id}/action")
 async def client_script_action(campaign_id: str, script_id: str, request: Request, user: dict = Depends(get_current_user)):

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Users, Briefcase, CreditCard, Shield, CheckCircle, XCircle, Clock,
@@ -6,7 +6,8 @@ import {
   AlertCircle, Search, Filter, RefreshCw, Mail, Calendar, MapPin, Wallet,
   Ban, Trash2, AlertTriangle, MessageCircle, Flag, Lock, Unlock, Gift,
   Star, Bell, Activity, BarChart3, Send, UserPlus, DollarSign, Percent,
-  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash, Settings, Inbox
+  ExternalLink, Copy, ArrowUpRight, ArrowDownRight, X, Plus, Link, Hash, Settings, Inbox,
+  Upload, Film
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -78,6 +79,9 @@ const AdminPage = ({ user }) => {
   const [agencyCreatorsList, setAgencyCreatorsList] = useState([]);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
+  const [deliveryUploading, setDeliveryUploading] = useState(false);
+  const [deliveryProgress, setDeliveryProgress] = useState(0);
+  const deliveryInputRef = useRef(null);
   const AGENCY_STATUSES = [
     { key: "brief_recu", label: "Brief reçu" },
     { key: "casting", label: "Casting" },
@@ -484,6 +488,51 @@ const AdminPage = ({ user }) => {
       if (r.ok) { toast.success("Campagne supprimée"); fetchAgencyCampaigns(); }
       else { toast.error("Erreur lors de la suppression"); }
     } catch (e) { toast.error("Erreur"); }
+  };
+
+  const handleDeliveryVideoUpload = async (file) => {
+    if (!editingCampaign) return;
+    setDeliveryUploading(true);
+    setDeliveryProgress(0);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) setDeliveryProgress(Math.round((e.loaded / e.total) * 100));
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
+          else { try { reject(JSON.parse(xhr.responseText)); } catch { reject({ detail: "Erreur" }); } }
+        });
+        xhr.addEventListener("error", () => reject({ detail: "Erreur réseau" }));
+        xhr.open("POST", `${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/upload-video`);
+        xhr.send(formData);
+      });
+      setEditingCampaign(prev => ({
+        ...prev,
+        delivered_videos: [...(prev.delivered_videos || []), result]
+      }));
+      toast.success("Vidéo uploadée !");
+    } catch (e) {
+      toast.error(e.detail || "Erreur upload");
+    } finally {
+      setDeliveryUploading(false);
+      setDeliveryProgress(0);
+    }
+  };
+
+  const handleDeleteDeliveryVideo = async (videoId) => {
+    if (!editingCampaign) return;
+    await fetch(`${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/delivered-videos/${videoId}`, {
+      method: "DELETE", credentials: "include"
+    });
+    setEditingCampaign(prev => ({
+      ...prev,
+      delivered_videos: (prev.delivered_videos || []).filter(v => v.video_id !== videoId)
+    }));
   };
 
   const updateCampaignStatus = async (id, status) => {
@@ -1717,16 +1766,63 @@ const AdminPage = ({ user }) => {
                       </div>
                     )}
 
-                    {/* Delivery link section */}
-                    <div className="border border-gray-200 rounded-lg p-3 space-y-2">
+                    {/* Delivery videos section */}
+                    <div className="border border-gray-200 rounded-lg p-3 space-y-3">
                       <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Livraison vidéos</p>
+
+                      {/* Uploaded videos grid */}
+                      {(editingCampaign?.delivered_videos || []).length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {(editingCampaign.delivered_videos).map(v => (
+                            <div key={v.video_id} className="relative group rounded-lg overflow-hidden bg-gray-900 aspect-[9/16]">
+                              {v.thumbnail ? (
+                                <img src={v.thumbnail} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Film className="w-6 h-6 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
+                              <button
+                                onClick={() => handleDeleteDeliveryVideo(v.video_id)}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <p className="absolute bottom-0 left-0 right-0 p-1 text-[10px] text-white bg-black/60 truncate">{v.filename}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Upload zone */}
+                      <input
+                        ref={deliveryInputRef}
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleDeliveryVideoUpload(f); e.target.value = ""; }}
+                      />
+                      {deliveryUploading ? (
+                        <div className="space-y-1">
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${deliveryProgress}%` }} />
+                          </div>
+                          <p className="text-xs text-gray-500 text-center">{deliveryProgress}% uploadé...</p>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => deliveryInputRef.current?.click()}
+                          className="w-full border-2 border-dashed border-gray-200 rounded-lg py-3 text-xs text-gray-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Upload className="w-4 h-4" /> Ajouter une vidéo
+                        </button>
+                      )}
+
+                      {/* Notes */}
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Lien Drive des vidéos</label>
-                        <Input className="h-9 text-sm" placeholder="https://drive.google.com/..." value={campaignForm.video_delivery_link} onChange={e => setCampaignForm(f => ({ ...f, video_delivery_link: e.target.value }))} />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Notes de livraison</label>
-                        <Textarea className="text-sm min-h-[50px]" placeholder="Instructions pour télécharger les fichiers..." value={campaignForm.delivery_notes} onChange={e => setCampaignForm(f => ({ ...f, delivery_notes: e.target.value }))} />
+                        <label className="text-xs text-gray-500 mb-1 block">Note de livraison</label>
+                        <Textarea className="text-sm min-h-[50px]" placeholder="Instructions..." value={campaignForm.delivery_notes} onChange={e => setCampaignForm(f => ({ ...f, delivery_notes: e.target.value }))} />
                       </div>
                     </div>
 

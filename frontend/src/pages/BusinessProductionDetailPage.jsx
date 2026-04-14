@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Check, Film, FileText, PlayCircle, Package,
-  Download, CheckCircle, MessageSquare, MapPin, Star
+  Download, CheckCircle, MessageSquare, MapPin, Star, X, ExternalLink
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -34,6 +34,7 @@ const BusinessProductionDetailPage = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [scriptCommentMap, setScriptCommentMap] = useState({});
   const [scriptCommentOpen, setScriptCommentOpen] = useState({});
+  const [selectedDeliveryVideo, setSelectedDeliveryVideo] = useState(null);
 
   const fetchCampaign = async () => {
     try {
@@ -108,6 +109,13 @@ const BusinessProductionDetailPage = ({ user }) => {
   const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
   const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
   const scripts = campaign.scripts || [];
+  const deliveredVideos = campaign.delivered_videos || [];
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}${url}`;
+  };
 
   return (
     <AppLayout user={user}>
@@ -413,7 +421,44 @@ const BusinessProductionDetailPage = ({ user }) => {
 
             {/* ── VIDÉOS ── */}
             <TabsContent value="videos" className="mt-0">
-              {campaign.video_delivery_link ? (
+              {deliveredVideos.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {deliveredVideos.map(v => (
+                      <div
+                        key={v.video_id}
+                        className="relative group rounded-2xl overflow-hidden bg-gray-900 aspect-[9/16] cursor-pointer shadow-md"
+                        onClick={() => setSelectedDeliveryVideo(v)}
+                      >
+                        {v.thumbnail ? (
+                          <img src={getImageUrl(v.thumbnail)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 100%)" }}
+                          >
+                            <Film className="w-8 h-8 text-white/60" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                            <PlayCircle className="w-7 h-7 text-white" />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                          <p className="text-[10px] text-white truncate">{v.filename}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {campaign.delivery_notes && (
+                    <div className="bg-white rounded-2xl shadow-sm p-5">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Note de livraison</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">{campaign.delivery_notes}</p>
+                    </div>
+                  )}
+                </div>
+              ) : campaign.video_delivery_link ? (
                 <div className="space-y-4">
                   <div
                     className="rounded-2xl p-8 sm:p-12 text-center shadow-lg"
@@ -452,6 +497,44 @@ const BusinessProductionDetailPage = ({ user }) => {
                   <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-[#FF2E63] bg-[#FFF1F5] px-3 py-1.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#FF2E63] animate-pulse" />
                     Étape actuelle : {status.label}
+                  </div>
+                </div>
+              )}
+
+              {/* Video player modal */}
+              {selectedDeliveryVideo && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+                  onClick={() => setSelectedDeliveryVideo(null)}
+                >
+                  <div
+                    className="relative w-full max-w-lg"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setSelectedDeliveryVideo(null)}
+                      className="absolute -top-10 right-0 text-white/70 hover:text-white flex items-center gap-1.5 text-sm"
+                    >
+                      <X className="w-5 h-5" /> Fermer
+                    </button>
+                    <video
+                      src={getImageUrl(selectedDeliveryVideo.url)}
+                      controls
+                      autoPlay
+                      className="w-full rounded-2xl shadow-2xl max-h-[70vh]"
+                    />
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-white/70 text-sm truncate">{selectedDeliveryVideo.filename}</p>
+                      <a
+                        href={getImageUrl(selectedDeliveryVideo.url)}
+                        download={selectedDeliveryVideo.filename}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 bg-white text-[#FF2E63] font-semibold text-sm px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+                      >
+                        <Download className="w-4 h-4" /> Télécharger
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
