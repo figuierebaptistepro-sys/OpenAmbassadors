@@ -96,17 +96,57 @@ const createMarkerIcon = (isPremium) => {
   });
 };
 
-/* ── VideoCard: thumbnail statique + preview vidéo au hover ── */
+/* ── VideoCard: frame auto-capturée + preview vidéo au hover ── */
 const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const [hovered, setHovered] = useState(false);
-  const videoRef = useRef(null);
-  const isVideo = video.url && (
-    video.url.includes('.mp4') || video.url.includes('.mov') || video.url.includes('.webm') || video.type === 'uploaded'
+  const [thumbSrc, setThumbSrc] = useState(
+    video.thumbnail ? getImageUrl(video.thumbnail) : null
   );
+  const videoRef = useRef(null);
+  const cardRef = useRef(null);
+
+  const isVideo = video.url && (
+    video.url.includes('.mp4') || video.url.includes('.mov') ||
+    video.url.includes('.webm') || video.type === 'uploaded'
+  );
+  const videoSrc = isVideo ? getImageUrl(video.url) : null;
+
+  // Capture une frame de la vidéo via canvas dès que la carte est visible
+  useEffect(() => {
+    if (thumbSrc || !videoSrc) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+
+      const vid = document.createElement('video');
+      vid.src = videoSrc;
+      vid.preload = 'metadata';
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.crossOrigin = 'anonymous';
+      vid.onloadedmetadata = () => {
+        vid.currentTime = Math.min(1.5, vid.duration * 0.1);
+      };
+      vid.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = vid.videoWidth;
+          canvas.height = vid.videoHeight;
+          canvas.getContext('2d').drawImage(vid, 0, 0);
+          setThumbSrc(canvas.toDataURL('image/jpeg', 0.75));
+        } catch (_) { /* CORS — fallback déjà affiché */ }
+        vid.src = '';
+      };
+    }, { threshold: 0.1 });
+
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [videoSrc, thumbSrc]);
 
   const handleMouseEnter = () => {
     setHovered(true);
     if (videoRef.current) {
+      // src déjà défini, preload="none" → play() déclenche le chargement
       videoRef.current.play().catch(() => {});
     }
   };
@@ -121,37 +161,38 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
 
   return (
     <div
+      ref={cardRef}
       className="relative aspect-[9/16] bg-gray-900 cursor-pointer group overflow-hidden"
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       data-testid={`video-card-${index}`}
     >
-      {/* Thumbnail statique (visible par défaut) */}
-      <div className={`absolute inset-0 transition-opacity duration-300 ${hovered && isVideo ? 'opacity-0' : 'opacity-100'}`}>
-        {video.thumbnail ? (
-          <img src={getImageUrl(video.thumbnail)} alt="" loading="lazy" className="w-full h-full object-cover" />
+      {/* Thumbnail (frame capturée ou fallback) */}
+      <div className={`absolute inset-0 transition-opacity duration-200 ${hovered ? 'opacity-0' : 'opacity-100'}`}>
+        {thumbSrc ? (
+          <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
         ) : video.creator?.picture ? (
-          <img src={getImageUrl(video.creator.picture)} alt="" loading="lazy" className="w-full h-full object-cover opacity-60 scale-110" />
+          <img src={getImageUrl(video.creator.picture)} alt="" loading="lazy" className="w-full h-full object-cover opacity-50 scale-110 blur-sm" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
         )}
       </div>
 
-      {/* Vraie vidéo — chargée uniquement au hover */}
+      {/* Vidéo — src toujours défini, preload="none" = zéro charge tant qu'on ne hover pas */}
       {isVideo && (
         <video
           ref={videoRef}
-          src={hovered ? getImageUrl(video.url) : undefined}
+          src={videoSrc}
           muted
           loop
           playsInline
           preload="none"
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
 
-      {/* Play overlay — disparaît au hover si vidéo */}
+      {/* Play overlay — disparaît quand la vidéo joue */}
       <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${hovered && isVideo ? 'opacity-0' : 'opacity-100'}`}>
         <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-black/70 transition-all">
           <Play className="w-5 h-5 text-white fill-white ml-0.5" />
