@@ -73,7 +73,8 @@ const AdminPage = ({ user }) => {
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [agencyClients, setAgencyClients] = useState([]);
   const [agencyInvitations, setAgencyInvitations] = useState([]);
-  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" });
+  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", video_delivery_link: "", delivery_notes: "" });
+  const [newScript, setNewScript] = useState({ title: "", content: "" });
   const [agencyCreatorsList, setAgencyCreatorsList] = useState([]);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
@@ -470,7 +471,8 @@ const AdminPage = ({ user }) => {
         toast.success(editingCampaign ? "Campagne mise à jour" : "Campagne créée");
         setShowCampaignForm(false);
         setEditingCampaign(null);
-        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" });
+        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu", video_delivery_link: "", delivery_notes: "" });
+        setNewScript({ title: "", content: "" });
         fetchAgencyCampaigns();
       } else { toast.error("Erreur lors de l'enregistrement"); }
     } catch (e) { toast.error("Erreur"); }
@@ -1615,6 +1617,83 @@ const AdminPage = ({ user }) => {
                       <label className="text-xs text-gray-500 mb-1 block">Message pour le client (visible dans son dashboard)</label>
                       <Textarea className="text-sm min-h-[60px]" placeholder="Message affiché au client..." value={campaignForm.client_notes} onChange={e => setCampaignForm(f => ({ ...f, client_notes: e.target.value }))} />
                     </div>
+
+                    {/* Scripts management — only when editing an existing campaign */}
+                    {editingCampaign && (
+                      <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Scripts</p>
+
+                        {/* Existing scripts list */}
+                        {(editingCampaign.scripts || []).length === 0 ? (
+                          <p className="text-xs text-gray-400">Aucun script pour l'instant</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {(editingCampaign.scripts || []).map(s => (
+                              <div key={s.script_id} className="bg-gray-50 rounded-lg p-2.5 space-y-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-gray-800 truncate">{s.title}</p>
+                                    <p className="text-xs text-gray-500 line-clamp-2">{s.content}</p>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {s.status === "valide" && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Validé</span>}
+                                    {s.status === "en_attente" && <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">En attente</span>}
+                                    {s.status === "modifications_demandees" && <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">Modifs demandées</span>}
+                                    <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-red-400 hover:text-red-600" onClick={async () => {
+                                      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/scripts/${s.script_id}`, { method: "DELETE", credentials: "include" });
+                                      if (r.ok) { toast.success("Script supprimé"); fetchAgencyCampaigns(); setEditingCampaign(prev => ({ ...prev, scripts: (prev.scripts || []).filter(sc => sc.script_id !== s.script_id) })); }
+                                      else toast.error("Erreur suppression script");
+                                    }}><Trash2 className="w-3 h-3" /></Button>
+                                  </div>
+                                </div>
+                                {s.status === "modifications_demandees" && s.client_comment && (
+                                  <div className="bg-orange-50 border border-orange-100 rounded p-1.5">
+                                    <p className="text-xs text-orange-700 italic">{s.client_comment}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Add new script */}
+                        <div className="space-y-2 pt-1 border-t border-gray-100">
+                          <p className="text-xs text-gray-500">Ajouter un script</p>
+                          <Input className="h-8 text-xs" placeholder="Titre du script" value={newScript.title} onChange={e => setNewScript(s => ({ ...s, title: e.target.value }))} />
+                          <Textarea className="text-xs min-h-[60px]" placeholder="Contenu du script..." value={newScript.content} onChange={e => setNewScript(s => ({ ...s, content: e.target.value }))} />
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={async () => {
+                            if (!newScript.title.trim()) { toast.error("Titre requis"); return; }
+                            const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/scripts`, {
+                              method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+                              body: JSON.stringify(newScript)
+                            });
+                            if (r.ok) {
+                              const added = await r.json();
+                              toast.success("Script ajouté");
+                              setNewScript({ title: "", content: "" });
+                              fetchAgencyCampaigns();
+                              setEditingCampaign(prev => ({ ...prev, scripts: [...(prev.scripts || []), added] }));
+                            } else toast.error("Erreur ajout script");
+                          }}>
+                            <Plus className="w-3 h-3 mr-1" /> Ajouter script
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delivery link section */}
+                    <div className="border border-gray-200 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Livraison vidéos</p>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Lien Drive des vidéos</label>
+                        <Input className="h-9 text-sm" placeholder="https://drive.google.com/..." value={campaignForm.video_delivery_link} onChange={e => setCampaignForm(f => ({ ...f, video_delivery_link: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Notes de livraison</label>
+                        <Textarea className="text-sm min-h-[50px]" placeholder="Instructions pour télécharger les fichiers..." value={campaignForm.delivery_notes} onChange={e => setCampaignForm(f => ({ ...f, delivery_notes: e.target.value }))} />
+                      </div>
+                    </div>
+
                     <div className="flex gap-2">
                       <Button size="sm" onClick={saveCampaign} className="bg-primary text-white">Enregistrer</Button>
                       <Button size="sm" variant="outline" onClick={() => setShowCampaignForm(false)}>Annuler</Button>
@@ -1634,7 +1713,7 @@ const AdminPage = ({ user }) => {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge className="text-xs bg-primary/10 text-primary">{AGENCY_STATUSES.find(s => s.key === c.status)?.label || c.status}</Badge>
-                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_id: c.creator_id || "", creator_name: c.creator_name || "", notes: c.notes || "", client_notes: c.client_notes || "", status: c.status }); setShowCampaignForm(true); }}>
+                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_id: c.creator_id || "", creator_name: c.creator_name || "", notes: c.notes || "", client_notes: c.client_notes || "", status: c.status, video_delivery_link: c.video_delivery_link || "", delivery_notes: c.delivery_notes || "" }); setNewScript({ title: "", content: "" }); setShowCampaignForm(true); }}>
                               <Settings className="w-3 h-3" />
                             </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-red-500 hover:text-red-700" onClick={() => deleteCampaign(c.campaign_id)}>

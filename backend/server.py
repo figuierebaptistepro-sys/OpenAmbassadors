@@ -723,6 +723,9 @@ class AgencyCampaign(BaseModel):
     creator_name: Optional[str] = None
     status: str = "brief_recu"
     notes: Optional[str] = None
+    scripts: List[dict] = []  # list of Script objects
+    video_delivery_link: Optional[str] = None  # Google Drive link when videos ready
+    delivery_notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -2615,6 +2618,72 @@ async def update_videos_delivered(campaign_id: str, request: Request, user: dict
         {"$set": {"videos_delivered": count, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     return {"message": "Compteur mis à jour", "videos_delivered": count}
+
+@api_router.post("/admin/agency/campaigns/{campaign_id}/scripts")
+async def add_script_to_campaign(campaign_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: add a script to a campaign"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    script = {
+        "script_id": f"script_{uuid.uuid4().hex[:8]}",
+        "title": body.get("title", ""),
+        "content": body.get("content", ""),
+        "status": "en_attente",
+        "client_comment": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$push": {"scripts": script}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return script
+
+@api_router.delete("/admin/agency/campaigns/{campaign_id}/scripts/{script_id}")
+async def delete_script_from_campaign(campaign_id: str, script_id: str, user: dict = Depends(get_current_user)):
+    """Admin: remove a script from a campaign"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$pull": {"scripts": {"script_id": script_id}}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Script supprimé"}
+
+@api_router.patch("/admin/agency/campaigns/{campaign_id}/delivery")
+async def set_campaign_delivery(campaign_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: set video delivery link on a campaign"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    update = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if "video_delivery_link" in body:
+        update["video_delivery_link"] = body["video_delivery_link"]
+    if "delivery_notes" in body:
+        update["delivery_notes"] = body["delivery_notes"]
+    await db.agency_campaigns.update_one({"campaign_id": campaign_id}, {"$set": update})
+    return {"message": "Livraison mise à jour"}
+
+@api_router.patch("/agency/my-campaigns/{campaign_id}/scripts/{script_id}/action")
+async def client_script_action(campaign_id: str, script_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Client: validate or request modifications on a script"""
+    body = await request.json()
+    action = body.get("action")
+    if action not in ("valide", "modifications_demandees"):
+        raise HTTPException(status_code=400, detail="Action invalide")
+    # Verify ownership
+    campaign = await db.agency_campaigns.find_one({"campaign_id": campaign_id, "client_id": user["user_id"]}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=403, detail="Accès refusé ou campagne introuvable")
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id, "scripts.script_id": script_id},
+        {"$set": {
+            "scripts.$.status": action,
+            "scripts.$.client_comment": body.get("comment"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"message": "Action enregistrée"}
 
 @api_router.post("/auth/check-invitation")
 async def check_invitation(request: Request):

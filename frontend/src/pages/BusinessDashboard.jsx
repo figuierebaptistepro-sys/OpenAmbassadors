@@ -20,6 +20,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -53,6 +55,8 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [scriptCommentMap, setScriptCommentMap] = useState({}); // script_id -> comment text
+  const [scriptCommentOpen, setScriptCommentOpen] = useState({}); // script_id -> bool
 
   const AGENCY_STATUSES = [
     { key: "brief_recu",  label: "Brief reçu",          color: "bg-slate-500",  light: "bg-slate-100 text-slate-700" },
@@ -788,7 +792,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
       </Sheet>
 
       {/* Campaign Detail Sheet */}
-      <Sheet open={!!selectedCampaign} onOpenChange={() => setSelectedCampaign(null)}>
+      <Sheet open={!!selectedCampaign} onOpenChange={() => { setSelectedCampaign(null); setScriptCommentMap({}); setScriptCommentOpen({}); }}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           {selectedCampaign && (() => {
             const c = selectedCampaign;
@@ -797,122 +801,251 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
             const videosTotal = formula?.videos || 0;
             const videosDelivered = c.videos_delivered || 0;
+
+            const handleScriptAction = async (scriptId, action, comment) => {
+              try {
+                const r = await fetch(`${API_URL}/api/agency/my-campaigns/${c.campaign_id}/scripts/${scriptId}/action`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ action, comment: comment || undefined }),
+                });
+                if (r.ok) {
+                  toast.success(action === "valide" ? "Script validé !" : "Modifications demandées");
+                  setScriptCommentOpen(prev => ({ ...prev, [scriptId]: false }));
+                  setScriptCommentMap(prev => ({ ...prev, [scriptId]: "" }));
+                  // Refresh campaigns and update selectedCampaign
+                  const updated = await fetch(`${API_URL}/api/agency/my-campaigns`, { credentials: "include" });
+                  if (updated.ok) {
+                    const list = await updated.json();
+                    setAgencyCampaigns(list);
+                    const refreshed = list.find(x => x.campaign_id === c.campaign_id);
+                    if (refreshed) setSelectedCampaign(refreshed);
+                  }
+                } else {
+                  toast.error("Erreur lors de l'action");
+                }
+              } catch { toast.error("Erreur réseau"); }
+            };
+
             return (
               <>
-                <SheetHeader className="mb-6">
+                <SheetHeader className="mb-4">
                   <div className={`h-1 w-full rounded-full ${status.color} mb-4`} />
                   <SheetTitle className="text-xl font-heading">{c.title}</SheetTitle>
                   <span className={`inline-flex self-start text-xs font-semibold px-3 py-1 rounded-full ${status.light}`}>{status.label}</span>
                 </SheetHeader>
 
-                <div className="space-y-6">
-                  {/* Description */}
-                  {c.description && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Description</p>
-                      <p className="text-sm text-gray-700 leading-relaxed">{c.description}</p>
+                {/* Description */}
+                {c.description && (
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">{c.description}</p>
+                )}
+
+                <Tabs defaultValue="avancement" className="w-full">
+                  <TabsList className="w-full mb-4">
+                    <TabsTrigger value="avancement" className="flex-1 text-xs">Avancement</TabsTrigger>
+                    <TabsTrigger value="scripts" className="flex-1 text-xs">Scripts {(c.scripts || []).length > 0 && `(${(c.scripts || []).length})`}</TabsTrigger>
+                    <TabsTrigger value="videos" className="flex-1 text-xs">Vidéos</TabsTrigger>
+                  </TabsList>
+
+                  {/* Tab 1: Avancement */}
+                  <TabsContent value="avancement" className="space-y-6 mt-0">
+                    {/* Formula + Budget */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {formula && (
+                        <div className="bg-primary/5 rounded-xl p-3.5">
+                          <Package className="w-4 h-4 text-primary mb-1.5" />
+                          <p className="text-xs text-gray-500">Formule</p>
+                          <p className="text-sm font-bold text-gray-900">{formula.label}</p>
+                        </div>
+                      )}
+                      {c.budget && (
+                        <div className="bg-green-50 rounded-xl p-3.5">
+                          <span className="text-lg mb-1.5 block">💰</span>
+                          <p className="text-xs text-gray-500">Budget</p>
+                          <p className="text-sm font-bold text-gray-900">{c.budget}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  {/* Formula + Budget */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {formula && (
-                      <div className="bg-primary/5 rounded-xl p-3.5">
-                        <Package className="w-4 h-4 text-primary mb-1.5" />
-                        <p className="text-xs text-gray-500">Formule</p>
-                        <p className="text-sm font-bold text-gray-900">{formula.label}</p>
-                      </div>
-                    )}
-                    {c.budget && (
-                      <div className="bg-green-50 rounded-xl p-3.5">
-                        <span className="text-lg mb-1.5 block">💰</span>
-                        <p className="text-xs text-gray-500">Budget</p>
-                        <p className="text-sm font-bold text-gray-900">{c.budget}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Creator */}
-                  {c.creator_name && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Créateur attitré</p>
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                        {c.creator_picture ? (
-                          <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
-                            alt={c.creator_name} className="w-12 h-12 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{c.creator_name}</p>
-                          {c.creator_city && <p className="text-xs text-gray-500">{c.creator_city}</p>}
-                          {c.creator_content_types?.length > 0 && (
-                            <div className="flex gap-1 mt-1 flex-wrap">
-                              {c.creator_content_types.slice(0, 3).map(t => (
-                                <span key={t} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">{t}</span>
-                              ))}
+                    {/* Creator */}
+                    {c.creator_name && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Créateur attitré</p>
+                        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                          {c.creator_picture ? (
+                            <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                              alt={c.creator_name} className="w-12 h-12 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
                             </div>
                           )}
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{c.creator_name}</p>
+                            {c.creator_city && <p className="text-xs text-gray-500">{c.creator_city}</p>}
+                            {c.creator_content_types?.length > 0 && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {c.creator_content_types.slice(0, 3).map(t => (
+                                  <span key={t} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {c.creator_id && (
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => { setSelectedCampaign(null); navigate(`/creators/${c.creator_id}`); }}>
+                              Voir <ExternalLink className="w-3 h-3 ml-1" />
+                            </Button>
+                          )}
                         </div>
-                        {c.creator_id && (
-                          <Button size="sm" variant="outline" className="text-xs" onClick={() => { setSelectedCampaign(null); navigate(`/creators/${c.creator_id}`); }}>
-                            Voir <ExternalLink className="w-3 h-3 ml-1" />
+                      </div>
+                    )}
+
+                    {/* Videos progress */}
+                    {formula && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vidéos livrées</p>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <div className="flex items-end justify-between mb-3">
+                            <span className="text-3xl font-bold text-gray-900">{videosDelivered}</span>
+                            <span className="text-gray-400 text-sm mb-1">/ {videosTotal} vidéos</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-green-500 h-3 rounded-full transition-all"
+                              style={{ width: `${videosTotal ? Math.min(100, (videosDelivered / videosTotal) * 100) : 0}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Steps timeline */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Étapes de production</p>
+                      <div className="space-y-2">
+                        {AGENCY_STATUSES.map((s, i) => {
+                          const done = i < currentIdx;
+                          const active = i === currentIdx;
+                          return (
+                            <div key={s.key} className={`flex items-center gap-3 p-2.5 rounded-lg transition-all
+                              ${active ? "bg-primary/5 border border-primary/20" : done ? "opacity-60" : "opacity-40"}`}>
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
+                                ${done ? `${status.color} text-white` : active ? `${status.color} text-white` : "bg-gray-200"}`}>
+                                {done ? <Check className="w-3 h-3" /> : <span className="text-xs font-bold text-gray-500">{i + 1}</span>}
+                              </div>
+                              <span className={`text-sm ${active ? "font-semibold text-gray-900" : "text-gray-600"}`}>{s.label}</span>
+                              {active && <span className="ml-auto text-xs font-medium text-[#FF2E63]">En cours</span>}
+                              {done && <span className="ml-auto text-xs text-gray-400">✓</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Client notes */}
+                    {c.client_notes && (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-amber-600 mb-1">Message de votre équipe</p>
+                        <p className="text-sm text-gray-700">{c.client_notes}</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Tab 2: Scripts */}
+                  <TabsContent value="scripts" className="mt-0">
+                    {(c.scripts || []).length === 0 ? (
+                      <div className="text-center py-10 text-gray-400">
+                        <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">Aucun script pour le moment</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {(c.scripts || []).map(s => (
+                          <div key={s.script_id} className="border border-gray-100 rounded-xl p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-semibold text-sm text-gray-900">{s.title}</p>
+                              {s.status === "valide" && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Validé</span>
+                              )}
+                              {s.status === "en_attente" && (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">En attente de validation</span>
+                              )}
+                              {s.status === "modifications_demandees" && (
+                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Modifications demandées</span>
+                              )}
+                            </div>
+
+                            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{s.content}</p>
+
+                            {s.status === "modifications_demandees" && s.client_comment && (
+                              <p className="text-xs text-gray-500 italic">Votre commentaire : {s.client_comment}</p>
+                            )}
+
+                            {s.status === "en_attente" && (
+                              <div className="space-y-2 pt-1">
+                                <div className="flex gap-2">
+                                  <Button size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => handleScriptAction(s.script_id, "valide", null)}>
+                                    Valider
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-8 text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
+                                    onClick={() => setScriptCommentOpen(prev => ({ ...prev, [s.script_id]: !prev[s.script_id] }))}>
+                                    Demander des modifications
+                                  </Button>
+                                </div>
+                                {scriptCommentOpen[s.script_id] && (
+                                  <div className="space-y-2">
+                                    <Textarea
+                                      className="text-xs min-h-[70px]"
+                                      placeholder="Décrivez les modifications souhaitées..."
+                                      value={scriptCommentMap[s.script_id] || ""}
+                                      onChange={e => setScriptCommentMap(prev => ({ ...prev, [s.script_id]: e.target.value }))}
+                                    />
+                                    <Button size="sm" className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                                      onClick={() => handleScriptAction(s.script_id, "modifications_demandees", scriptCommentMap[s.script_id])}>
+                                      Envoyer
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Tab 3: Vidéos */}
+                  <TabsContent value="videos" className="mt-0">
+                    {c.video_delivery_link ? (
+                      <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-5 text-center space-y-3">
+                          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                            <PlayCircle className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 mb-1">Vos vidéos sont prêtes !</p>
+                            <p className="text-xs text-gray-500">Cliquez ci-dessous pour accéder à vos fichiers</p>
+                          </div>
+                          <Button className="bg-[#FF2E63] hover:bg-[#e0284f] text-white"
+                            onClick={() => window.open(c.video_delivery_link, "_blank")}>
+                            <ExternalLink className="w-4 h-4 mr-2" /> Télécharger les vidéos
                           </Button>
+                        </div>
+                        {c.delivery_notes && (
+                          <div className="bg-gray-50 rounded-xl p-4">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Instructions</p>
+                            <p className="text-sm text-gray-700 leading-relaxed">{c.delivery_notes}</p>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Videos progress */}
-                  {formula && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vidéos livrées</p>
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-end justify-between mb-3">
-                          <span className="text-3xl font-bold text-gray-900">{videosDelivered}</span>
-                          <span className="text-gray-400 text-sm mb-1">/ {videosTotal} vidéos</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div className="bg-green-500 h-3 rounded-full transition-all"
-                            style={{ width: `${videosTotal ? Math.min(100, (videosDelivered / videosTotal) * 100) : 0}%` }} />
-                        </div>
+                    ) : (
+                      <div className="text-center py-10 text-gray-400">
+                        <Film className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">Vos vidéos seront disponibles ici une fois la livraison effectuée</p>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Steps timeline */}
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Étapes de production</p>
-                    <div className="space-y-2">
-                      {AGENCY_STATUSES.map((s, i) => {
-                        const done = i < currentIdx;
-                        const active = i === currentIdx;
-                        return (
-                          <div key={s.key} className={`flex items-center gap-3 p-2.5 rounded-lg transition-all
-                            ${active ? "bg-primary/5 border border-primary/20" : done ? "opacity-60" : "opacity-40"}`}>
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
-                              ${done ? `${status.color} text-white` : active ? `${status.color} text-white` : "bg-gray-200"}`}>
-                              {done ? <Check className="w-3 h-3" /> : <span className="text-xs font-bold text-gray-500">{i + 1}</span>}
-                            </div>
-                            <span className={`text-sm ${active ? "font-semibold text-gray-900" : "text-gray-600"}`}>{s.label}</span>
-                            {active && <span className="ml-auto text-xs font-medium text-primary">En cours</span>}
-                            {done && <span className="ml-auto text-xs text-gray-400">✓</span>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Client notes */}
-                  {c.client_notes && (
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-                      <p className="text-xs font-semibold text-amber-600 mb-1">Message de votre équipe</p>
-                      <p className="text-sm text-gray-700">{c.client_notes}</p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </>
             );
           })()}
