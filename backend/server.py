@@ -399,6 +399,106 @@ async def send_withdrawal_status_email(creator_email: str, creator_name: str, am
         """
     )
 
+# ==================== AGENCY EMAIL NOTIFICATIONS ====================
+
+def _agency_email_wrapper(content: str) -> str:
+    return f"""
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 16px;background:#f9f9f9;">
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <div style="background:linear-gradient(135deg,#FF2E63 0%,#c2185b 100%);padding:28px 32px;text-align:center;">
+          <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-0.5px;">OpenAmbassadors</span>
+        </div>
+        <div style="padding:32px;">
+          {content}
+        </div>
+        <div style="padding:20px 32px;border-top:1px solid #f0f0f0;text-align:center;">
+          <p style="color:#aaa;font-size:12px;margin:0;">© OpenAmbassadors · <a href="{FRONTEND_URL}" style="color:#FF2E63;text-decoration:none;">openambassadors.com</a></p>
+        </div>
+      </div>
+    </div>"""
+
+async def send_agency_campaign_created_email(client_email: str, client_name: str, campaign_title: str, formula: str):
+    label = "12 vidéos / mois" if formula == "12_videos" else ("20 vidéos / mois" if formula == "20_videos" else formula or "")
+    content = f"""
+      <h2 style="color:#FF2E63;margin:0 0 8px;">Votre programme démarre ! 🚀</h2>
+      <p style="color:#555;line-height:1.7;">Bonjour <strong>{client_name or ''}</strong>,</p>
+      <p style="color:#555;line-height:1.7;">Votre campagne <strong>"{campaign_title}"</strong> a été créée et notre équipe commence à travailler dessus.</p>
+      <div style="background:#FFF1F5;border-left:4px solid #FF2E63;border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:#FF2E63;font-weight:700;margin:0 0 4px;">Programme : {label}</p>
+        <p style="color:#555;margin:0;font-size:14px;">Prochaine étape : casting des créateurs</p>
+      </div>
+      <p style="color:#555;line-height:1.7;">Vous recevrez un email à chaque étape clé de votre campagne.</p>
+      <div style="text-align:center;margin-top:28px;">
+        <a href="{FRONTEND_URL}/business/projects" style="background:linear-gradient(135deg,#FF2E63,#c2185b);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Suivre ma campagne</a>
+      </div>"""
+    await send_email(to=client_email, subject=f"🚀 Votre campagne \"{campaign_title}\" a démarré !", html=_agency_email_wrapper(content))
+
+async def send_agency_status_changed_email(client_email: str, client_name: str, campaign_title: str, new_status: str, campaign_id: str):
+    STATUS_INFO = {
+        "casting":   ("🎯 Casting en cours", "Notre équipe sélectionne les meilleurs créateurs pour votre campagne.", "#3B82F6"),
+        "tournage":  ("🎬 Tournage lancé !", "Les créateurs sélectionnés tournent vos vidéos. C'est parti !", "#8B5CF6"),
+        "montage":   ("✂️ Montage en cours", "Vos vidéos sont en cours de montage. Plus qu'un peu de patience !", "#F59E0B"),
+        "livraison": ("📦 Livraison imminente", "Le montage est terminé. Vos vidéos arrivent très bientôt !", "#10B981"),
+        "termine":   ("✅ Campagne terminée !", "Toutes vos vidéos sont livrées. Merci de votre confiance !", "#FF2E63"),
+    }
+    if new_status not in STATUS_INFO:
+        return
+    title, message, color = STATUS_INFO[new_status]
+    content = f"""
+      <h2 style="color:{color};margin:0 0 8px;">{title}</h2>
+      <p style="color:#555;line-height:1.7;">Bonjour <strong>{client_name or ''}</strong>,</p>
+      <p style="color:#555;line-height:1.7;">Votre campagne <strong>"{campaign_title}"</strong> vient de passer à une nouvelle étape.</p>
+      <div style="background:#f8f8f8;border-left:4px solid {color};border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:{color};font-weight:700;margin:0 0 4px;">{title}</p>
+        <p style="color:#555;margin:0;font-size:14px;">{message}</p>
+      </div>
+      <div style="text-align:center;margin-top:28px;">
+        <a href="{FRONTEND_URL}/business/productions/{campaign_id}" style="background:linear-gradient(135deg,#FF2E63,#c2185b);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Voir ma campagne</a>
+      </div>"""
+    await send_email(to=client_email, subject=f"{title} — {campaign_title}", html=_agency_email_wrapper(content))
+
+async def send_agency_script_ready_email(client_email: str, client_name: str, campaign_title: str, script_title: str, campaign_id: str):
+    content = f"""
+      <h2 style="color:#FF2E63;margin:0 0 8px;">Un script est prêt pour validation 📝</h2>
+      <p style="color:#555;line-height:1.7;">Bonjour <strong>{client_name or ''}</strong>,</p>
+      <p style="color:#555;line-height:1.7;">Un nouveau script a été ajouté à votre campagne <strong>"{campaign_title}"</strong> et attend votre validation.</p>
+      <div style="background:#FFF1F5;border-left:4px solid #FF2E63;border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:#FF2E63;font-weight:700;margin:0 0 4px;">Script : {script_title}</p>
+        <p style="color:#555;margin:0;font-size:14px;">Validez-le ou demandez des modifications directement depuis votre espace.</p>
+      </div>
+      <div style="text-align:center;margin-top:28px;">
+        <a href="{FRONTEND_URL}/business/productions/{campaign_id}?tab=scripts" style="background:linear-gradient(135deg,#FF2E63,#c2185b);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Valider le script</a>
+      </div>"""
+    await send_email(to=client_email, subject=f"📝 Script prêt à valider — {campaign_title}", html=_agency_email_wrapper(content))
+
+async def send_agency_video_delivered_email(client_email: str, client_name: str, campaign_title: str, video_filename: str, videos_count: int, campaign_id: str):
+    content = f"""
+      <h2 style="color:#FF2E63;margin:0 0 8px;">Nouvelle vidéo livrée ! 🎉</h2>
+      <p style="color:#555;line-height:1.7;">Bonjour <strong>{client_name or ''}</strong>,</p>
+      <p style="color:#555;line-height:1.7;">Une nouvelle vidéo vient d'être ajoutée à votre campagne <strong>"{campaign_title}"</strong>.</p>
+      <div style="background:#FFF1F5;border-left:4px solid #FF2E63;border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:#FF2E63;font-weight:700;margin:0 0 4px;">📹 {video_filename}</p>
+        <p style="color:#555;margin:0;font-size:14px;">{videos_count} vidéo{"s" if videos_count > 1 else ""} disponible{"s" if videos_count > 1 else ""} au total</p>
+      </div>
+      <div style="text-align:center;margin-top:28px;">
+        <a href="{FRONTEND_URL}/business/productions/{campaign_id}?tab=videos" style="background:linear-gradient(135deg,#FF2E63,#c2185b);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Voir mes vidéos</a>
+      </div>"""
+    await send_email(to=client_email, subject=f"🎉 Nouvelle vidéo livrée — {campaign_title}", html=_agency_email_wrapper(content))
+
+async def send_agency_script_action_email(admin_email: str, client_name: str, campaign_title: str, script_title: str, action: str, comment: str, campaign_id: str):
+    is_validated = action == "valide"
+    color = "#10B981" if is_validated else "#F59E0B"
+    title = "✅ Script validé" if is_validated else "✏️ Modifications demandées"
+    msg = f"a <strong>validé</strong>" if is_validated else f"a demandé des <strong>modifications</strong> sur"
+    content = f"""
+      <h2 style="color:{color};margin:0 0 8px;">{title}</h2>
+      <p style="color:#555;line-height:1.7;">Le client <strong>{client_name or ''}</strong> {msg} le script <strong>"{script_title}"</strong> de la campagne <strong>"{campaign_title}"</strong>.</p>
+      {f'<div style="background:#FFF8E1;border-left:4px solid #F59E0B;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="color:#555;margin:0;font-size:14px;"><strong>Commentaire :</strong> {comment}</p></div>' if comment else ''}
+      <div style="text-align:center;margin-top:28px;">
+        <a href="{FRONTEND_URL}/admin" style="background:linear-gradient(135deg,#FF2E63,#c2185b);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Voir dans l'admin</a>
+      </div>"""
+    await send_email(to=admin_email, subject=f"{title} par {client_name} — {campaign_title}", html=_agency_email_wrapper(content))
+
 # ==================== NOTIFICATION HELPER ====================
 
 async def create_notification(
@@ -2615,6 +2715,12 @@ async def create_agency_campaign(request: Request, user: dict = Depends(get_curr
         status=body.get("status", "brief_recu"),
     )
     await db.agency_campaigns.insert_one(campaign.model_dump())
+    # Email de bienvenue au client
+    client = await db.users.find_one({"user_id": body["client_id"]}, {"_id": 0})
+    if client and client.get("email"):
+        asyncio.create_task(send_agency_campaign_created_email(
+            client["email"], client.get("name", ""), campaign.title, campaign.formula or ""
+        ))
     return campaign.model_dump()
 
 @api_router.get("/admin/agency/campaigns")
@@ -2636,8 +2742,16 @@ async def update_agency_campaign(campaign_id: str, request: Request, user: dict 
     if user.get("email") not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="Admin only")
     body = await request.json()
+    old = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
     body["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.agency_campaigns.update_one({"campaign_id": campaign_id}, {"$set": body})
+    # Email si le statut change
+    if old and "status" in body and body["status"] != old.get("status"):
+        client = await db.users.find_one({"user_id": old["client_id"]}, {"_id": 0})
+        if client and client.get("email"):
+            asyncio.create_task(send_agency_status_changed_email(
+                client["email"], client.get("name", ""), old.get("title", ""), body["status"], campaign_id
+            ))
     return {"message": "Campagne mise à jour"}
 
 @api_router.delete("/admin/agency/campaigns/{campaign_id}")
@@ -2726,10 +2840,19 @@ async def add_script_to_campaign(campaign_id: str, request: Request, user: dict 
         "client_comment": None,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
+    campaign = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
     await db.agency_campaigns.update_one(
         {"campaign_id": campaign_id},
         {"$push": {"scripts": script}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
     )
+    # Email au client
+    if campaign:
+        client = await db.users.find_one({"user_id": campaign["client_id"]}, {"_id": 0})
+        if client and client.get("email"):
+            asyncio.create_task(send_agency_script_ready_email(
+                client["email"], client.get("name", ""), campaign.get("title", ""),
+                script["title"], campaign_id
+            ))
     return script
 
 @api_router.delete("/admin/agency/campaigns/{campaign_id}/scripts/{script_id}")
@@ -2842,6 +2965,16 @@ async def upload_campaign_video(campaign_id: str, file: UploadFile = File(...), 
         {"$push": {"delivered_videos": video_entry},
          "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
     )
+    # Email au client
+    campaign_doc = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
+    if campaign_doc:
+        client = await db.users.find_one({"user_id": campaign_doc["client_id"]}, {"_id": 0})
+        if client and client.get("email"):
+            videos_count = len(campaign_doc.get("delivered_videos", [])) + 1
+            asyncio.create_task(send_agency_video_delivered_email(
+                client["email"], client.get("name", ""), campaign_doc.get("title", ""),
+                original_filename, videos_count, campaign_id
+            ))
     return video_entry
 
 @api_router.delete("/admin/agency/campaigns/{campaign_id}/delivered-videos/{video_id}")
@@ -2867,6 +3000,8 @@ async def client_script_action(campaign_id: str, script_id: str, request: Reques
     campaign = await db.agency_campaigns.find_one({"campaign_id": campaign_id, "client_id": user["user_id"]}, {"_id": 0})
     if not campaign:
         raise HTTPException(status_code=403, detail="Accès refusé ou campagne introuvable")
+    # Find script title for email
+    script_obj = next((s for s in campaign.get("scripts", []) if s.get("script_id") == script_id), None)
     await db.agency_campaigns.update_one(
         {"campaign_id": campaign_id, "scripts.script_id": script_id},
         {"$set": {
@@ -2875,6 +3010,16 @@ async def client_script_action(campaign_id: str, script_id: str, request: Reques
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
     )
+    # Email à l'admin
+    asyncio.create_task(send_agency_script_action_email(
+        ADMIN_EMAILS[0],
+        user.get("name", user.get("email", "")),
+        campaign.get("title", ""),
+        script_obj.get("title", "") if script_obj else "",
+        action,
+        body.get("comment", ""),
+        campaign_id
+    ))
     return {"message": "Action enregistrée"}
 
 @api_router.post("/auth/check-invitation")
