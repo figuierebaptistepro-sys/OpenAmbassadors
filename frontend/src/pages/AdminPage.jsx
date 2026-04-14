@@ -73,7 +73,8 @@ const AdminPage = ({ user }) => {
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
   const [agencyClients, setAgencyClients] = useState([]);
   const [agencyInvitations, setAgencyInvitations] = useState([]);
-  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" });
+  const [campaignForm, setCampaignForm] = useState({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" });
+  const [agencyCreatorsList, setAgencyCreatorsList] = useState([]);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
   const AGENCY_STATUSES = [
@@ -173,7 +174,7 @@ const AdminPage = ({ user }) => {
     if (activeTab === "reviews") fetchReviews();
     if (activeTab === "activity") fetchActivityLogs();
     if (activeTab === "demandes") fetchDemandes();
-    if (activeTab === "agence") { fetchAgencyCampaigns(); fetchAgencyClients(); fetchAgencyInvitations(); }
+    if (activeTab === "agence") { fetchAgencyCampaigns(); fetchAgencyClients(); fetchAgencyInvitations(); fetchAgencyCreators(); }
   }, [activeTab, userTypeFilter, userStatusFilter, withdrawalStatusFilter, projectStatusFilter, reportStatusFilter, reviewSourceFilter]);
 
   // ==================== FETCH FUNCTIONS ====================
@@ -416,6 +417,13 @@ const AdminPage = ({ user }) => {
     } catch (error) { console.error("Error:", error); }
   };
 
+  const fetchAgencyCreators = async () => {
+    try {
+      const r = await fetch(`${API_URL}/api/creators?limit=100`, { credentials: "include" });
+      if (r.ok) setAgencyCreatorsList(await r.json());
+    } catch (e) { console.error(e); }
+  };
+
   const fetchAgencyCampaigns = async () => {
     try {
       const r = await fetch(`${API_URL}/api/admin/agency/campaigns`, { credentials: "include" });
@@ -462,7 +470,7 @@ const AdminPage = ({ user }) => {
         toast.success(editingCampaign ? "Campagne mise à jour" : "Campagne créée");
         setShowCampaignForm(false);
         setEditingCampaign(null);
-        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" });
+        setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" });
         fetchAgencyCampaigns();
       } else { toast.error("Erreur lors de l'enregistrement"); }
     } catch (e) { toast.error("Erreur"); }
@@ -1531,7 +1539,7 @@ const AdminPage = ({ user }) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Campagnes clients ({agencyCampaigns.length})</CardTitle>
-                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_name: "", notes: "", status: "brief_recu" }); setShowCampaignForm(true); }} className="bg-primary text-white">
+                  <Button size="sm" onClick={() => { setEditingCampaign(null); setCampaignForm({ client_id: "", title: "", description: "", budget: "", formula: "", creator_id: "", creator_name: "", notes: "", client_notes: "", status: "brief_recu" }); setShowCampaignForm(true); }} className="bg-primary text-white">
                     <Plus className="w-4 h-4 mr-1" />Nouvelle campagne
                   </Button>
                 </div>
@@ -1559,8 +1567,21 @@ const AdminPage = ({ user }) => {
                         <Input className="h-9 text-sm" placeholder="ex: 1500€" value={campaignForm.budget} onChange={e => setCampaignForm(f => ({ ...f, budget: e.target.value }))} />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Créateur assigné</label>
-                        <Input className="h-9 text-sm" placeholder="Nom du créateur" value={campaignForm.creator_name} onChange={e => setCampaignForm(f => ({ ...f, creator_name: e.target.value }))} />
+                        <label className="text-xs text-gray-500 mb-1 block">Créateur attitré</label>
+                        <Select value={campaignForm.creator_id} onValueChange={(v) => {
+                          const creator = agencyCreatorsList.find(c => c.user_id === v);
+                          setCampaignForm(f => ({ ...f, creator_id: v, creator_name: creator?.name || "" }));
+                        }}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Choisir un créateur" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Aucun créateur</SelectItem>
+                            {agencyCreatorsList.map(c => (
+                              <SelectItem key={c.user_id} value={c.user_id}>
+                                {c.name || c.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Formule</label>
@@ -1587,7 +1608,11 @@ const AdminPage = ({ user }) => {
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Notes internes (invisibles pour le client)</label>
-                      <Textarea className="text-sm min-h-[60px]" placeholder="Notes..." value={campaignForm.notes} onChange={e => setCampaignForm(f => ({ ...f, notes: e.target.value }))} />
+                      <Textarea className="text-sm min-h-[60px]" placeholder="Notes internes..." value={campaignForm.notes} onChange={e => setCampaignForm(f => ({ ...f, notes: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Message pour le client (visible dans son dashboard)</label>
+                      <Textarea className="text-sm min-h-[60px]" placeholder="Message affiché au client..." value={campaignForm.client_notes} onChange={e => setCampaignForm(f => ({ ...f, client_notes: e.target.value }))} />
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={saveCampaign} className="bg-primary text-white">Enregistrer</Button>
@@ -1608,7 +1633,7 @@ const AdminPage = ({ user }) => {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge className="text-xs bg-primary/10 text-primary">{AGENCY_STATUSES.find(s => s.key === c.status)?.label || c.status}</Badge>
-                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_name: c.creator_name || "", notes: c.notes || "", status: c.status }); setShowCampaignForm(true); }}>
+                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => { setEditingCampaign(c); setCampaignForm({ client_id: c.client_id, title: c.title, description: c.description || "", budget: c.budget || "", formula: c.formula || "", creator_id: c.creator_id || "", creator_name: c.creator_name || "", notes: c.notes || "", client_notes: c.client_notes || "", status: c.status }); setShowCampaignForm(true); }}>
                               <Settings className="w-3 h-3" />
                             </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-red-500 hover:text-red-700" onClick={() => deleteCampaign(c.campaign_id)}>

@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Search, Users, ChevronRight, Star, MapPin, CheckCircle, 
-  Briefcase, Plus, ArrowRight, Sparkles, Target, Rocket, 
-  Image, Globe, FileText, Clock, Zap, Crown, Building2, Check, Upload, Camera
+  Search, Users, ChevronRight, Star, MapPin, CheckCircle,
+  Briefcase, Plus, ArrowRight, Sparkles, Target, Rocket,
+  Image, Globe, FileText, Clock, Zap, Crown, Building2, Check, Upload, Camera,
+  Film, Package, ChevronDown, ExternalLink, PlayCircle
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -51,14 +52,15 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [agencyCampaigns, setAgencyCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   const AGENCY_STATUSES = [
-    { key: "brief_recu", label: "Brief reçu" },
-    { key: "casting", label: "Casting" },
-    { key: "tournage", label: "Tournage" },
-    { key: "montage", label: "Montage" },
-    { key: "livraison", label: "Livraison des fichiers" },
-    { key: "termine", label: "Terminé" },
+    { key: "brief_recu",  label: "Brief reçu",          color: "bg-slate-500",  light: "bg-slate-100 text-slate-700" },
+    { key: "casting",     label: "Casting",              color: "bg-blue-500",   light: "bg-blue-100 text-blue-700" },
+    { key: "tournage",    label: "Tournage",             color: "bg-orange-500", light: "bg-orange-100 text-orange-700" },
+    { key: "montage",     label: "Montage",              color: "bg-purple-500", light: "bg-purple-100 text-purple-700" },
+    { key: "livraison",   label: "Livraison des fichiers", color: "bg-green-500", light: "bg-green-100 text-green-700" },
+    { key: "termine",     label: "Terminé",              color: "bg-emerald-600", light: "bg-emerald-100 text-emerald-700" },
   ];
   const AGENCY_FORMULAS = [
     { key: "12_videos", label: "12 vidéos / mois", videos: 12 },
@@ -275,70 +277,145 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
         {/* ===== AGENCY CLIENT CAMPAIGNS ===== */}
         {user?.is_agency_client && (
-          <div className="mb-6">
-            <h2 className="font-heading text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-primary" />
-              Mes campagnes
-            </h2>
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Film className="w-5 h-5 text-primary" />
+                Mes productions
+              </h2>
+              <span className="text-xs text-gray-400">{agencyCampaigns.length} campagne{agencyCampaigns.length > 1 ? "s" : ""}</span>
+            </div>
+
             {agencyCampaigns.length === 0 ? (
-              <Card className="border-0 shadow-sm">
-                <CardContent className="py-8 text-center text-sm text-gray-400">
-                  Aucune campagne en cours. Ton équipe OpenAmbassadors te préparera ça très vite !
-                </CardContent>
-              </Card>
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 py-12 text-center">
+                <Film className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-500">Aucune production en cours</p>
+                <p className="text-xs text-gray-400 mt-1">Votre équipe OpenAmbassadors la préparera très vite !</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {agencyCampaigns.map((c) => {
                   const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
+                  const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
                   const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
+                  const videosTotal = formula?.videos || 0;
+                  const videosDelivered = c.videos_delivered || 0;
+                  const videosPct = videosTotal ? Math.min(100, Math.round((videosDelivered / videosTotal) * 100)) : 0;
+                  const stepPct = Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100);
+
                   return (
-                    <Card key={c.campaign_id} className="border-0 shadow-sm">
-                      <CardContent className="pt-4 pb-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <p className="font-semibold text-sm">{c.title}</p>
-                          <Badge className="bg-primary/10 text-primary text-xs ml-2 flex-shrink-0">
-                            {AGENCY_STATUSES[currentIdx]?.label || c.status}
-                          </Badge>
-                        </div>
-                        {c.description && <p className="text-xs text-gray-500 mb-3">{c.description}</p>}
-                        <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
-                          {formula && <span className="font-medium text-primary">📦 {formula.label}</span>}
-                          {c.creator_name && <span>🎬 {c.creator_name}</span>}
-                        </div>
-                        {/* Videos delivered */}
-                        {formula && (
-                          <div className="mb-3 space-y-1">
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Vidéos livrées</span>
-                              <span className="font-semibold">{c.videos_delivered || 0} / {formula.videos}</span>
+                    <div key={c.campaign_id} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+                      {/* Color bar */}
+                      <div className={`h-1.5 w-full ${status.color}`} />
+
+                      <div className="p-5">
+                        {/* Top row: title + status + creator */}
+                        <div className="flex items-start gap-4 mb-5">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <h3 className="font-heading font-bold text-gray-900 text-base">{c.title}</h3>
+                              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${status.light}`}>{status.label}</span>
                             </div>
-                            <div className="w-full bg-gray-100 rounded-full h-2">
-                              <div className="bg-green-500 h-2 rounded-full transition-all"
-                                style={{ width: `${Math.min(100, ((c.videos_delivered || 0) / formula.videos) * 100)}%` }} />
+                            {c.description && <p className="text-sm text-gray-500 leading-relaxed">{c.description}</p>}
+                            {formula && (
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <Package className="w-3.5 h-3.5 text-primary" />
+                                <span className="text-xs font-medium text-primary">{formula.label}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Creator card */}
+                          {c.creator_name && (
+                            <div className="flex-shrink-0 flex flex-col items-center gap-1.5 bg-gray-50 rounded-xl px-4 py-3 min-w-[100px]">
+                              {c.creator_picture ? (
+                                <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                                  alt={c.creator_name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-primary font-bold text-lg">{c.creator_name[0]?.toUpperCase()}</span>
+                                </div>
+                              )}
+                              <p className="text-xs font-semibold text-gray-700 text-center leading-tight">{c.creator_name}</p>
+                              <p className="text-xs text-gray-400">Créateur attitré</p>
+                              {c.creator_id && (
+                                <button onClick={() => navigate(`/creators/${c.creator_id}`)}
+                                  className="text-xs text-primary hover:underline flex items-center gap-0.5 mt-0.5">
+                                  Voir profil <ExternalLink className="w-2.5 h-2.5" />
+                                </button>
+                              )}
                             </div>
-                          </div>
-                        )}
-                        {/* Progress bar */}
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-400">
-                            <span>Étape {currentIdx + 1}/{AGENCY_STATUSES.length}</span>
-                            <span>{Math.round(((currentIdx + 1) / AGENCY_STATUSES.length) * 100)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / AGENCY_STATUSES.length) * 100}%` }} />
-                          </div>
-                          <p className="text-xs text-primary font-medium">{AGENCY_STATUSES[currentIdx]?.label}</p>
+                          )}
                         </div>
-                        {/* Steps */}
-                        <div className="mt-3 flex flex-wrap gap-1">
-                          {AGENCY_STATUSES.map((s, i) => (
-                            <span key={s.key} className={`text-xs px-2 py-0.5 rounded-full ${i <= currentIdx ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-400"}`}>
-                              {s.label}
-                            </span>
-                          ))}
+
+                        {/* Progress grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                          {/* Videos delivered */}
+                          {formula && (
+                            <div className="bg-gray-50 rounded-xl p-3.5">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                                  <PlayCircle className="w-3.5 h-3.5 text-green-500" />Vidéos livrées
+                                </span>
+                                <span className="text-sm font-bold text-gray-900">{videosDelivered}<span className="text-gray-400 font-normal">/{videosTotal}</span></span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${videosPct}%` }} />
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1.5">{videosPct}% livré</p>
+                            </div>
+                          )}
+
+                          {/* Production step */}
+                          <div className="bg-gray-50 rounded-xl p-3.5">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                                <CheckCircle className="w-3.5 h-3.5 text-primary" />Étape de production
+                              </span>
+                              <span className="text-sm font-bold text-gray-900">{currentIdx + 1}<span className="text-gray-400 font-normal">/{AGENCY_STATUSES.length}</span></span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className={`h-2 rounded-full transition-all ${status.color}`} style={{ width: `${stepPct}%` }} />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1.5">{stepPct}% complété</p>
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
+
+                        {/* Step stepper */}
+                        <div className="flex items-center gap-0 mb-4 overflow-x-auto pb-1">
+                          {AGENCY_STATUSES.map((s, i) => {
+                            const done = i < currentIdx;
+                            const active = i === currentIdx;
+                            return (
+                              <div key={s.key} className="flex items-center flex-shrink-0">
+                                <div className={`flex flex-col items-center gap-1`}>
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                                    ${done ? `${status.color} text-white` : active ? `${status.color} text-white ring-4 ring-offset-1` : "bg-gray-200 text-gray-400"}`
+                                    .replace("ring-4 ring-offset-1", active ? "ring-4 ring-offset-1" : "")}>
+                                    {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                                  </div>
+                                  <span className={`text-xs whitespace-nowrap ${active ? "font-semibold text-gray-800" : done ? "text-gray-500" : "text-gray-400"}`}>{s.label}</span>
+                                </div>
+                                {i < AGENCY_STATUSES.length - 1 && (
+                                  <div className={`h-0.5 w-6 sm:w-10 mx-1 mb-4 flex-shrink-0 ${i < currentIdx ? status.color : "bg-gray-200"}`} />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Action */}
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          {c.client_notes && (
+                            <p className="text-xs text-gray-500 italic flex-1 mr-4">💬 {c.client_notes}</p>
+                          )}
+                          <Button size="sm" variant="outline" className="ml-auto border-gray-200 text-gray-700 hover:border-primary hover:text-primary"
+                            onClick={() => setSelectedCampaign(c)}>
+                            Voir les détails <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -716,6 +793,138 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
               Enregistrer
             </Button>
           </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Campaign Detail Sheet */}
+      <Sheet open={!!selectedCampaign} onOpenChange={() => setSelectedCampaign(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedCampaign && (() => {
+            const c = selectedCampaign;
+            const currentIdx = AGENCY_STATUSES.findIndex(s => s.key === c.status);
+            const status = AGENCY_STATUSES[currentIdx] || AGENCY_STATUSES[0];
+            const formula = AGENCY_FORMULAS.find(f => f.key === c.formula);
+            const videosTotal = formula?.videos || 0;
+            const videosDelivered = c.videos_delivered || 0;
+            return (
+              <>
+                <SheetHeader className="mb-6">
+                  <div className={`h-1 w-full rounded-full ${status.color} mb-4`} />
+                  <SheetTitle className="text-xl font-heading">{c.title}</SheetTitle>
+                  <span className={`inline-flex self-start text-xs font-semibold px-3 py-1 rounded-full ${status.light}`}>{status.label}</span>
+                </SheetHeader>
+
+                <div className="space-y-6">
+                  {/* Description */}
+                  {c.description && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Description</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{c.description}</p>
+                    </div>
+                  )}
+
+                  {/* Formula + Budget */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {formula && (
+                      <div className="bg-primary/5 rounded-xl p-3.5">
+                        <Package className="w-4 h-4 text-primary mb-1.5" />
+                        <p className="text-xs text-gray-500">Formule</p>
+                        <p className="text-sm font-bold text-gray-900">{formula.label}</p>
+                      </div>
+                    )}
+                    {c.budget && (
+                      <div className="bg-green-50 rounded-xl p-3.5">
+                        <span className="text-lg mb-1.5 block">💰</span>
+                        <p className="text-xs text-gray-500">Budget</p>
+                        <p className="text-sm font-bold text-gray-900">{c.budget}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Creator */}
+                  {c.creator_name && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Créateur attitré</p>
+                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                        {c.creator_picture ? (
+                          <img src={c.creator_picture.startsWith("http") ? c.creator_picture : `${API_URL}${c.creator_picture}`}
+                            alt={c.creator_name} className="w-12 h-12 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-primary font-bold text-xl">{c.creator_name[0]?.toUpperCase()}</span>
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">{c.creator_name}</p>
+                          {c.creator_city && <p className="text-xs text-gray-500">{c.creator_city}</p>}
+                          {c.creator_content_types?.length > 0 && (
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {c.creator_content_types.slice(0, 3).map(t => (
+                                <span key={t} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">{t}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {c.creator_id && (
+                          <Button size="sm" variant="outline" className="text-xs" onClick={() => { setSelectedCampaign(null); navigate(`/creators/${c.creator_id}`); }}>
+                            Voir <ExternalLink className="w-3 h-3 ml-1" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Videos progress */}
+                  {formula && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vidéos livrées</p>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-end justify-between mb-3">
+                          <span className="text-3xl font-bold text-gray-900">{videosDelivered}</span>
+                          <span className="text-gray-400 text-sm mb-1">/ {videosTotal} vidéos</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="bg-green-500 h-3 rounded-full transition-all"
+                            style={{ width: `${videosTotal ? Math.min(100, (videosDelivered / videosTotal) * 100) : 0}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Steps timeline */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Étapes de production</p>
+                    <div className="space-y-2">
+                      {AGENCY_STATUSES.map((s, i) => {
+                        const done = i < currentIdx;
+                        const active = i === currentIdx;
+                        return (
+                          <div key={s.key} className={`flex items-center gap-3 p-2.5 rounded-lg transition-all
+                            ${active ? "bg-primary/5 border border-primary/20" : done ? "opacity-60" : "opacity-40"}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
+                              ${done ? `${status.color} text-white` : active ? `${status.color} text-white` : "bg-gray-200"}`}>
+                              {done ? <Check className="w-3 h-3" /> : <span className="text-xs font-bold text-gray-500">{i + 1}</span>}
+                            </div>
+                            <span className={`text-sm ${active ? "font-semibold text-gray-900" : "text-gray-600"}`}>{s.label}</span>
+                            {active && <span className="ml-auto text-xs font-medium text-primary">En cours</span>}
+                            {done && <span className="ml-auto text-xs text-gray-400">✓</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Client notes */}
+                  {c.client_notes && (
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-amber-600 mb-1">Message de votre équipe</p>
+                      <p className="text-sm text-gray-700">{c.client_notes}</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </SheetContent>
       </Sheet>
 
