@@ -155,10 +155,10 @@ const BusinessProjectsPage = ({ user }) => {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Total", value: stats.total, color: "bg-gray-100 text-gray-700" },
+            { label: "Total", value: stats.total + agencyCampaigns.length, color: "bg-gray-100 text-gray-700" },
             { label: "En ligne", value: stats.open, color: "bg-green-100 text-green-700" },
-            { label: "En cours", value: stats.in_progress, color: "bg-blue-100 text-blue-700" },
-            { label: "Terminés", value: stats.completed, color: "bg-gray-100 text-gray-600" },
+            { label: "En cours", value: stats.in_progress + agencyCampaigns.filter(c => c.status !== "termine").length, color: "bg-blue-100 text-blue-700" },
+            { label: "Terminés", value: stats.completed + agencyCampaigns.filter(c => c.status === "termine").length, color: "bg-gray-100 text-gray-600" },
           ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-sm">
               <CardContent className="p-3 text-center">

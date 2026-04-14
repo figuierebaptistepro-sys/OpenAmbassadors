@@ -100,6 +100,10 @@ const BrowseCreators = ({ user }) => {
   const [creators, setCreators] = useState([]);
   const [allVideos, setAllVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [currentSkip, setCurrentSkip] = useState(0);
+  const PAGE_SIZE = 30;
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [activeTab, setActiveTab] = useState("creators");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -128,43 +132,39 @@ const BrowseCreators = ({ user }) => {
     filters.minRating > 0,
   ].filter(Boolean).length;
 
-  useEffect(() => { fetchCreators(); }, [filters]);
+  useEffect(() => { setCurrentSkip(0); fetchCreators(0, true); }, [filters]);
 
-  const fetchCreators = async () => {
-    setLoading(true);
+  const applyClientFilters = (data) => {
+    if (filters.premiumOnly) data = data.filter(c => c.is_premium);
+    if (filters.minRating > 0) data = data.filter(c => (c.rating || 5) >= filters.minRating);
+    if (filters.contentTypes.length > 1) data = data.filter(c => filters.contentTypes.every(type => c.content_types?.includes(type)));
+    if (filters.niches.length > 0) data = data.filter(c => filters.niches.some(niche => c.niches?.includes(niche)));
+    return data;
+  };
+
+  const fetchCreators = async (skip = 0, reset = false) => {
+    if (reset) setLoading(true); else setLoadingMore(true);
     try {
       const params = new URLSearchParams();
       if (filters.search) params.append("search", filters.search);
       if (filters.city) params.append("city", filters.city);
-      if (filters.contentTypes.length > 0) {
-        params.append("content_type", filters.contentTypes[0]);
-      }
+      if (filters.contentTypes.length > 0) params.append("content_type", filters.contentTypes[0]);
       if (filters.experienceLevel) params.append("experience_level", filters.experienceLevel);
       if (filters.available) params.append("available", "true");
+      params.append("skip", skip);
+      params.append("limit", PAGE_SIZE);
 
       const response = await fetch(`${API_URL}/api/creators?${params.toString()}`, { credentials: "include" });
       if (response.ok) {
         let data = await response.json();
-        
-        // Client-side filtering for additional criteria
-        if (filters.premiumOnly) {
-          data = data.filter(c => c.is_premium);
+        data = applyClientFilters(data);
+        setHasMore(data.length === PAGE_SIZE);
+        if (reset) {
+          setCreators(data);
+        } else {
+          setCreators(prev => [...prev, ...data]);
         }
-        if (filters.minRating > 0) {
-          data = data.filter(c => (c.rating || 5) >= filters.minRating);
-        }
-        if (filters.contentTypes.length > 1) {
-          data = data.filter(c => 
-            filters.contentTypes.every(type => c.content_types?.includes(type))
-          );
-        }
-        if (filters.niches.length > 0) {
-          data = data.filter(c => 
-            filters.niches.some(niche => c.niches?.includes(niche))
-          );
-        }
-        
-        setCreators(data);
+        setCurrentSkip(skip + PAGE_SIZE);
         
         // Extract all videos
         const videos = [];
@@ -191,6 +191,7 @@ const BrowseCreators = ({ user }) => {
       console.error("Error:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -668,6 +669,24 @@ const BrowseCreators = ({ user }) => {
                       </Link>
                     </motion.div>
                   ))}
+                  {/* Load more button */}
+                  {hasMore && (
+                    <div className="text-center pt-4">
+                      <Button
+                        onClick={() => fetchCreators(currentSkip, false)}
+                        disabled={loadingMore}
+                        variant="outline"
+                        className="border-primary text-primary hover:bg-primary/5"
+                      >
+                        {loadingMore ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            Chargement...
+                          </span>
+                        ) : "Voir plus de créateurs"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-20">
