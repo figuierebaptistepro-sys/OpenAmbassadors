@@ -1979,12 +1979,38 @@ async def upload_portfolio_media(
         except Exception as e:
             logging.warning(f"Thumbnail upload failed: {e}")
 
+    # Sauvegarder directement dans le portfolio (évite un 2ème appel API côté client)
+    title = file.filename.rsplit(".", 1)[0] if file.filename else "Vidéo"
+    video_entry = {
+        "url": media_url,
+        "thumbnail": thumbnail_url,
+        "title": title,
+        "type": media_type,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    result = await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$push": {"portfolio_videos": video_entry}}
+    )
+    if result.modified_count == 0:
+        profile = CreatorProfile(user_id=user["user_id"], portfolio_videos=[video_entry])
+        await db.creator_profiles.insert_one(profile.model_dump())
+
+    # Mettre à jour le score de complétion
+    profile_doc = await db.creator_profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    new_score = calculate_creator_completion(profile_doc)
+    await db.creator_profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"completion_score": new_score}}
+    )
+
     return {
         "message": "Fichier uploadé",
         "url": media_url,
         "thumbnail": thumbnail_url,
         "type": media_type,
-        "filename": filename
+        "filename": filename,
+        "saved": True
     }
 
 @api_router.get("/uploads/portfolio/{filename}")

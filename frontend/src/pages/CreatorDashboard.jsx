@@ -274,10 +274,11 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
         "-i", inputName,
         "-c:v", "libx264",
         "-crf", "28",
-        "-preset", "fast",
+        "-preset", "ultrafast",   // 3-5x plus rapide que "fast" dans WASM
+        "-tune", "fastdecode",
         "-vf", "scale=-2:720",
         "-c:a", "aac",
-        "-b:a", "128k",
+        "-b:a", "96k",
         "-movflags", "+faststart",
         outputName
       ]);
@@ -346,46 +347,36 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
       const formData = new FormData();
       formData.append("file", fileToUpload);
 
-      // Progression upload
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 5, 95));
-      }, 300);
-
-      const response = await fetch(`${API_URL}/api/upload/portfolio`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
+      // Upload avec vraie progression via XHR
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(pct);
+          }
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            try { reject(JSON.parse(xhr.responseText)); }
+            catch { reject({ detail: "Erreur lors de l'upload" }); }
+          }
+        });
+        xhr.addEventListener("error", () => reject({ detail: "Erreur réseau" }));
+        xhr.open("POST", `${API_URL}/api/upload/portfolio`);
+        xhr.send(formData);
       });
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Ajouter la vidéo au portfolio
-        const portfolioResponse = await fetch(`${API_URL}/api/creators/me/portfolio`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            url: data.url,
-            thumbnail: data.thumbnail || null,
-            title: file.name.replace(/\.[^/.]+$/, ""),
-            type: "uploaded"
-          }),
-        });
-
-        if (portfolioResponse.ok) {
-          toast.success("Vidéo uploadée avec succès !");
-          setVideoDialogOpen(false);
-          fetchData();
-        } else {
-          toast.error("Erreur lors de l'ajout au portfolio");
-        }
+      // Le backend sauvegarde directement dans le portfolio (plus de 2ème requête)
+      if (data.saved) {
+        toast.success("Vidéo uploadée avec succès !");
+        setVideoDialogOpen(false);
+        fetchData();
       } else {
-        const error = await response.json();
-        toast.error(error.detail || "Erreur lors de l'upload");
+        toast.error("Erreur lors de l'ajout au portfolio");
       }
     } catch (error) {
       console.error("Upload error:", error);
