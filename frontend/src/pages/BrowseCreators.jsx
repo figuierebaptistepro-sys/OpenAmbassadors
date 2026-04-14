@@ -706,36 +706,41 @@ const BrowseCreators = ({ user }) => {
               {allVideos.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-0.5">
                   {allVideos.map((video, index) => (
-                    <motion.div
+                    <div
                       key={index}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="relative aspect-[9/16] bg-gray-900 cursor-pointer group"
+                      className="relative aspect-[9/16] bg-gray-900 cursor-pointer group overflow-hidden"
                       onClick={() => setSelectedVideo(video)}
                       data-testid={`video-card-${index}`}
                     >
-                      {video.url?.includes('.mp4') || video.url?.includes('.mov') || video.url?.includes('.webm') || video.type === 'uploaded' ? (
-                        <video
-                          src={`${getImageUrl(video.url)}#t=0.5`}
+                      {/* Static thumbnail — no video element, zero network cost */}
+                      {video.thumbnail ? (
+                        <img
+                          src={getImageUrl(video.thumbnail)}
+                          alt=""
+                          loading="lazy"
                           className="w-full h-full object-cover"
-                          muted
-                          playsInline
-                          preload="none"
-                          onLoadedData={(e) => { e.target.currentTime = 0.5; }}
+                        />
+                      ) : video.creator?.picture ? (
+                        <img
+                          src={getImageUrl(video.creator.picture)}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-full object-cover opacity-60 scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                          <Play className="w-10 h-10 text-white/30" />
-                        </div>
+                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
                       )}
-                      
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Play className="w-12 h-12 text-white fill-white" />
+
+                      {/* Play overlay — always visible, bigger on hover */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-black/70 transition-all">
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                        </div>
                       </div>
-                      
+
+                      {/* Creator info */}
                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                        <Link 
+                        <Link
                           to={`/creators/${video.creator.user_id}`}
                           onClick={(e) => e.stopPropagation()}
                           className="flex items-center gap-2"
@@ -755,7 +760,7 @@ const BrowseCreators = ({ user }) => {
                           {video.creator.is_premium && <Crown className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />}
                         </Link>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               ) : (
