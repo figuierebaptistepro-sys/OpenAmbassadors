@@ -819,9 +819,9 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             return (
               <>
                 <SheetHeader className="mb-4">
-                  <div className={`h-1 w-full rounded-full ${status.color} mb-4`} />
+                  <div className="h-1.5 w-full rounded-full mb-4" style={{ background: "linear-gradient(90deg, #FF2E63, #FF5C8A)" }} />
                   <SheetTitle className="text-xl font-heading">{c.title}</SheetTitle>
-                  <span className={`inline-flex self-start text-xs font-semibold px-3 py-1 rounded-full ${status.light}`}>{status.label}</span>
+                  <span className="inline-flex self-start text-xs font-semibold px-3 py-1 rounded-full bg-[#FFF1F5] text-[#FF2E63]">{status.label}</span>
                 </SheetHeader>
 
                 {/* Description */}
@@ -898,9 +898,9 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                             <span className="text-3xl font-bold text-gray-900">{videosDelivered}</span>
                             <span className="text-gray-400 text-sm mb-1">/ {videosTotal} vidéos</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div className="bg-green-500 h-3 rounded-full transition-all"
-                              style={{ width: `${videosTotal ? Math.min(100, (videosDelivered / videosTotal) * 100) : 0}%` }} />
+                          <div className="w-full bg-gray-100 rounded-full h-3">
+                            <div className="h-3 rounded-full transition-all"
+                              style={{ width: `${videosTotal ? Math.min(100, (videosDelivered / videosTotal) * 100) : 0}%`, background: "linear-gradient(90deg, #FF2E63, #FF5C8A)" }} />
                           </div>
                         </div>
                       </div>
@@ -917,8 +917,8 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                             <div key={s.key} className={`flex items-center gap-3 p-2.5 rounded-lg transition-all
                               ${active ? "bg-primary/5 border border-primary/20" : done ? "opacity-60" : "opacity-40"}`}>
                               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
-                                ${done ? `${status.color} text-white` : active ? `${status.color} text-white` : "bg-gray-200"}`}>
-                                {done ? <Check className="w-3 h-3" /> : <span className="text-xs font-bold text-gray-500">{i + 1}</span>}
+                                ${done ? "bg-[#FF2E63] text-white" : active ? "bg-[#FF2E63] text-white" : "bg-gray-200"}`}>
+                                {done ? <Check className="w-3 h-3" /> : active ? <span className="text-xs font-bold">{i + 1}</span> : <span className="text-xs font-bold text-gray-500">{i + 1}</span>}
                               </div>
                               <span className={`text-sm ${active ? "font-semibold text-gray-900" : "text-gray-600"}`}>{s.label}</span>
                               {active && <span className="ml-auto text-xs font-medium text-[#FF2E63]">En cours</span>}
