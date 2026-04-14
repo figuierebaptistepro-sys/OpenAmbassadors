@@ -5437,6 +5437,66 @@ async def health_check():
     overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
     return {"status": overall, "checks": checks, "version": "1.0"}
 
+# ── Sitemap XML — auto-generated from DB ──
+@app.get("/sitemap.xml", response_class=Response)
+async def sitemap():
+    """Dynamic sitemap for Google indexing"""
+    from fastapi.responses import Response as FastAPIResponse
+    base = FRONTEND_URL.rstrip("/")
+
+    # Static pages
+    static_pages = [
+        ("", "weekly", "1.0"),
+        ("/find-creator", "daily", "0.9"),
+    ]
+
+    # Creator profiles (only visible ones)
+    creators = await db.creator_profiles.find(
+        {"is_visible": {"$ne": False}},
+        {"user_id": 1, "updated_at": 1}
+    ).to_list(5000)
+
+    urls = []
+    for path, freq, priority in static_pages:
+        urls.append(f"""  <url>
+    <loc>{base}{path}</loc>
+    <changefreq>{freq}</changefreq>
+    <priority>{priority}</priority>
+  </url>""")
+
+    for c in creators:
+        uid = c.get("user_id", "")
+        if not uid:
+            continue
+        lastmod = c.get("updated_at", "")
+        lastmod_tag = f"\n    <lastmod>{lastmod[:10]}</lastmod>" if lastmod else ""
+        urls.append(f"""  <url>
+    <loc>{base}/creators/{uid}</loc>{lastmod_tag}
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>""")
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(urls)}
+</urlset>"""
+    return FastAPIResponse(content=xml, media_type="application/xml")
+
+# ── robots.txt ──
+@app.get("/robots.txt", response_class=Response)
+async def robots():
+    from fastapi.responses import PlainTextResponse
+    base = FRONTEND_URL.rstrip("/")
+    content = f"""User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /business/
+Disallow: /api/
+
+Sitemap: {base}/sitemap.xml"""
+    return PlainTextResponse(content=content)
+
 # Add Security Headers Middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -279,8 +280,48 @@ const CreatorProfileV2 = ({ currentUser }) => {
   const avgRating = creator.rating || 0;
   const reviewCount = creator.reviews_count || 0;
 
+  const metaTitle = creator
+    ? `${creator.name} — Créateur UGC ${creator.city ? `à ${creator.city}` : ''} | OpenAmbassadors`
+    : "Profil créateur | OpenAmbassadors";
+  const metaDescription = creator
+    ? `${creator.tagline || creator.bio || `${creator.name} est un créateur de contenu UGC`}${creator.city ? ` basé à ${creator.city}` : ""}${creator.content_types?.length ? `. Spécialisé en ${creator.content_types.slice(0,3).join(", ")}` : ""}.`
+    : "";
+  const metaImage = creator?.picture
+    ? (creator.picture.startsWith("http") ? creator.picture : `${API_URL}${creator.picture}`)
+    : `${window.location.origin}/logo512.png`;
+  const canonicalUrl = `${window.location.origin}/creators/${userId}`;
+
   return (
     <AppLayout user={currentUser}>
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        {/* Open Graph */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={metaImage} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="profile" />
+        <meta property="og:site_name" content="OpenAmbassadors" />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={metaImage} />
+        {/* Structured data JSON-LD */}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": creator?.name,
+          "description": metaDescription,
+          "image": metaImage,
+          "url": canonicalUrl,
+          "address": creator?.city ? { "@type": "PostalAddress", "addressLocality": creator.city, "addressCountry": "FR" } : undefined,
+          "knowsAbout": creator?.content_types || [],
+          "worksFor": { "@type": "Organization", "name": "OpenAmbassadors", "url": window.location.origin }
+        })}</script>
+      </Helmet>
       {/* Back button */}
       <div className="absolute top-20 left-4 z-20">
         <button 

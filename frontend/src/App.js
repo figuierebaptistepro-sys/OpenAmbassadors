@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useParams } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import "@fontsource/plus-jakarta-sans/400.css";
@@ -510,10 +511,12 @@ function AppRouter({ onUserChange }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppRouter />
-      <Toaster position="top-right" richColors />
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <AppRouter />
+        <Toaster position="top-right" richColors />
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }
 
