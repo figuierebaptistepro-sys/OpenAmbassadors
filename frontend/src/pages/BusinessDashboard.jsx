@@ -372,29 +372,8 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                     <Film className="w-4 h-4 text-primary" />
                     Mes productions
                   </h2>
-                  <button onClick={() => navigate("/mon-suivi")} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
-                    Voir tout <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  <span className="text-xs text-gray-400">{agencyCampaigns.length} campagne{agencyCampaigns.length > 1 ? "s" : ""}</span>
                 </div>
-
-                {/* CTA to dedicated suivi page */}
-                {(() => {
-                  const pendingScripts = agencyCampaigns.flatMap(c => c.scripts || []).filter(s => s.status === "en_attente");
-                  if (pendingScripts.length > 0) return (
-                    <button onClick={() => navigate("/mon-suivi")}
-                      className="w-full mb-4 flex items-center gap-4 bg-gradient-to-r from-[#FF2E63] to-[#c2185b] text-white rounded-2xl px-5 py-4 shadow-md shadow-[#FF2E63]/20 hover:shadow-lg hover:shadow-[#FF2E63]/30 transition-shadow text-left">
-                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <span className="font-bold text-lg">{pendingScripts.length}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm">Script{pendingScripts.length > 1 ? "s" : ""} en attente de validation</p>
-                        <p className="text-white/70 text-xs">Approuvez ou demandez des modifications</p>
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-white/80 flex-shrink-0" />
-                    </button>
-                  );
-                  return null;
-                })()}
 
                 {agencyCampaigns.length === 0 ? (
                   <div className="rounded-2xl border-2 border-dashed border-gray-200 py-10 text-center">
@@ -619,7 +598,7 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
                                     </div>
                                   )}
                                   <Button size="sm" className="bg-[#FF2E63] hover:bg-[#FF5C8A] text-white text-xs shrink-0"
-                                    onClick={() => navigate("/mon-suivi")}>
+                                    onClick={() => setSelectedCampaign(c)}>
                                     Voir les détails <ArrowRight className="w-3 h-3 ml-1" />
                                   </Button>
                                 </div>

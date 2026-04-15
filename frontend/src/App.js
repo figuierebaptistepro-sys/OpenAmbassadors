@@ -53,7 +53,6 @@ import BusinessPoolsPage from "./pages/BusinessPoolsPage";
 import PoolPaymentSuccessPage from "./pages/PoolPaymentSuccessPage";
 import MyFavoritesPage from "./pages/MyFavoritesPage";
 import BusinessProductionDetailPage from "./pages/BusinessProductionDetailPage";
-import ClientSuivi from "./pages/ClientSuivi";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -543,14 +542,6 @@ function AppRouter({ onUserChange }) {
           <AdminRoute>
             {({ user }) => <AgencyCampaignPage user={user} />}
           </AdminRoute>
-        }
-      />
-      <Route
-        path="/mon-suivi"
-        element={
-          <ProtectedRoute requireType>
-            {({ user }) => <ClientSuivi user={user} />}
-          </ProtectedRoute>
         }
       />
       <Route
