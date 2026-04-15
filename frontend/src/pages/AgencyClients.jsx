@@ -23,13 +23,33 @@ function getDeadlineInfo(deadline) {
 }
 
 const STATUSES = {
-  brief_recu:  { label: "Brief reçu",  color: "bg-gray-100 text-gray-600" },
-  casting:     { label: "Casting",      color: "bg-blue-100 text-blue-700" },
-  tournage:    { label: "Tournage",     color: "bg-amber-100 text-amber-700" },
-  montage:     { label: "Montage",      color: "bg-purple-100 text-purple-700" },
-  livraison:   { label: "Livraison",    color: "bg-orange-100 text-orange-700" },
-  termine:     { label: "Terminé",      color: "bg-green-100 text-green-700" },
+  non_commence: { label: "À venir",    color: "bg-gray-100 text-gray-400" },
+  brief_recu:   { label: "Brief reçu", color: "bg-gray-100 text-gray-600" },
+  casting:      { label: "Casting",    color: "bg-blue-100 text-blue-700" },
+  tournage:     { label: "Tournage",   color: "bg-amber-100 text-amber-700" },
+  montage:      { label: "Montage",    color: "bg-purple-100 text-purple-700" },
+  livraison:    { label: "Livraison",  color: "bg-orange-100 text-orange-700" },
+  termine:      { label: "Terminé",    color: "bg-green-100 text-green-700" },
 };
+
+// Group campaigns by package_id; singles become their own "group" of 1
+function groupByPackage(camps) {
+  const pkgs = {};
+  const singles = [];
+  camps.forEach(c => {
+    if (c.package_id) {
+      if (!pkgs[c.package_id]) pkgs[c.package_id] = [];
+      pkgs[c.package_id].push(c);
+    } else {
+      singles.push([c]);
+    }
+  });
+  const grouped = [
+    ...Object.values(pkgs).map(g => g.sort((a, b) => a.order - b.order)),
+    ...singles,
+  ];
+  return grouped.sort((a, b) => new Date(b[0].updated_at) - new Date(a[0].updated_at));
+}
 
 export default function AgencyClients({ user }) {
   const navigate = useNavigate();
@@ -82,10 +102,10 @@ export default function AgencyClients({ user }) {
 
   const clientsWithData = filtered.map(client => {
     const clientCamps = campaigns.filter(c => c.client_id === client.user_id);
-    const active = clientCamps.filter(c => c.status !== "termine");
+    const active = clientCamps.filter(c => c.status !== "termine" && c.status !== "non_commence");
     const done = clientCamps.filter(c => c.status === "termine");
-    const latestActive = active.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
-    return { ...client, clientCamps, active, done, latestActive };
+    const packages = groupByPackage(clientCamps);
+    return { ...client, clientCamps, active, done, packages };
   });
 
   if (loading) return (
@@ -190,43 +210,69 @@ export default function AgencyClients({ user }) {
                         </div>
                       </div>
 
-                      {/* Campaigns */}
-                      {client.clientCamps.length === 0 ? (
+                      {/* Campaigns grouped by package */}
+                      {client.packages.length === 0 ? (
                         <div className="px-4 py-3 text-xs text-gray-400">Aucune campagne — <button className="text-[#FF2E63] hover:underline" onClick={() => navigate("/agency/campaign/new")}>en créer une</button></div>
                       ) : (
                         <div className="divide-y divide-gray-50">
-                          {client.clientCamps.map(c => {
-                            const st = STATUSES[c.status] || STATUSES.brief_recu;
-                            const formula = c.formula === "12_videos" ? 12 : c.formula === "20_videos" ? 20 : null;
-                            const pct = formula ? Math.min(100, Math.round(((c.videos_delivered || 0) / formula) * 100)) : null;
+                          {client.packages.map(months => {
+                            const first = months[0];
+                            const isMulti = months.length > 1;
+                            const formula = first.formula === "12_videos" ? 12 : first.formula === "20_videos" ? 20 : null;
                             return (
-                              <div key={c.campaign_id} onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
-                                className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 cursor-pointer group transition-colors">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-0.5">
-                                    <p className="text-sm font-medium text-gray-800 truncate">{c.title}</p>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${st.color}`}>{st.label}</span>
-                                    {(c.scripts || []).some(s => s.status === "modifications_demandees") && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium flex-shrink-0">⚠ Modifs</span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    {c.creator_name && <span className="text-xs text-gray-400">🎬 {c.creator_name}</span>}
-                                    {formula && (
-                                      <div className="flex items-center gap-1.5">
-                                        <div className="w-20 h-1.5 bg-gray-100 rounded-full"><div className="h-1.5 rounded-full bg-[#FF2E63]" style={{ width: `${pct}%` }} /></div>
-                                        <span className="text-xs text-gray-400">{c.videos_delivered || 0}/{formula}</span>
-                                      </div>
-                                    )}
-                                    <span className="text-xs text-gray-400">Mois {c.order || 1}</span>
-                                    {(() => { const dl = getDeadlineInfo(c.deadline); return dl ? (
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-medium ${dl.color}`}>
-                                        <CalendarClock className="w-2.5 h-2.5" /> {dl.label}
-                                      </span>
-                                    ) : null; })()}
-                                  </div>
+                              <div key={first.package_id || first.campaign_id} className="px-4 py-3">
+                                {/* Package header */}
+                                <div className="flex items-center gap-2 mb-2">
+                                  <p className="text-sm font-medium text-gray-800 truncate">{first.title}</p>
+                                  {isMulti && (
+                                    <span className="text-[10px] bg-[#FF2E63]/10 text-[#FF2E63] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">
+                                      {months.length} mois
+                                    </span>
+                                  )}
+                                  {first.creator_name && <span className="text-xs text-gray-400 ml-auto flex-shrink-0">🎬 {first.creator_name}</span>}
                                 </div>
-                                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0 transition-colors" />
+
+                                {/* Month pills */}
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {months.map(c => {
+                                    const st = STATUSES[c.status] || STATUSES.brief_recu;
+                                    const isNotStarted = c.status === "non_commence";
+                                    const pct = formula ? Math.min(100, Math.round(((c.videos_delivered || 0) / formula) * 100)) : null;
+                                    const hasModifs = (c.scripts || []).some(s => s.status === "modifications_demandees");
+                                    const dl = getDeadlineInfo(c.deadline);
+                                    return (
+                                      <div
+                                        key={c.campaign_id}
+                                        onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
+                                        className={`flex-1 min-w-[140px] max-w-[200px] rounded-lg border px-3 py-2 cursor-pointer transition-all group
+                                          ${isNotStarted ? "border-gray-200 bg-gray-50 opacity-70 hover:opacity-90" : "border-gray-200 bg-white hover:border-[#FF2E63]/30 hover:shadow-sm"}`}
+                                      >
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                          <span className="text-[10px] font-bold text-gray-500">M{c.order}</span>
+                                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
+                                          {hasModifs && <span className="text-[10px] text-orange-600">⚠</span>}
+                                          <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 ml-auto flex-shrink-0" />
+                                        </div>
+                                        {!isNotStarted && formula && (
+                                          <div className="flex items-center gap-1.5">
+                                            <div className="flex-1 h-1 bg-gray-100 rounded-full">
+                                              <div className="h-1 rounded-full bg-[#FF2E63]" style={{ width: `${pct}%` }} />
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 flex-shrink-0">{c.videos_delivered || 0}/{formula}</span>
+                                          </div>
+                                        )}
+                                        {isNotStarted && (
+                                          <p className="text-[10px] text-gray-400">Non démarré</p>
+                                        )}
+                                        {dl && !isNotStarted && (
+                                          <div className={`flex items-center gap-0.5 text-[10px] mt-0.5 font-medium ${dl.color.split(" ")[0]}`}>
+                                            <CalendarClock className="w-2.5 h-2.5" /> {dl.label}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             );
                           })}

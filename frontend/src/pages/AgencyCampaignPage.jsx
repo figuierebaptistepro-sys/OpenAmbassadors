@@ -50,7 +50,7 @@ const TABS = [
 const EMPTY_FORM = {
   client_id: "", title: "", description: "", budget: "", formula: "",
   creator_id: "", creator_name: "", notes: "", client_notes: "",
-  status: "brief_recu", order: 1, delivery_notes: "", deadline: ""
+  status: "brief_recu", order: 1, delivery_notes: "", deadline: "", total_months: 1
 };
 
 export default function AgencyCampaignPage({ user }) {
@@ -63,6 +63,7 @@ export default function AgencyCampaignPage({ user }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [clients, setClients] = useState([]);
   const [creators, setCreators] = useState([]);
+  const [packageMonths, setPackageMonths] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
 
@@ -92,13 +93,23 @@ export default function AgencyCampaignPage({ user }) {
     if (!r.ok) { navigate("/agency"); return; }
     const found = await r.json();
     setCampaign(found);
+    // Load package siblings if multi-month
+    if (found.package_id) {
+      const allR = await fetch(`${API_URL}/api/admin/agency/campaigns`, { credentials: "include" });
+      if (allR.ok) {
+        const all = await allR.json();
+        setPackageMonths(all.filter(c => c.package_id === found.package_id).sort((a, b) => a.order - b.order));
+      }
+    } else {
+      setPackageMonths([]);
+    }
     setForm({
       client_id: found.client_id, title: found.title, description: found.description || "",
       budget: found.budget || "", formula: found.formula || "", creator_id: found.creator_id || "",
       creator_name: found.creator_name || "", notes: found.notes || "",
       client_notes: found.client_notes || "", status: found.status,
       order: found.order || 1, delivery_notes: found.delivery_notes || "",
-      deadline: found.deadline || ""
+      deadline: found.deadline || "", total_months: found.total_months || 1
     });
     setLoading(false);
   }, [id, isNew, navigate]);
@@ -253,8 +264,26 @@ export default function AgencyCampaignPage({ user }) {
           </div>
         </div>
 
+        {/* ── Non-commence banner ── */}
+        {!isNew && form.status === "non_commence" && (
+          <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
+            <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700">Ce mois n'a pas encore démarré</p>
+              <p className="text-xs text-gray-400">Il démarrera automatiquement ou vous pouvez le lancer manuellement.</p>
+            </div>
+            <Button size="sm" className="bg-[#FF2E63] hover:bg-[#e0254f] text-white text-xs h-8 flex-shrink-0"
+              onClick={async () => {
+                const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}/activate`, { method: "POST", credentials: "include" });
+                if (r.ok) { toast.success("Mois démarré !"); fetchCampaign(); }
+              }}>
+              Lancer ce mois →
+            </Button>
+          </div>
+        )}
+
         {/* ── Status stepper ── */}
-        {!isNew && (
+        {!isNew && form.status !== "non_commence" && (
           <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
             {STATUSES.map((s, i) => {
               const currentIdx = STATUSES.findIndex(x => x.key === form.status);
@@ -265,6 +294,40 @@ export default function AgencyCampaignPage({ user }) {
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                     ${active ? "bg-[#FF2E63] text-white shadow-sm" : done ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
                   {s.label}
+                </button>
+              );
+            })}
+            {form.total_months > 1 && form.status === "termine" && packageMonths.some(m => m.status === "non_commence") && (
+              <button
+                onClick={async () => {
+                  const next = packageMonths.find(m => m.status === "non_commence");
+                  if (next) { await fetch(`${API_URL}/api/admin/agency/campaigns/${next.campaign_id}/activate`, { method: "POST", credentials: "include" }); navigate(`/agency/campaign/${next.campaign_id}`); }
+                }}
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#FF2E63]/10 text-[#FF2E63] hover:bg-[#FF2E63]/20 transition-all ml-2"
+              >
+                → Démarrer mois {(packageMonths.find(m => m.status === "non_commence") || {}).order}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Package month navigator ── */}
+        {!isNew && packageMonths.length > 1 && (
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-xs text-gray-400 flex-shrink-0">Engagement {form.total_months} mois :</span>
+            {packageMonths.map(m => {
+              const isCurrent = m.campaign_id === id;
+              const isNotStarted = m.status === "non_commence";
+              const st = STATUSES.find(s => s.key === m.status);
+              return (
+                <button
+                  key={m.campaign_id}
+                  onClick={() => !isCurrent && navigate(`/agency/campaign/${m.campaign_id}`)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border
+                    ${isCurrent ? "bg-[#FF2E63] text-white border-[#FF2E63]" : isNotStarted ? "bg-gray-50 text-gray-400 border-gray-200 cursor-pointer hover:border-gray-300" : "bg-white text-gray-600 border-gray-200 cursor-pointer hover:border-gray-300"}`}
+                >
+                  Mois {m.order}
+                  {isNotStarted ? <span className="opacity-60">· À venir</span> : <span className={`w-1.5 h-1.5 rounded-full ${st?.ring?.replace("ring-","bg-") || "bg-gray-400"}`} />}
                 </button>
               );
             })}
@@ -345,19 +408,36 @@ export default function AgencyCampaignPage({ user }) {
                 </Select>
               </div>
 
-              {/* Mois */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Numéro de mois</label>
-                <div className="flex gap-1.5">
-                  {[1,2,3,4,5,6].map(m => (
-                    <button key={m} type="button" onClick={() => setForm(f => ({ ...f, order: m }))}
-                      className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors
-                        ${form.order === m ? "bg-[#FF2E63] text-white" : "border border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
-                      {m}
-                    </button>
-                  ))}
+              {/* Durée d'engagement (new) / Numéro de mois (existing) */}
+              {isNew ? (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1.5 block">Durée d'engagement</label>
+                  <div className="flex gap-1.5">
+                    {[1,2,3,4,5].map(m => (
+                      <button key={m} type="button" onClick={() => setForm(f => ({ ...f, total_months: m }))}
+                        className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors
+                          ${form.total_months === m ? "bg-[#FF2E63] text-white" : "border border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
+                        {m} mois
+                      </button>
+                    ))}
+                  </div>
+                  {form.total_months > 1 && (
+                    <p className="text-xs text-gray-400 mt-1.5">
+                      {form.total_months} mois seront créés. Mois 1 démarre directement, les suivants sont en "À venir".
+                    </p>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+                    Mois {form.order} / {form.total_months}
+                    {form.total_months > 1 && <span className="text-gray-400 font-normal"> — engagement {form.total_months} mois</span>}
+                  </label>
+                  <div className="h-10 px-3 flex items-center bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                    Mois {form.order} sur {form.total_months}
+                  </div>
+                </div>
+              )}
 
               {/* Deadline */}
               <div>

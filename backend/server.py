@@ -804,6 +804,7 @@ class Review(BaseModel):
 # ==================== AGENCY MODELS ====================
 
 AGENCY_STATUSES = [
+    {"key": "non_commence",     "label": "À venir"},
     {"key": "brief_recu",       "label": "Brief reçu"},
     {"key": "casting",          "label": "Casting"},
     {"key": "tournage",         "label": "Tournage"},
@@ -830,6 +831,8 @@ class AgencyCampaign(BaseModel):
     creator_name: Optional[str] = None
     status: str = "brief_recu"
     order: int = 1  # Month number (1, 2, 3...)
+    package_id: Optional[str] = None   # groups multiple months of the same engagement
+    total_months: int = 1              # total months in the engagement (1-5)
     notes: Optional[str] = None
     client_notes: Optional[str] = None
     deadline: Optional[str] = None  # ISO date string "YYYY-MM-DD"
@@ -2744,29 +2747,38 @@ async def create_agency_campaign(request: Request, user: dict = Depends(get_curr
     if user.get("email") not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="Admin only")
     body = await request.json()
-    campaign = AgencyCampaign(
-        client_id=body["client_id"],
-        title=body["title"],
-        description=body.get("description"),
-        budget=body.get("budget"),
-        formula=body.get("formula"),
-        order=body.get("order", 1),
-        creator_id=body.get("creator_id"),
-        creator_name=body.get("creator_name"),
-        notes=body.get("notes"),
-        client_notes=body.get("client_notes"),
-        delivery_notes=body.get("delivery_notes"),
-        deadline=body.get("deadline"),
-        status=body.get("status", "brief_recu"),
-    )
-    await db.agency_campaigns.insert_one(campaign.model_dump())
-    # Email de bienvenue au client
+    total_months = max(1, min(5, int(body.get("total_months", 1))))
+    pkg_id = f"pkg_{uuid.uuid4().hex[:12]}" if total_months > 1 else None
+
+    campaigns_created = []
+    for month_order in range(1, total_months + 1):
+        c = AgencyCampaign(
+            client_id=body["client_id"],
+            title=body["title"],
+            description=body.get("description"),
+            budget=body.get("budget"),
+            formula=body.get("formula"),
+            order=month_order,
+            total_months=total_months,
+            package_id=pkg_id,
+            creator_id=body.get("creator_id"),
+            creator_name=body.get("creator_name"),
+            notes=body.get("notes"),
+            client_notes=body.get("client_notes"),
+            delivery_notes=body.get("delivery_notes"),
+            deadline=body.get("deadline"),
+            status="brief_recu" if month_order == 1 else "non_commence",
+        )
+        await db.agency_campaigns.insert_one(c.model_dump())
+        campaigns_created.append(c)
+
+    # Email for first month
     client = await db.users.find_one({"user_id": body["client_id"]}, {"_id": 0})
     if client and client.get("email"):
         asyncio.create_task(send_agency_campaign_created_email(
-            client["email"], client.get("name", ""), campaign.title, campaign.formula or ""
+            client["email"], client.get("name", ""), campaigns_created[0].title, campaigns_created[0].formula or ""
         ))
-    return campaign.model_dump()
+    return campaigns_created[0].model_dump()
 
 @api_router.get("/admin/agency/campaigns/{campaign_id}")
 async def get_agency_campaign(campaign_id: str, user: dict = Depends(get_current_user)):
@@ -2912,6 +2924,22 @@ async def add_script_to_campaign(campaign_id: str, request: Request, user: dict 
                 script["title"], campaign_id
             ))
     return script
+
+@api_router.post("/admin/agency/campaigns/{campaign_id}/activate")
+async def activate_campaign_month(campaign_id: str, user: dict = Depends(get_current_user)):
+    """Admin: start a non_commence month (set to brief_recu)"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    c = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
+    if not c:
+        raise HTTPException(status_code=404, detail="Campagne introuvable")
+    if c.get("status") != "non_commence":
+        raise HTTPException(status_code=400, detail="Ce mois est déjà démarré")
+    await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id},
+        {"$set": {"status": "brief_recu", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Mois démarré"}
 
 @api_router.patch("/admin/agency/campaigns/{campaign_id}/scripts/{script_id}/status")
 async def update_script_status(campaign_id: str, script_id: str, request: Request, user: dict = Depends(get_current_user)):

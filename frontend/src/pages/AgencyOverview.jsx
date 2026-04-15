@@ -64,7 +64,7 @@ export default function AgencyOverview({ user }) {
     return daysSince > 7;
   });
   const inDelivery = campaigns.filter(c => c.status === "livraison");
-  const activeCampaigns = campaigns.filter(c => c.status !== "termine");
+  const activeCampaigns = campaigns.filter(c => c.status !== "termine" && c.status !== "non_commence");
 
   const urgentDeadlines = campaigns.filter(c => {
     if (!c.deadline || c.status === "termine") return false;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Plus, Search, RefreshCw, AlertCircle, ArrowRight, Film, FileText
+  Plus, Search, RefreshCw, AlertCircle, ArrowRight, Film, FileText, Clock
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import AgencyNav from "../components/AgencyNav";
@@ -64,13 +64,16 @@ export default function AgencyCampaigns({ user }) {
     setMovingId(null);
   };
 
-  const filtered = campaigns.filter(c => {
+  const allFiltered = campaigns.filter(c => {
     if (!search) return true;
     const q = search.toLowerCase();
     return c.title?.toLowerCase().includes(q)
       || c.client_name?.toLowerCase().includes(q)
       || c.creator_name?.toLowerCase().includes(q);
   });
+
+  const filtered = allFiltered.filter(c => c.status !== "non_commence");
+  const upcoming = allFiltered.filter(c => c.status === "non_commence");
 
   const needsAttention = campaigns.filter(c =>
     (c.scripts || []).some(s => s.status === "modifications_demandees")
@@ -112,6 +115,20 @@ export default function AgencyCampaigns({ user }) {
               <button key={c.campaign_id} onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
                 className="flex-shrink-0 text-xs bg-orange-100 hover:bg-orange-200 text-orange-800 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1">
                 {c.client_name} — {c.title} <ArrowRight className="w-3 h-3" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* À venir strip */}
+        {upcoming.length > 0 && (
+          <div className="flex-shrink-0 bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+            <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-500 font-medium flex-shrink-0">À venir :</span>
+            {upcoming.map(c => (
+              <button key={c.campaign_id} onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
+                className="flex-shrink-0 text-xs bg-white border border-gray-200 text-gray-600 hover:border-gray-300 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1">
+                <span className="text-gray-400">M{c.order}</span> {c.client_name} — {c.title}
               </button>
             ))}
           </div>
