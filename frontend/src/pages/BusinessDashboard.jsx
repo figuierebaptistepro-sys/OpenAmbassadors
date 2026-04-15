@@ -5,7 +5,8 @@ import {
   Search, Users, ChevronRight, Star, MapPin, CheckCircle,
   Briefcase, Plus, ArrowRight, Sparkles, Target, Rocket,
   Image, Globe, FileText, Clock, Zap, Crown, Building2, Check, Upload, Camera,
-  Film, Package, ChevronDown, ExternalLink, PlayCircle, Lock
+  Film, Package, ChevronDown, ExternalLink, PlayCircle, Lock,
+  MessageSquare, AlertCircle
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -1061,66 +1062,165 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
 
                   {/* Tab 2: Scripts */}
                   <TabsContent value="scripts" className="mt-0">
-                    {(c.scripts || []).length === 0 ? (
-                      <div className="text-center py-10 text-gray-400">
-                        <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                        <p className="text-sm">Aucun script pour le moment</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {(c.scripts || []).map(s => (
-                          <div key={s.script_id} className="border border-gray-100 rounded-xl p-4 space-y-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="font-semibold text-sm text-gray-900">{s.title}</p>
-                              {s.status === "valide" && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Validé</span>
-                              )}
-                              {s.status === "en_attente" && (
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">En attente de validation</span>
-                              )}
-                              {s.status === "modifications_demandees" && (
-                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Modifications demandées</span>
+                    {(() => {
+                      const visibleScripts = (c.scripts || []).filter(s => s.status !== "realise");
+                      const pendingCount = visibleScripts.filter(s => s.status === "en_attente").length;
+                      const validatedCount = visibleScripts.filter(s => s.status === "valide").length;
+
+                      if (visibleScripts.length === 0) return (
+                        <div className="text-center py-12 text-gray-400">
+                          <FileText className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                          <p className="text-sm font-medium">Aucun script pour le moment</p>
+                          <p className="text-xs mt-1 opacity-70">Votre équipe prépare les scripts bientôt</p>
+                        </div>
+                      );
+
+                      return (
+                        <div className="space-y-3">
+                          {/* Summary bar */}
+                          {(pendingCount > 0 || validatedCount > 0) && (
+                            <div className={`flex items-start gap-3 rounded-xl px-4 py-3 ${
+                              pendingCount > 0 ? "bg-[#FFF1F5] border border-[#FF2E63]/15" : "bg-green-50 border border-green-100"
+                            }`}>
+                              {pendingCount > 0 ? (
+                                <>
+                                  <div className="w-5 h-5 rounded-full bg-[#FF2E63] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span className="text-white text-[9px] font-bold">{pendingCount}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-700 leading-relaxed">
+                                    <span className="font-bold text-[#FF2E63]">Action requise</span> — lisez chaque script et approuvez-le ou demandez des modifications avant le tournage.
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs text-green-700 font-medium">Tous les scripts sont validés — votre équipe peut démarrer le tournage.</p>
+                                </>
                               )}
                             </div>
+                          )}
 
-                            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{s.content}</p>
+                          {/* Script cards */}
+                          {visibleScripts.map(s => (
+                            <div key={s.script_id} className={`rounded-2xl overflow-hidden border-2 ${
+                              s.status === "en_attente"              ? "border-[#FF2E63]/20" :
+                              s.status === "valide"                  ? "border-green-200" :
+                              s.status === "modifications_demandees" ? "border-orange-200" :
+                              "border-gray-200"
+                            }`}>
+                              {/* Top color strip */}
+                              <div className={`h-1 ${
+                                s.status === "en_attente"              ? "bg-gradient-to-r from-[#FF2E63] to-[#FF5C8A]" :
+                                s.status === "valide"                  ? "bg-green-400" :
+                                s.status === "modifications_demandees" ? "bg-orange-400" :
+                                "bg-gray-200"
+                              }`} />
 
-                            {s.status === "modifications_demandees" && s.client_comment && (
-                              <p className="text-xs text-gray-500 italic">Votre commentaire : {s.client_comment}</p>
-                            )}
-
-                            {s.status === "en_attente" && (
-                              <div className="space-y-2 pt-1">
-                                <div className="flex gap-2">
-                                  <Button size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => handleScriptAction(s.script_id, "valide", null)}>
-                                    Valider
-                                  </Button>
-                                  <Button size="sm" variant="outline" className="h-8 text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
-                                    onClick={() => setScriptCommentOpen(prev => ({ ...prev, [s.script_id]: !prev[s.script_id] }))}>
-                                    Demander des modifications
-                                  </Button>
+                              <div className="p-4 space-y-3">
+                                {/* Title + badge */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <FileText className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                      s.status === "valide" ? "text-green-500" :
+                                      s.status === "en_attente" ? "text-[#FF2E63]" : "text-gray-400"
+                                    }`} />
+                                    <p className="font-semibold text-sm text-gray-900 leading-tight">{s.title}</p>
+                                  </div>
+                                  {s.status === "valide" && (
+                                    <span className="flex items-center gap-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold whitespace-nowrap flex-shrink-0">
+                                      <Check className="w-2.5 h-2.5" /> Approuvé
+                                    </span>
+                                  )}
+                                  {s.status === "en_attente" && (
+                                    <span className="flex items-center gap-1 text-[10px] bg-[#FFF1F5] text-[#FF2E63] px-2 py-0.5 rounded-full font-bold whitespace-nowrap flex-shrink-0">
+                                      <Clock className="w-2.5 h-2.5" /> À valider
+                                    </span>
+                                  )}
+                                  {s.status === "modifications_demandees" && (
+                                    <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold whitespace-nowrap flex-shrink-0">Retours envoyés</span>
+                                  )}
                                 </div>
-                                {scriptCommentOpen[s.script_id] && (
-                                  <div className="space-y-2">
-                                    <Textarea
-                                      className="text-xs min-h-[70px]"
-                                      placeholder="Décrivez les modifications souhaitées..."
-                                      value={scriptCommentMap[s.script_id] || ""}
-                                      onChange={e => setScriptCommentMap(prev => ({ ...prev, [s.script_id]: e.target.value }))}
-                                    />
-                                    <Button size="sm" className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
-                                      onClick={() => handleScriptAction(s.script_id, "modifications_demandees", scriptCommentMap[s.script_id])}>
-                                      Envoyer
-                                    </Button>
+
+                                {/* Content */}
+                                {s.content && (
+                                  <div className={`rounded-xl p-3.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                                    s.status === "valide" ? "bg-green-50/60 text-gray-600" : "bg-gray-50 text-gray-700"
+                                  }`}>
+                                    {s.content}
+                                  </div>
+                                )}
+
+                                {/* Previous comment */}
+                                {s.status === "modifications_demandees" && s.client_comment && (
+                                  <div className="flex gap-2.5 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2.5">
+                                    <MessageSquare className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <p className="text-[10px] font-bold text-orange-600 mb-0.5">Votre retour</p>
+                                      <p className="text-xs text-orange-700 italic">"{s.client_comment}"</p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Confirmed states */}
+                                {s.status === "valide" && (
+                                  <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 rounded-xl px-3 py-2.5">
+                                    <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                    Vous avez approuvé ce script — l'équipe peut procéder.
+                                  </div>
+                                )}
+                                {s.status === "modifications_demandees" && (
+                                  <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 rounded-xl px-3 py-2.5">
+                                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                    Retours reçus — l'équipe va vous soumettre une nouvelle version.
+                                  </div>
+                                )}
+
+                                {/* CTAs for en_attente */}
+                                {s.status === "en_attente" && (
+                                  <div className="space-y-2.5 pt-1">
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleScriptAction(s.script_id, "valide", null)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl bg-[#FF2E63] text-white hover:bg-[#e0284f] transition-colors shadow-sm shadow-[#FF2E63]/20">
+                                        <CheckCircle className="w-3.5 h-3.5" /> Approuver
+                                      </button>
+                                      <button
+                                        onClick={() => setScriptCommentOpen(prev => ({ ...prev, [s.script_id]: !prev[s.script_id] }))}
+                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border-2 border-orange-200 text-orange-700 hover:bg-orange-50 transition-colors">
+                                        <MessageSquare className="w-3.5 h-3.5" /> Modifications
+                                      </button>
+                                    </div>
+                                    {scriptCommentOpen[s.script_id] && (
+                                      <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 space-y-2">
+                                        <p className="text-[11px] font-bold text-orange-700">Décrivez les modifications souhaitées :</p>
+                                        <Textarea
+                                          className="text-xs min-h-[72px] border-orange-200 bg-white"
+                                          placeholder="Ex : changer le ton, reformuler la partie sur X..."
+                                          value={scriptCommentMap[s.script_id] || ""}
+                                          onChange={e => setScriptCommentMap(prev => ({ ...prev, [s.script_id]: e.target.value }))}
+                                        />
+                                        <div className="flex gap-2 items-center">
+                                          <button
+                                            disabled={!scriptCommentMap[s.script_id]?.trim()}
+                                            onClick={() => handleScriptAction(s.script_id, "modifications_demandees", scriptCommentMap[s.script_id])}
+                                            className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-colors">
+                                            <ArrowRight className="w-3.5 h-3.5" /> Envoyer mes retours
+                                          </button>
+                                          <button onClick={() => setScriptCommentOpen(prev => ({ ...prev, [s.script_id]: false }))}
+                                            className="text-xs text-gray-400 hover:text-gray-600">
+                                            Annuler
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </TabsContent>
 
                   {/* Tab 3: Vidéos */}
