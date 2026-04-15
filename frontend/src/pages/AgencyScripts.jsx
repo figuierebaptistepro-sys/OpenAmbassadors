@@ -6,15 +6,9 @@ import AgencyNav from "../components/AgencyNav";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { toast } from "sonner";
+import { SCRIPT_STATUSES } from "../lib/agency";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-const SCRIPT_STATUSES = {
-  en_attente:              { label: "En attente",          color: "bg-gray-100 text-gray-600",    dot: "bg-gray-400"    },
-  valide:                  { label: "Validé",               color: "bg-green-100 text-green-700",  dot: "bg-green-500"   },
-  modifications_demandees: { label: "Modifs demandées",     color: "bg-orange-100 text-orange-700",dot: "bg-orange-500"  },
-  refuse:                  { label: "Refusé",               color: "bg-red-100 text-red-700",      dot: "bg-red-500"     },
-};
 
 const FILTERS = [
   { key: "all",                   label: "Tous" },
@@ -193,7 +187,7 @@ export default function AgencyScripts({ user }) {
 
                         {/* Status badge */}
                         <div className="flex-shrink-0 flex flex-col items-end gap-2">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${st.color} flex items-center gap-1`}>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${st.badge} flex items-center gap-1`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                             {st.label}
                           </span>

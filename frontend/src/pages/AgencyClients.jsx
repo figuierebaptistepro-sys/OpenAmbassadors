@@ -7,49 +7,9 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { toast } from "sonner";
+import { STATUS_MAP, FORMULA_MAP, getDeadlineInfo, groupByPackage } from "../lib/agency";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-function getDeadlineInfo(deadline) {
-  if (!deadline) return null;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const d = new Date(deadline);
-  const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-  if (diff < 0)  return { label: `Retard ${Math.abs(diff)}j`, color: "text-red-600 bg-red-50" };
-  if (diff === 0) return { label: "Aujourd'hui",               color: "text-red-600 bg-red-50" };
-  if (diff <= 3) return { label: `Dans ${diff}j`,              color: "text-orange-600 bg-orange-50" };
-  if (diff <= 7) return { label: `Dans ${diff}j`,              color: "text-yellow-600 bg-yellow-50" };
-  return { label: d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), color: "text-gray-400 bg-gray-50" };
-}
-
-const STATUSES = {
-  non_commence: { label: "À venir",    color: "bg-gray-100 text-gray-400" },
-  brief_recu:   { label: "Brief reçu", color: "bg-gray-100 text-gray-600" },
-  casting:      { label: "Casting",    color: "bg-blue-100 text-blue-700" },
-  tournage:     { label: "Tournage",   color: "bg-amber-100 text-amber-700" },
-  montage:      { label: "Montage",    color: "bg-purple-100 text-purple-700" },
-  livraison:    { label: "Livraison",  color: "bg-orange-100 text-orange-700" },
-  termine:      { label: "Terminé",    color: "bg-green-100 text-green-700" },
-};
-
-// Group campaigns by package_id; singles become their own "group" of 1
-function groupByPackage(camps) {
-  const pkgs = {};
-  const singles = [];
-  camps.forEach(c => {
-    if (c.package_id) {
-      if (!pkgs[c.package_id]) pkgs[c.package_id] = [];
-      pkgs[c.package_id].push(c);
-    } else {
-      singles.push([c]);
-    }
-  });
-  const grouped = [
-    ...Object.values(pkgs).map(g => g.sort((a, b) => a.order - b.order)),
-    ...singles,
-  ];
-  return grouped.sort((a, b) => new Date(b[0].updated_at) - new Date(a[0].updated_at));
-}
 
 export default function AgencyClients({ user }) {
   const navigate = useNavigate();
@@ -218,7 +178,8 @@ export default function AgencyClients({ user }) {
                           {client.packages.map(months => {
                             const first = months[0];
                             const isMulti = months.length > 1;
-                            const formula = first.formula === "12_videos" ? 12 : first.formula === "20_videos" ? 20 : null;
+                            const formulaInfo = FORMULA_MAP[first.formula] || null;
+                            const formula = formulaInfo?.videos || null;
                             return (
                               <div key={first.package_id || first.campaign_id} className="px-4 py-3">
                                 {/* Package header */}
@@ -235,7 +196,7 @@ export default function AgencyClients({ user }) {
                                 {/* Month pills */}
                                 <div className="flex gap-1.5 flex-wrap">
                                   {months.map(c => {
-                                    const st = STATUSES[c.status] || STATUSES.brief_recu;
+                                    const st = STATUS_MAP[c.status] || STATUS_MAP.brief_recu;
                                     const isNotStarted = c.status === "non_commence";
                                     const pct = formula ? Math.min(100, Math.round(((c.videos_delivered || 0) / formula) * 100)) : null;
                                     const hasModifs = (c.scripts || []).some(s => s.status === "modifications_demandees");
@@ -249,7 +210,7 @@ export default function AgencyClients({ user }) {
                                       >
                                         <div className="flex items-center gap-1.5 mb-1">
                                           <span className="text-[10px] font-bold text-gray-500">M{c.order}</span>
-                                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
+                                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.badge}`}>{st.label}</span>
                                           {hasModifs && <span className="text-[10px] text-orange-600">⚠</span>}
                                           <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 ml-auto flex-shrink-0" />
                                         </div>

@@ -6,20 +6,12 @@ import AgencyNav from "../components/AgencyNav";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { toast } from "sonner";
+import { STATUS_MAP } from "../lib/agency";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const STATUSES = [
-  { key: "brief_recu",  label: "Brief reçu",  color: "bg-gray-100 text-gray-600" },
-  { key: "casting",     label: "Casting",      color: "bg-blue-100 text-blue-700" },
-  { key: "tournage",    label: "Tournage",     color: "bg-amber-100 text-amber-700" },
-  { key: "montage",     label: "Montage",      color: "bg-purple-100 text-purple-700" },
-  { key: "livraison",   label: "Livraison",    color: "bg-orange-100 text-orange-700" },
-  { key: "termine",     label: "Terminé",      color: "bg-green-100 text-green-700" },
-];
-
-const statusLabel = (key) => STATUSES.find(s => s.key === key)?.label || key;
-const statusColor = (key) => STATUSES.find(s => s.key === key)?.color || "bg-gray-100 text-gray-600";
+const statusLabel = (key) => STATUS_MAP[key]?.label || key;
+const statusColor = (key) => STATUS_MAP[key]?.badge || "bg-gray-100 text-gray-600";
 
 export default function AgencyOverview({ user }) {
   const navigate = useNavigate();
