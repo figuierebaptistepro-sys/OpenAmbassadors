@@ -76,27 +76,25 @@ export default function AgencyCampaignPage({ user }) {
 
   const fetchCampaign = useCallback(async () => {
     if (isNew) return;
-    const r = await fetch(`${API_URL}/api/admin/agency/campaigns`, { credentials: "include" });
-    if (r.ok) {
-      const all = await r.json();
-      const found = all.find(c => c.campaign_id === id);
-      if (!found) { navigate("/agency"); return; }
-      setCampaign(found);
-      setForm({
-        client_id: found.client_id, title: found.title, description: found.description || "",
-        budget: found.budget || "", formula: found.formula || "", creator_id: found.creator_id || "",
-        creator_name: found.creator_name || "", notes: found.notes || "",
-        client_notes: found.client_notes || "", status: found.status,
-        order: found.order || 1, delivery_notes: found.delivery_notes || ""
-      });
-    }
+    const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${id}`, { credentials: "include" });
+    if (!r.ok) { navigate("/agency"); return; }
+    const found = await r.json();
+    setCampaign(found);
+    setForm({
+      client_id: found.client_id, title: found.title, description: found.description || "",
+      budget: found.budget || "", formula: found.formula || "", creator_id: found.creator_id || "",
+      creator_name: found.creator_name || "", notes: found.notes || "",
+      client_notes: found.client_notes || "", status: found.status,
+      order: found.order || 1, delivery_notes: found.delivery_notes || ""
+    });
     setLoading(false);
   }, [id, isNew, navigate]);
 
   useEffect(() => {
     fetchClients();
     fetchCreators();
-    if (!isNew) fetchCampaign();
+    if (isNew) setLoading(false);
+    else fetchCampaign();
   }, [fetchClients, fetchCreators, fetchCampaign, isNew]);
 
   const save = async () => {
@@ -114,7 +112,7 @@ export default function AgencyCampaignPage({ user }) {
       });
       if (r.ok) {
         toast.success(isNew ? "Campagne créée" : "Modifications enregistrées");
-        if (isNew) { const d = await r.json(); navigate(`/agency/campaign/${d.campaign_id || ""}`, { replace: true }); fetchCampaign(); }
+        if (isNew) { const d = await r.json(); navigate(`/agency/campaign/${d.campaign_id}`, { replace: true }); }
         else fetchCampaign();
       } else toast.error("Erreur");
     } catch { toast.error("Erreur réseau"); }

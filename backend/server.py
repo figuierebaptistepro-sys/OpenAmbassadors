@@ -2747,9 +2747,13 @@ async def create_agency_campaign(request: Request, user: dict = Depends(get_curr
         title=body["title"],
         description=body.get("description"),
         budget=body.get("budget"),
+        formula=body.get("formula"),
+        order=body.get("order", 1),
         creator_id=body.get("creator_id"),
         creator_name=body.get("creator_name"),
         notes=body.get("notes"),
+        client_notes=body.get("client_notes"),
+        delivery_notes=body.get("delivery_notes"),
         status=body.get("status", "brief_recu"),
     )
     await db.agency_campaigns.insert_one(campaign.model_dump())
@@ -2760,6 +2764,19 @@ async def create_agency_campaign(request: Request, user: dict = Depends(get_curr
             client["email"], client.get("name", ""), campaign.title, campaign.formula or ""
         ))
     return campaign.model_dump()
+
+@api_router.get("/admin/agency/campaigns/{campaign_id}")
+async def get_agency_campaign(campaign_id: str, user: dict = Depends(get_current_user)):
+    """Get a single agency campaign by ID"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    c = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
+    if not c:
+        raise HTTPException(status_code=404, detail="Campagne introuvable")
+    client = await db.users.find_one({"user_id": c["client_id"]}, {"_id": 0})
+    c["client_name"] = client.get("name") if client else c["client_id"]
+    c["client_email"] = client.get("email") if client else ""
+    return c
 
 @api_router.get("/admin/agency/campaigns")
 async def get_all_agency_campaigns(user: dict = Depends(get_current_user)):
