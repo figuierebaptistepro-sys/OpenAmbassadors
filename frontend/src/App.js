@@ -33,6 +33,10 @@ import NewProjectPage from "./pages/NewProjectPage";
 import WalletPage from "./pages/WalletPage";
 import AdminPage from "./pages/AdminPage";
 import AgencyDashboard from "./pages/AgencyDashboard";
+import AgencyOverview from "./pages/AgencyOverview";
+import AgencyClients from "./pages/AgencyClients";
+import AgencyCampaigns from "./pages/AgencyCampaigns";
+import AgencyScripts from "./pages/AgencyScripts";
 import AgencyCampaignPage from "./pages/AgencyCampaignPage";
 import BusinessProjectsPage from "./pages/BusinessProjectsPage";
 import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
@@ -504,7 +508,31 @@ function AppRouter({ onUserChange }) {
         path="/agency"
         element={
           <AdminRoute>
-            {({ user }) => <AgencyDashboard user={user} />}
+            {({ user }) => <AgencyOverview user={user} />}
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/agency/clients"
+        element={
+          <AdminRoute>
+            {({ user }) => <AgencyClients user={user} />}
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/agency/campaigns"
+        element={
+          <AdminRoute>
+            {({ user }) => <AgencyCampaigns user={user} />}
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/agency/scripts"
+        element={
+          <AdminRoute>
+            {({ user }) => <AgencyScripts user={user} />}
           </AdminRoute>
         }
       />

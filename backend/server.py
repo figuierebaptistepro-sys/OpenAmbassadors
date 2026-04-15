@@ -2910,6 +2910,24 @@ async def add_script_to_campaign(campaign_id: str, request: Request, user: dict 
             ))
     return script
 
+@api_router.patch("/admin/agency/campaigns/{campaign_id}/scripts/{script_id}/status")
+async def update_script_status(campaign_id: str, script_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Admin: update a script's status by script_id"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    new_status = body.get("status")
+    allowed = {"en_attente", "valide", "modifications_demandees", "refuse"}
+    if new_status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    result = await db.agency_campaigns.update_one(
+        {"campaign_id": campaign_id, "scripts.script_id": script_id},
+        {"$set": {"scripts.$.status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Script not found")
+    return {"message": "Statut mis à jour", "status": new_status}
+
 @api_router.delete("/admin/agency/campaigns/{campaign_id}/scripts/{script_id}")
 async def delete_script_from_campaign(campaign_id: str, script_id: str, user: dict = Depends(get_current_user)):
     """Admin: remove a script from a campaign"""
