@@ -139,6 +139,39 @@ const CreatorCardRedirect = () => {
   return <Navigate to={`/c/${cleanUsername}`} replace />;
 };
 
+// Admin-only route — verifies with backend, redirects non-admins to /dashboard
+const AdminRoute = ({ children }) => {
+  const navigate = useNavigate();
+  const [state, setState] = useState({ checked: false, allowed: false, user: null });
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const [meRes, adminRes] = await Promise.all([
+          fetch(`${API_URL}/api/auth/me`, { credentials: "include" }),
+          fetch(`${API_URL}/api/admin/check`, { credentials: "include" }),
+        ]);
+        if (!meRes.ok) { navigate("/login"); return; }
+        const user = await meRes.json();
+        const adminData = adminRes.ok ? await adminRes.json() : { is_admin: false };
+        if (!adminData.is_admin) { navigate("/dashboard"); return; }
+        setState({ checked: true, allowed: true, user });
+      } catch {
+        navigate("/login");
+      }
+    };
+    check();
+  }, [navigate]);
+
+  if (!state.checked) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F6F7FB]">
+      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  return state.allowed ? (typeof children === "function" ? children({ user: state.user }) : children) : null;
+};
+
 // Conditional route for /:username - checks if it starts with @
 const CreatorCardConditionalRoute = () => {
   const { username } = useParams();
@@ -461,17 +494,17 @@ function AppRouter({ onUserChange }) {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requireType>
+          <AdminRoute>
             {({ user }) => <AdminPage user={user} />}
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="/agency"
         element={
-          <ProtectedRoute requireType>
+          <AdminRoute>
             {({ user }) => <AgencyDashboard user={user} />}
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
       <Route
