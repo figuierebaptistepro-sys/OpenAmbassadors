@@ -102,6 +102,7 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   const [inView, setInView] = useState(false);
   const [frameReady, setFrameReady] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState(false);
   const videoRef = useRef(null);
   const cardRef = useRef(null);
 
@@ -168,16 +169,22 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
       onMouseLeave={handleMouseLeave}
       data-testid={`video-card-${index}`}
     >
-      {/* Thumbnail statique (nouvelles vidéos avec FFmpeg) — zéro charge réseau */}
-      {hasThumbnail && (
-        <div className={`absolute inset-0 transition-opacity duration-200 ${showVideo ? 'opacity-0' : 'opacity-100'}`}>
-          <img src={getImageUrl(video.thumbnail)} alt="" loading="lazy" className="w-full h-full object-cover" />
-        </div>
+      {/* Shimmer skeleton — visible until thumbnail or frame is ready */}
+      {((hasThumbnail && !thumbLoaded) || (!hasThumbnail && !frameReady)) && (
+        <div className="absolute inset-0 bg-gray-800 animate-pulse" />
       )}
 
-      {/* Fallback gradient si pas de thumbnail et frame pas encore prête */}
-      {!hasThumbnail && !frameReady && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+      {/* Thumbnail statique (nouvelles vidéos avec FFmpeg) — zéro charge réseau */}
+      {hasThumbnail && (
+        <div className={`absolute inset-0 transition-opacity duration-300 ${showVideo ? 'opacity-0' : thumbLoaded ? 'opacity-100' : 'opacity-0'}`}>
+          <img
+            src={getImageUrl(video.thumbnail)}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onLoad={() => setThumbLoaded(true)}
+          />
+        </div>
       )}
 
       {/* Vidéo : pour thumbnail (seekée) si pas de thumb statique, et toujours pour le hover */}

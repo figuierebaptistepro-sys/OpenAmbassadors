@@ -442,14 +442,9 @@ const CreatorProfileV2 = ({ currentUser }) => {
                   )}
                 </div>
 
-                {/* Prix + CTA */}
+                {/* CTA */}
                 <div className="flex flex-wrap items-center gap-4">
-                  <div className="bg-gray-50 px-4 py-2 rounded-xl">
-                    <span className="text-sm text-gray-500">À partir de </span>
-                    <span className="text-2xl font-bold text-gray-900">{creator.min_rate || "—"}€</span>
-                  </div>
-                  
-                  <Button 
+                  <Button
                     onClick={() => setCollaborationDialogOpen(true)}
                     size="lg"
                     className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 h-12 rounded-xl shadow-lg shadow-primary/20"
@@ -719,7 +714,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-900 truncate">{creator.name}</p>
-                  <p className="text-sm text-gray-500">À partir de <span className="font-bold text-gray-900">{creator.min_rate || "—"}€</span></p>
+                  <p className="text-sm text-gray-500">{creator.city || "Créateur"}</p>
                 </div>
                 <Button 
                   onClick={() => setCollaborationDialogOpen(true)}
