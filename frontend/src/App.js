@@ -32,6 +32,7 @@ import BillingPage from "./pages/BillingPage";
 import NewProjectPage from "./pages/NewProjectPage";
 import WalletPage from "./pages/WalletPage";
 import AdminPage from "./pages/AdminPage";
+import AgencyDashboard from "./pages/AgencyDashboard";
 import BusinessProjectsPage from "./pages/BusinessProjectsPage";
 import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
 import { InboxPage, ConversationPage } from "./pages/MessagesPage";
@@ -462,6 +463,14 @@ function AppRouter({ onUserChange }) {
         element={
           <ProtectedRoute requireType>
             {({ user }) => <AdminPage user={user} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agency"
+        element={
+          <ProtectedRoute requireType>
+            {({ user }) => <AgencyDashboard user={user} />}
           </ProtectedRoute>
         }
       />

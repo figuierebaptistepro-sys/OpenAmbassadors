@@ -68,7 +68,7 @@ if RESEND_API_KEY:
     logging.info("Resend email client initialized")
 
 # Admin emails (only these can access admin panel)
-ADMIN_EMAILS = ["figuierebaptistepro@gmail.com"]
+ADMIN_EMAILS = ["figuierebaptistepro@gmail.com", "contact@studiosavora.com"]
 
 # Create uploads directories (fallback for local storage)
 UPLOADS_DIR = ROOT_DIR / "uploads"
@@ -2690,6 +2690,34 @@ async def admin_update_collaboration_status(request_id: str, request: Request, u
     return {"message": "Statut mis à jour"}
 
 # ==================== AGENCY ROUTES ====================
+
+@api_router.get("/admin/agency/stats")
+async def get_agency_stats(user: dict = Depends(get_current_user)):
+    """KPI stats for the agency dashboard"""
+    if user.get("email") not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    campaigns = await db.agency_campaigns.find({}, {"_id": 0}).to_list(500)
+    clients_count = await db.users.count_documents({"is_agency_client": True})
+    active_campaigns = [c for c in campaigns if c.get("status") != "termine"]
+    scripts_pending = sum(
+        1 for c in campaigns
+        for s in c.get("scripts", [])
+        if s.get("status") == "modifications_demandees"
+    )
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    videos_this_month = sum(
+        len([v for v in c.get("delivered_videos", [])
+             if v.get("uploaded_at", "") >= month_start.isoformat()])
+        for c in campaigns
+    )
+    return {
+        "clients_actifs": clients_count,
+        "campagnes_actives": len(active_campaigns),
+        "scripts_en_attente": scripts_pending,
+        "videos_livrees_mois": videos_this_month,
+    }
 
 @api_router.post("/admin/agency/invitations")
 async def create_agency_invitation(user: dict = Depends(get_current_user)):
