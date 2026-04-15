@@ -410,7 +410,7 @@ export default function AgencyCampaignPage({ user }) {
 
         {/* ══════ TAB: SCRIPTS ══════ */}
         {!isNew && tab === "scripts" && (
-          <ScriptsTab campaign={campaign} campaignId={id} onUpdate={setCampaign} />
+          <ScriptsTab campaign={campaign} campaignId={id} campaignStatus={form.status} onUpdate={setCampaign} />
         )}
 
         {/* ══════ TAB: VIDÉOS ══════ */}

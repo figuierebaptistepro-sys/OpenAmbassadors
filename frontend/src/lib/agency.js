@@ -23,10 +23,11 @@ export const FORMULAS = [
 export const FORMULA_MAP = Object.fromEntries(FORMULAS.map(f => [f.key, f]));
 
 export const SCRIPT_STATUSES = {
-  en_attente:              { label: "En attente",      badge: "bg-gray-100 text-gray-600",     dot: "bg-gray-400"   },
-  valide:                  { label: "Validé",           badge: "bg-green-100 text-green-700",   dot: "bg-green-500"  },
-  modifications_demandees: { label: "Modifs demandées", badge: "bg-orange-100 text-orange-700", dot: "bg-orange-500" },
-  refuse:                  { label: "Refusé",           badge: "bg-red-100 text-red-700",       dot: "bg-red-500"    },
+  en_attente:              { label: "En attente",      badge: "bg-gray-100 text-gray-600",      dot: "bg-gray-400"    },
+  valide:                  { label: "Validé",           badge: "bg-green-100 text-green-700",    dot: "bg-green-500"   },
+  modifications_demandees: { label: "Modifs demandées", badge: "bg-orange-100 text-orange-700",  dot: "bg-orange-500"  },
+  refuse:                  { label: "Refusé",           badge: "bg-red-100 text-red-700",        dot: "bg-red-500"     },
+  realise:                 { label: "Réalisé 🎬",       badge: "bg-purple-100 text-purple-700",  dot: "bg-purple-500"  },
 };
 
 /**

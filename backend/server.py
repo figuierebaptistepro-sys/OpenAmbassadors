@@ -2951,7 +2951,7 @@ async def update_script_status(campaign_id: str, script_id: str, request: Reques
         raise HTTPException(status_code=403, detail="Admin only")
     body = await request.json()
     new_status = body.get("status")
-    allowed = {"en_attente", "valide", "modifications_demandees", "refuse"}
+    allowed = {"en_attente", "valide", "modifications_demandees", "refuse", "realise"}
     if new_status not in allowed:
         raise HTTPException(status_code=400, detail="Invalid status")
     result = await db.agency_campaigns.update_one(
