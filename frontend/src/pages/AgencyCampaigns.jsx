@@ -10,6 +10,18 @@ import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+function getDeadlineInfo(deadline) {
+  if (!deadline) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(deadline);
+  const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+  if (diff < 0)  return { label: `En retard ${Math.abs(diff)}j`, color: "bg-red-100 text-red-700", icon: "🔴" };
+  if (diff === 0) return { label: "Aujourd'hui !",                 color: "bg-red-100 text-red-700", icon: "🔴" };
+  if (diff <= 3) return { label: `Dans ${diff}j`,                  color: "bg-orange-100 text-orange-700", icon: "🟠" };
+  if (diff <= 7) return { label: `Dans ${diff}j`,                  color: "bg-yellow-100 text-yellow-700", icon: "🟡" };
+  return { label: new Date(deadline).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), color: "bg-gray-100 text-gray-400", icon: "📅" };
+}
+
 const STATUSES = [
   { key: "brief_recu",  label: "Brief reçu",  color: "border-gray-300",   head: "bg-gray-100",   dot: "bg-gray-400",    text: "text-gray-600"  },
   { key: "casting",     label: "Casting",      color: "border-blue-300",   head: "bg-blue-50",    dot: "bg-blue-500",    text: "text-blue-700"  },
@@ -193,6 +205,13 @@ function CampaignCard({ campaign: c, onOpen, onMove, moving, statuses }) {
           </div>
         </div>
       )}
+
+      {/* Deadline */}
+      {(() => { const dl = getDeadlineInfo(c.deadline); return dl ? (
+        <div className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md mb-2 w-fit ${dl.color}`}>
+          <span>{dl.icon}</span> {dl.label}
+        </div>
+      ) : null; })()}
 
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-gray-400">Mois {c.order || 1}</span>

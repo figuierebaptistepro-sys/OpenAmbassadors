@@ -831,6 +831,8 @@ class AgencyCampaign(BaseModel):
     status: str = "brief_recu"
     order: int = 1  # Month number (1, 2, 3...)
     notes: Optional[str] = None
+    client_notes: Optional[str] = None
+    deadline: Optional[str] = None  # ISO date string "YYYY-MM-DD"
     scripts: List[dict] = []  # list of Script objects
     video_delivery_link: Optional[str] = None  # Google Drive link when videos ready
     delivery_notes: Optional[str] = None
@@ -2754,6 +2756,7 @@ async def create_agency_campaign(request: Request, user: dict = Depends(get_curr
         notes=body.get("notes"),
         client_notes=body.get("client_notes"),
         delivery_notes=body.get("delivery_notes"),
+        deadline=body.get("deadline"),
         status=body.get("status", "brief_recu"),
     )
     await db.agency_campaigns.insert_one(campaign.model_dump())

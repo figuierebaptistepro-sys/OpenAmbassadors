@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Video, Users, TrendingUp, ChevronRight, RefreshCw, Link2, Copy, Clock } from "lucide-react";
+import { AlertCircle, Video, Users, TrendingUp, ChevronRight, RefreshCw, Link2, CalendarClock, Clock } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import AgencyNav from "../components/AgencyNav";
 import { Button } from "../components/ui/button";
@@ -65,6 +65,13 @@ export default function AgencyOverview({ user }) {
   });
   const inDelivery = campaigns.filter(c => c.status === "livraison");
   const activeCampaigns = campaigns.filter(c => c.status !== "termine");
+
+  const urgentDeadlines = campaigns.filter(c => {
+    if (!c.deadline || c.status === "termine") return false;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.ceil((new Date(c.deadline) - today) / (1000 * 60 * 60 * 24));
+    return diff <= 3;
+  }).sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
   const recentCampaigns = [...campaigns].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 8);
 
   if (loading) return (
@@ -113,10 +120,30 @@ export default function AgencyOverview({ user }) {
                   <CardTitle className="text-sm font-semibold">⚡ Nécessite une action</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {needsScriptAction.length === 0 && stalledCampaigns.length === 0 && inDelivery.length === 0 ? (
+                  {needsScriptAction.length === 0 && stalledCampaigns.length === 0 && inDelivery.length === 0 && urgentDeadlines.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Tout est à jour ✓</p>
                   ) : (
                     <>
+                      {urgentDeadlines.map(c => {
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const diff = Math.ceil((new Date(c.deadline) - today) / (1000 * 60 * 60 * 24));
+                        const overdue = diff < 0;
+                        const label = overdue
+                          ? `En retard de ${Math.abs(diff)} jour${Math.abs(diff) > 1 ? "s" : ""}`
+                          : diff === 0 ? "Deadline aujourd'hui !"
+                          : `Deadline dans ${diff} jour${diff > 1 ? "s" : ""}`;
+                        return (
+                          <div key={c.campaign_id} onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors border ${overdue ? "bg-red-50 border-red-100 hover:bg-red-100" : "bg-orange-50 border-orange-100 hover:bg-orange-100"}`}>
+                            <CalendarClock className={`w-4 h-4 flex-shrink-0 ${overdue ? "text-red-500" : "text-orange-500"}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-800 truncate">{c.title}</p>
+                              <p className={`text-xs ${overdue ? "text-red-600" : "text-orange-600"}`}>{c.client_name} — {label}</p>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 flex-shrink-0 ${overdue ? "text-red-400" : "text-orange-400"}`} />
+                          </div>
+                        );
+                      })}
                       {needsScriptAction.map(c => (
                         <div key={c.campaign_id} onClick={() => navigate(`/agency/campaign/${c.campaign_id}`)}
                           className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-100 rounded-xl cursor-pointer hover:bg-orange-100 transition-colors">

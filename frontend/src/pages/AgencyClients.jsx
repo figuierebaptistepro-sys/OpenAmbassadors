@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Link2, Building2, ChevronRight, RefreshCw, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, Search, Link2, Building2, ChevronRight, RefreshCw, Trash2, CalendarClock } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import AgencyNav from "../components/AgencyNav";
 import { Button } from "../components/ui/button";
@@ -9,6 +9,18 @@ import { Card, CardContent } from "../components/ui/card";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+function getDeadlineInfo(deadline) {
+  if (!deadline) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(deadline);
+  const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+  if (diff < 0)  return { label: `Retard ${Math.abs(diff)}j`, color: "text-red-600 bg-red-50" };
+  if (diff === 0) return { label: "Aujourd'hui",               color: "text-red-600 bg-red-50" };
+  if (diff <= 3) return { label: `Dans ${diff}j`,              color: "text-orange-600 bg-orange-50" };
+  if (diff <= 7) return { label: `Dans ${diff}j`,              color: "text-yellow-600 bg-yellow-50" };
+  return { label: d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), color: "text-gray-400 bg-gray-50" };
+}
 
 const STATUSES = {
   brief_recu:  { label: "Brief reçu",  color: "bg-gray-100 text-gray-600" },
@@ -207,6 +219,11 @@ export default function AgencyClients({ user }) {
                                       </div>
                                     )}
                                     <span className="text-xs text-gray-400">Mois {c.order || 1}</span>
+                                    {(() => { const dl = getDeadlineInfo(c.deadline); return dl ? (
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-medium ${dl.color}`}>
+                                        <CalendarClock className="w-2.5 h-2.5" /> {dl.label}
+                                      </span>
+                                    ) : null; })()}
                                   </div>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0 transition-colors" />

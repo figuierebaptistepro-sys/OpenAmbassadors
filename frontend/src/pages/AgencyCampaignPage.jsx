@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Save, Trash2, Plus, X, Upload, Film,
   CheckCircle, AlertCircle, Clock, FileText, Video,
-  Info, ChevronRight, Download, Eye
+  Info, ChevronRight, Download, Eye, CalendarClock
 } from "lucide-react";
 import AppLayout from "../components/AppLayout";
 import { Button } from "../components/ui/button";
@@ -14,6 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+function getDeadlineInfo(deadline) {
+  if (!deadline) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(deadline);
+  const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+  if (diff < 0)  return { label: `En retard (${Math.abs(diff)}j)`, color: "bg-red-100 text-red-700 border-red-200" };
+  if (diff === 0) return { label: "Deadline aujourd'hui !",          color: "bg-red-100 text-red-700 border-red-200" };
+  if (diff <= 3) return { label: `Deadline dans ${diff}j`,           color: "bg-orange-100 text-orange-700 border-orange-200" };
+  if (diff <= 7) return { label: `Deadline dans ${diff}j`,           color: "bg-yellow-100 text-yellow-700 border-yellow-200" };
+  return { label: `Deadline : ${d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}`, color: "bg-gray-100 text-gray-500 border-gray-200" };
+}
 
 const STATUSES = [
   { key: "brief_recu",  label: "Brief reçu",  color: "bg-gray-100 text-gray-600",     ring: "ring-gray-300"    },
@@ -38,7 +50,7 @@ const TABS = [
 const EMPTY_FORM = {
   client_id: "", title: "", description: "", budget: "", formula: "",
   creator_id: "", creator_name: "", notes: "", client_notes: "",
-  status: "brief_recu", order: 1, delivery_notes: ""
+  status: "brief_recu", order: 1, delivery_notes: "", deadline: ""
 };
 
 export default function AgencyCampaignPage({ user }) {
@@ -85,7 +97,8 @@ export default function AgencyCampaignPage({ user }) {
       budget: found.budget || "", formula: found.formula || "", creator_id: found.creator_id || "",
       creator_name: found.creator_name || "", notes: found.notes || "",
       client_notes: found.client_notes || "", status: found.status,
-      order: found.order || 1, delivery_notes: found.delivery_notes || ""
+      order: found.order || 1, delivery_notes: found.delivery_notes || "",
+      deadline: found.deadline || ""
     });
     setLoading(false);
   }, [id, isNew, navigate]);
@@ -186,6 +199,7 @@ export default function AgencyCampaignPage({ user }) {
   const formula = FORMULAS.find(f => f.key === form.formula);
   const currentStatusInfo = STATUSES.find(s => s.key === form.status) || STATUSES[0];
   const pendingScripts = (campaign?.scripts || []).filter(s => s.status === "modifications_demandees").length;
+  const deadlineInfo = getDeadlineInfo(form.deadline);
 
   if (loading) return (
     <AppLayout user={user}>
@@ -217,6 +231,11 @@ export default function AgencyCampaignPage({ user }) {
                 )}
                 {formula && (
                   <span className="text-xs text-gray-400">{campaign?.videos_delivered || 0}/{formula.videos} vidéos</span>
+                )}
+                {deadlineInfo && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border ${deadlineInfo.color}`}>
+                    <CalendarClock className="w-3 h-3" /> {deadlineInfo.label}
+                  </span>
                 )}
               </div>
             )}
@@ -338,6 +357,19 @@ export default function AgencyCampaignPage({ user }) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Deadline */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+                  Date de livraison <span className="text-gray-400 font-normal">(deadline)</span>
+                </label>
+                <Input
+                  type="date"
+                  className="h-10 border-gray-200"
+                  value={form.deadline}
+                  onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                />
               </div>
 
               {/* Statut (new only) */}
