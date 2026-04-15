@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Briefcase, BookOpen, Users,
-  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2, Trophy, Zap, Heart, Building2
+  Settings, HelpCircle, Crown, LogOut, Menu, X, User, ChevronDown, CreditCard, FileText, Wallet, Shield, MessageCircle, Gift, Share2, Trophy, Zap, Heart, Building2, Film
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import NotificationBell from "./NotificationBell";
@@ -80,6 +80,9 @@ const AppLayout = ({ children, user, currentPlan }) => {
 
   const menuItems = [
     ...(userType === "creator" ? creatorMenuItems : businessMenuItems),
+    ...(user?.is_agency_client ? [
+      { icon: Film, label: "Ma Production", path: "/mon-suivi", highlight: true },
+    ] : []),
     ...(isAdmin ? [
       { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
       { icon: Building2, label: "Agence", path: "/agency" },
