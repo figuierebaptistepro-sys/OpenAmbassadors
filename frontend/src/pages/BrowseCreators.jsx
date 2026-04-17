@@ -299,7 +299,6 @@ const DEFAULT_BANNER_STYLE = {
 const CreatorCard = ({ creator, index, getImageUrl }) => {
   const videos = creator.portfolio_videos?.slice(0, 3) || [];
   const hasVideos = videos.length > 0;
-  const hasBrands = creator.brands_worked?.length > 0;
   const gridCols = videos.length >= 3 ? 'grid-cols-3' : videos.length === 2 ? 'grid-cols-2' : 'grid-cols-1';
 
   return (
@@ -307,9 +306,10 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
+      className="h-full"
     >
-      <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col">
+      <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`} className="h-full flex">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col w-full">
 
           {/* ── Bannière fixe h-40 — identique pour toutes les cards ── */}
           <div className="relative h-40 flex-shrink-0">
@@ -320,21 +320,12 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
                 ))}
               </div>
             ) : (
-              /* Bannière app par défaut — profil centré dans le gradient */
-              <div className="absolute inset-0 flex items-center justify-center" style={DEFAULT_BANNER_STYLE}>
+              /* Bannière gradient — sans photo de profil */
+              <div className="absolute inset-0" style={DEFAULT_BANNER_STYLE}>
                 <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
                   style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
                 <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl"
                   style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
-                <div className="relative z-10 w-16 h-16 rounded-2xl overflow-hidden shadow-lg border-2 border-white/60">
-                  {creator.picture ? (
-                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
-                      <span className="text-xl font-bold text-white">{(creator.name || "C")[0]}</span>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
