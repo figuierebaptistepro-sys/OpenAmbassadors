@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, MapPin, Star, Crown, Video, Play, X, ChevronRight, User, 
-  SlidersHorizontal, Map, Filter, ChevronDown, Check, RotateCcw
+  Search, MapPin, Star, Crown, Video, Play, X, ChevronRight, User,
+  SlidersHorizontal, Map, Filter, ChevronDown, Check, RotateCcw,
+  Globe, Camera, Clock, Briefcase
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -235,6 +236,205 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
         </Link>
       </div>
     </div>
+  );
+};
+
+/* ── Vignette vidéo dans la bannière de la card créateur ── */
+const VideoBannerItem = ({ video, getImageUrl }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const videoRef = useRef(null);
+  const isVideo = video?.url && (
+    video.url.includes('.mp4') || video.url.includes('.mov') ||
+    video.url.includes('.webm') || video.type === 'uploaded'
+  );
+
+  const handleEnter = () => {
+    setHovered(true);
+    videoRef.current?.play().catch(() => {});
+  };
+  const handleLeave = () => {
+    setHovered(false);
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; }
+  };
+
+  return (
+    <div
+      className="relative aspect-[9/16] bg-gray-900 overflow-hidden"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      {!loaded && <div className="absolute inset-0 bg-gray-800 animate-pulse" />}
+      {video?.thumbnail && (
+        <img
+          src={getImageUrl(video.thumbnail)}
+          alt=""
+          loading="lazy"
+          className={`w-full h-full object-cover transition-all duration-300 ${loaded ? 'opacity-100' : 'opacity-0'} ${hovered ? 'scale-105' : 'scale-100'}`}
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+      {!video?.thumbnail && isVideo && (
+        <video
+          src={`${getImageUrl(video.url)}#t=1`}
+          muted playsInline preload="metadata"
+          className="w-full h-full object-cover"
+          onLoadedData={() => setLoaded(true)}
+        />
+      )}
+      {isVideo && hovered && (
+        <video
+          ref={videoRef}
+          src={getImageUrl(video.url)}
+          muted loop playsInline autoPlay
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+    </div>
+  );
+};
+
+/* ── Carte créateur redesignée ── */
+const CreatorCard = ({ creator, index, getImageUrl }) => {
+  const videos = creator.portfolio_videos?.slice(0, 3) || [];
+  const hasVideos = videos.length > 0;
+  const hasBrands = creator.brands_worked?.length > 0;
+
+  const gridCols = videos.length === 1 ? 'grid-cols-1' : videos.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04 }}
+    >
+      <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 group">
+
+          {/* ── Bannière vidéos ── */}
+          <div className="relative">
+            {hasVideos ? (
+              <div className={`grid gap-0.5 ${gridCols}`}>
+                {videos.map((v, i) => (
+                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
+                ))}
+              </div>
+            ) : (
+              <div className="h-36 bg-gradient-to-br from-primary/10 via-pink-50 to-rose-100" />
+            )}
+
+            {/* Badge commandes */}
+            {creator.completed_projects > 0 && (
+              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                {creator.completed_projects} commandes
+              </div>
+            )}
+
+            {/* Disponible badge */}
+            {creator.available && (
+              <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                Disponible
+              </div>
+            )}
+
+            {/* Avatar chevauchant */}
+            <div className="absolute -bottom-6 left-4 z-10">
+              <div className="w-14 h-14 rounded-xl border-[3px] border-white shadow-lg overflow-hidden bg-gray-100">
+                {creator.picture ? (
+                  <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
+                    <span className="text-lg font-bold text-white">{(creator.name || "C")[0]}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Logos marques ── */}
+          {hasBrands ? (
+            <div className="px-4 pt-8 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none">
+              {creator.brands_worked.slice(0, 5).map((brand, i) => (
+                <span key={i} className="text-[10px] font-bold text-gray-400 whitespace-nowrap uppercase tracking-widest">{brand}</span>
+              ))}
+            </div>
+          ) : (
+            <div className="pt-8" />
+          )}
+
+          {/* ── Infos ── */}
+          <div className="px-4 pb-4">
+            {/* Nom + rating */}
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <h3 className="font-bold text-gray-900 truncate">{creator.name || "Créateur"}</h3>
+                {creator.is_premium && (
+                  <div className="w-4.5 h-4.5 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                )}
+              </div>
+              {creator.rating > 0 ? (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-bold text-gray-900">{creator.rating.toFixed(1)}</span>
+                  {creator.reviews_count > 0 && (
+                    <span className="text-xs text-gray-400">({creator.reviews_count})</span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs text-primary font-semibold">Nouveau</span>
+              )}
+            </div>
+
+            {/* Détails */}
+            <div className="space-y-1.5">
+              {creator.city && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                  <span>{creator.city}</span>
+                </div>
+              )}
+              {creator.languages?.length > 0 && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                  <span>{creator.languages.join(", ")}</span>
+                </div>
+              )}
+              {creator.equipment?.length > 0 && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Camera className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                  <span className="truncate">{creator.equipment.slice(0, 2).join(", ")}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Clock className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                  <span>Temps de réponse moyen</span>
+                </div>
+                <span className="font-bold text-gray-900">{creator.response_time || "< 24h"}</span>
+              </div>
+            </div>
+
+            {/* Types de contenu */}
+            {creator.content_types?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-100">
+                {creator.content_types.slice(0, 3).map(type => (
+                  <span key={type} className="px-2 py-0.5 bg-primary/8 text-primary text-[11px] font-medium rounded-full">{type}</span>
+                ))}
+                {creator.niches?.slice(0, 2).map(n => {
+                  const niche = NICHES.find(x => x.id === n);
+                  return niche ? (
+                    <span key={n} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] rounded-full">{niche.icon} {niche.label}</span>
+                  ) : null;
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 };
 
@@ -727,81 +927,22 @@ const BrowseCreators = ({ user }) => {
               <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : activeTab === "creators" ? (
-            /* CREATORS VIEW */
+            /* CREATORS VIEW — grille de cards */
             <div className="p-4 lg:p-6">
               {creators.length > 0 ? (
-                <div className="space-y-3">
-                  {creators.map((creator, index) => (
-                    <motion.div
-                      key={creator.user_id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
-                        <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4">
-                          <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
-                            {creator.picture ? (
-                              <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                                <span className="text-xl lg:text-2xl font-bold text-primary">{(creator.name || "C")[0]}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-gray-900 truncate">{creator.name || "Créateur"}</h3>
-                              {creator.is_premium && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
-                              {creator.city && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3.5 h-3.5" />
-                                  {creator.city}
-                                </span>
-                              )}
-                              {creator.rating > 0 ? (
-                              <span className="flex items-center gap-1">
-                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                {creator.rating?.toFixed(1)}
-                              </span>
-                              ) : (
-                              <span className="text-xs text-primary font-medium">Nouveau créateur</span>
-                              )}
-                              {creator.experience_level && (
-                                <span className="hidden sm:inline text-gray-400">
-                                  {EXPERIENCE_LEVELS.find(l => l.value === creator.experience_level)?.label}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {creator.available && (
-                                <Badge className="bg-green-100 text-green-700 text-xs">Disponible</Badge>
-                              )}
-                              {creator.content_types?.slice(0, 2).map(type => (
-                                <Badge key={type} variant="outline" className="text-xs border-gray-200">
-                                  {type}
-                                </Badge>
-                              ))}
-                              {creator.portfolio_videos?.length > 0 && (
-                                <Badge variant="outline" className="text-xs border-gray-200">
-                                  <Video className="w-3 h-3 mr-1" />
-                                  {creator.portfolio_videos.length}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <ChevronRight className="w-5 h-5 text-gray-400 self-center flex-shrink-0" />
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                  {/* Load more button */}
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {creators.map((creator, index) => (
+                      <CreatorCard
+                        key={creator.user_id}
+                        creator={creator}
+                        index={index}
+                        getImageUrl={getImageUrl}
+                      />
+                    ))}
+                  </div>
                   {hasMore && (
-                    <div className="text-center pt-4">
+                    <div className="text-center pt-6">
                       <Button
                         onClick={() => fetchCreators(currentSkip, false)}
                         disabled={loadingMore}
@@ -817,7 +958,7 @@ const BrowseCreators = ({ user }) => {
                       </Button>
                     </div>
                   )}
-                </div>
+                </>
               ) : (
                 <div className="text-center py-20">
                   <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
