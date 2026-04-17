@@ -309,97 +309,91 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
       transition={{ delay: index * 0.04 }}
     >
       <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
-        {/* Pas de overflow-hidden sur la card → l'avatar peut déborder */}
-        <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col">
 
-          {/* ── Wrapper bannière + avatar (relative pour positionner l'avatar) ── */}
-          <div className="relative">
-
-            {/* Bannière h-44 avec overflow-hidden + coins arrondis en haut */}
-            <div className="h-44 overflow-hidden rounded-t-2xl relative">
-              {hasVideos ? (
-                <div className={`absolute inset-0 grid gap-0.5 ${gridCols}`}>
-                  {videos.map((v, i) => (
-                    <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
-                  ))}
+          {/* ── Bannière fixe h-40 — identique pour toutes les cards ── */}
+          <div className="relative h-40 flex-shrink-0">
+            {hasVideos ? (
+              <div className={`absolute inset-0 grid gap-0.5 ${gridCols}`}>
+                {videos.map((v, i) => (
+                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
+                ))}
+              </div>
+            ) : (
+              /* Bannière app par défaut — profil centré dans le gradient */
+              <div className="absolute inset-0 flex items-center justify-center" style={DEFAULT_BANNER_STYLE}>
+                <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
+                <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
+                <div className="relative z-10 w-16 h-16 rounded-2xl overflow-hidden shadow-lg border-2 border-white/60">
+                  {creator.picture ? (
+                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
+                      <span className="text-xl font-bold text-white">{(creator.name || "C")[0]}</span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="absolute inset-0" style={DEFAULT_BANNER_STYLE}>
-                  <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
-                    style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
-                  <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl"
-                    style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
-                </div>
-              )}
+              </div>
+            )}
 
-              {/* Badge disponible */}
-              {creator.available && (
-                <div className="absolute top-2 left-2 z-10 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                  Disponible
-                </div>
-              )}
+            {/* Badge disponible */}
+            {creator.available && (
+              <div className="absolute top-2 left-2 z-10 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                Disponible
+              </div>
+            )}
 
-              {/* Badge commandes */}
-              {creator.completed_projects > 0 && (
-                <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                  {creator.completed_projects} commandes
-                </div>
-              )}
-            </div>
+            {/* Badge commandes */}
+            {creator.completed_projects > 0 && (
+              <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                {creator.completed_projects} commandes
+              </div>
+            )}
+          </div>
 
-            {/* Avatar — positionné sur le wrapper (pas dans overflow-hidden) */}
-            <div className="absolute -bottom-5 left-4 z-20">
-              <div className="w-12 h-12 rounded-xl border-[3px] border-white shadow-lg overflow-hidden bg-gray-100">
+          {/* ── Infos — flex-1 pour que toutes les cards s'étirent pareil ── */}
+          <div className="flex flex-col flex-1 px-4 py-3">
+
+            {/* Photo + Nom + rating */}
+            <div className="flex items-center gap-3 mb-3">
+              {/* Photo de profil — propre, dans la section info */}
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm border border-gray-100">
                 {creator.picture ? (
                   <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
-                    <span className="text-base font-bold text-white">{(creator.name || "C")[0]}</span>
+                    <span className="text-sm font-bold text-white">{(creator.name || "C")[0]}</span>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* ── Logos marques ── */}
-          {hasBrands ? (
-            <div className="px-4 pt-7 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none">
-              {creator.brands_worked.slice(0, 5).map((brand, i) => (
-                <span key={i} className="text-[10px] font-bold text-gray-400 whitespace-nowrap uppercase tracking-widest">{brand}</span>
-              ))}
-            </div>
-          ) : (
-            <div className="pt-7" />
-          )}
-
-          {/* ── Infos ── */}
-          <div className="px-4 pb-4">
-            {/* Nom + rating */}
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <h3 className="font-bold text-gray-900 truncate text-sm">{creator.name || "Créateur"}</h3>
-                {creator.is_premium && (
-                  <div className="w-4 h-4 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-white" />
-                  </div>
-                )}
-              </div>
-              {creator.rating > 0 ? (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-bold text-gray-900">{creator.rating.toFixed(1)}</span>
-                  {creator.reviews_count > 0 && (
-                    <span className="text-[11px] text-gray-400">({creator.reviews_count})</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-bold text-gray-900 truncate text-sm">{creator.name || "Créateur"}</h3>
+                  {creator.is_premium && (
+                    <div className="w-4 h-4 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
                   )}
                 </div>
-              ) : (
-                <span className="text-[11px] text-gray-400 font-medium flex-shrink-0">Nouveau</span>
-              )}
+                {creator.rating > 0 ? (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    <span className="text-xs font-bold text-gray-900">{creator.rating.toFixed(1)}</span>
+                    {creator.reviews_count > 0 && (
+                      <span className="text-[11px] text-gray-400">({creator.reviews_count})</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-gray-400">Nouveau créateur</span>
+                )}
+              </div>
             </div>
 
             {/* Détails */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 flex-1">
               {creator.city && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
@@ -419,7 +413,7 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
               </div>
             </div>
 
-            {/* Tags */}
+            {/* Tags — toujours en bas */}
             {creator.content_types?.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-100">
                 {creator.content_types.slice(0, 3).map(type => (
