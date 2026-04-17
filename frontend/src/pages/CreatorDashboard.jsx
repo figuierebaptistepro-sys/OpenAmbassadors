@@ -489,17 +489,13 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                     <img src={getImageUrl(user.banner)} alt="" className="w-full h-full object-cover" />
                   ) : (
                     /* Default branded banner */
-                    <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 50%, #880e4f 100%)" }}>
-                      {/* Decorative blobs */}
-                      <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-                      <div className="absolute top-2 left-1/3 w-20 h-20 rounded-full bg-white/8 blur-xl" />
-                      <div className="absolute -bottom-4 left-8 w-24 h-24 rounded-full bg-pink-300/20 blur-2xl" />
-                      {/* Subtle dot grid */}
-                      <div className="absolute inset-0 opacity-10"
-                        style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
-                      {/* Brand text watermark */}
-                      <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                        <span className="text-white/40 text-xs font-semibold tracking-widest uppercase select-none">OpenAmbassadors</span>
+                    <div className="w-full h-full" style={{ background: "linear-gradient(160deg, #fff5f7 0%, #ffe0e9 40%, #ffd6e7 70%, #fce4ec 100%)" }}>
+                      {/* Grand cercle primaire flou */}
+                      <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
+                      <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
+                      {/* Watermark */}
+                      <div className="absolute bottom-2 right-3">
+                        <span className="text-[#FF2E63]/20 text-[10px] font-bold tracking-[0.2em] uppercase select-none">OpenAmbassadors</span>
                       </div>
                     </div>
                   )}

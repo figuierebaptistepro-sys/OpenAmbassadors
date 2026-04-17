@@ -346,22 +346,21 @@ const CreatorProfileV2 = ({ currentUser }) => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 55%, #880e4f 100%)" }}>
-              {/* Blobs décoratifs */}
-              <div className="absolute -top-8 -right-8 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
-              <div className="absolute top-6 left-1/3 w-32 h-32 rounded-full bg-white/8 blur-2xl" />
-              <div className="absolute -bottom-6 left-12 w-40 h-40 rounded-full bg-pink-300/20 blur-3xl" />
-              {/* Grille de points */}
-              <div className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-              {/* Watermark */}
-              <div className="absolute bottom-4 left-5">
-                <span className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">OpenAmbassadors</span>
+            <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #fff5f7 0%, #ffe0e9 40%, #ffd6e7 70%, #fce4ec 100%)" }}>
+              {/* Grand cercle primaire flou — haut droite */}
+              <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
+              {/* Cercle accent — bas gauche */}
+              <div className="absolute -bottom-10 left-0 w-56 h-56 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
+              {/* Ligne décorative horizontale */}
+              <div className="absolute bottom-8 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, #FF2E6330, transparent)" }} />
+              {/* Watermark minimaliste */}
+              <div className="absolute bottom-3 right-5">
+                <span className="text-[#FF2E63]/20 text-[11px] font-bold tracking-[0.2em] uppercase select-none">OpenAmbassadors</span>
               </div>
             </div>
           )}
-          {/* Overlay fade subtil tout en bas uniquement */}
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/60 to-transparent" />
+          {/* Fondu bas vers le blanc de la card */}
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />
         </div>
 
         {/* Profil Card */}
