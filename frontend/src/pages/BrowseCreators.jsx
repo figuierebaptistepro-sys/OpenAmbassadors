@@ -607,64 +607,52 @@ const BrowseCreators = ({ user }) => {
         <div className="flex-1 min-w-0">
           {/* Header with Tabs */}
           <div className="bg-white border-b border-gray-200 sticky top-0 lg:top-14 z-20">
-            {/* Mobile filter button + tabs */}
-            <div className="flex items-center justify-between p-3 lg:px-6">
-              {/* Mobile filter button */}
+
+            {/* Mobile: filter row */}
+            <div className="flex lg:hidden items-center justify-between px-3 pt-3 pb-2">
               <button
                 onClick={() => setMobileFiltersOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 <span className="text-sm font-medium">Filtres</span>
                 {activeFiltersCount > 0 && (
-                  <Badge className="bg-primary text-white text-xs h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                  <span className="bg-primary text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full">
                     {activeFiltersCount}
-                  </Badge>
+                  </span>
                 )}
               </button>
+              <span className="text-xs text-gray-400">
+                <span className="font-semibold text-gray-700">{creators.length}</span> créateur{creators.length !== 1 ? 's' : ''}
+              </span>
+            </div>
 
+            {/* Tabs row (mobile: full width below filter row) */}
+            <div className="flex items-center justify-between px-3 pb-3 lg:px-6 lg:py-0 lg:h-14">
               {/* View tabs */}
-              <div className="flex items-center gap-1 mx-auto lg:mx-0">
-                <button
-                  onClick={() => setActiveTab("creators")}
-                  className={`py-2 px-4 rounded-full text-sm font-semibold transition-all ${
-                    activeTab === "creators"
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  data-testid="tab-creators"
-                >
-                  <User className="w-4 h-4 inline mr-1.5" />
-                  Créateurs
-                </button>
-                <button
-                  onClick={() => setActiveTab("videos")}
-                  className={`py-2 px-4 rounded-full text-sm font-semibold transition-all ${
-                    activeTab === "videos"
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  data-testid="tab-videos"
-                >
-                  <Video className="w-4 h-4 inline mr-1.5" />
-                  Vidéos
-                </button>
-                <button
-                  onClick={() => setActiveTab("map")}
-                  className={`py-2 px-4 rounded-full text-sm font-semibold transition-all ${
-                    activeTab === "map"
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  data-testid="tab-map"
-                >
-                  <Map className="w-4 h-4 inline mr-1.5" />
-                  Carte
-                </button>
+              <div className="flex items-center gap-1 w-full lg:w-auto">
+                {[
+                  { key: "creators", label: "Créateurs", icon: User, testId: "tab-creators" },
+                  { key: "videos",   label: "Vidéos",    icon: Video, testId: "tab-videos" },
+                  { key: "map",      label: "Carte",     icon: Map,   testId: "tab-map" },
+                ].map(({ key, label, icon: Icon, testId }) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    data-testid={testId}
+                    className={`flex-1 lg:flex-none flex items-center justify-center gap-1.5 py-2 lg:px-4 rounded-full text-sm font-semibold transition-all ${
+                      activeTab === key
+                        ? "bg-primary text-white shadow-md shadow-primary/30"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
-
-              {/* Desktop: Results count */}
-              <div className="hidden lg:block text-sm text-gray-500">
+              {/* Desktop: results count */}
+              <div className="hidden lg:block text-sm text-gray-500 ml-4 whitespace-nowrap">
                 <span className="font-semibold text-gray-900">{creators.length}</span> résultat{creators.length !== 1 ? 's' : ''}
               </div>
             </div>
@@ -788,17 +776,17 @@ const BrowseCreators = ({ user }) => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               {creator.available && (
-                                <Badge className="bg-green-100 text-green-700 text-xs flex-shrink-0">Disponible</Badge>
+                                <Badge className="bg-green-100 text-green-700 text-xs">Disponible</Badge>
                               )}
                               {creator.content_types?.slice(0, 2).map(type => (
-                                <Badge key={type} variant="outline" className="text-xs border-gray-200 flex-shrink-0">
+                                <Badge key={type} variant="outline" className="text-xs border-gray-200">
                                   {type}
                                 </Badge>
                               ))}
                               {creator.portfolio_videos?.length > 0 && (
-                                <Badge variant="outline" className="text-xs border-gray-200 flex-shrink-0">
+                                <Badge variant="outline" className="text-xs border-gray-200">
                                   <Video className="w-3 h-3 mr-1" />
                                   {creator.portfolio_videos.length}
                                 </Badge>
