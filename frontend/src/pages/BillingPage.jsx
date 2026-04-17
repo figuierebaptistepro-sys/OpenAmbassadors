@@ -219,7 +219,7 @@ const BillingPage = ({ user }) => {
                 </div>
               </div>
               <CardContent className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Statut</p>
                     <Badge className="bg-green-100 text-green-700">Actif</Badge>
@@ -227,12 +227,6 @@ const BillingPage = ({ user }) => {
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Renouvellement</p>
                     <p className="font-medium text-gray-900 text-sm">{renewalLabel}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-xs mb-1">Montant</p>
-                    <p className="font-heading text-xl font-bold text-gray-900">
-                      {currentPack?.price || 0}€<span className="text-gray-500 text-xs font-normal">/mois</span>
-                    </p>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
@@ -273,8 +267,7 @@ const BillingPage = ({ user }) => {
                           <h4 className="font-heading font-bold text-gray-900 text-sm">{pack.name}</h4>
                         </div>
                         <div className="text-center mb-4">
-                          <span className="font-heading text-2xl font-bold text-gray-900">{pack.price}€</span>
-                          <span className="text-gray-500 text-xs">/mois</span>
+                          <span className="text-sm font-medium text-gray-400">Sur devis</span>
                         </div>
                         <ul className="space-y-2 mb-4">
                           {benefits.map((b, i) => (

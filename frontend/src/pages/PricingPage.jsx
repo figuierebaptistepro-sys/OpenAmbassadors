@@ -234,12 +234,9 @@ const PricingPage = ({ user, onUserUpdate }) => {
                     <h3 className="text-xl font-bold text-gray-900 mb-1">{pkg.name}</h3>
                     <p className="text-sm text-gray-500 mb-4">{pkg.description}</p>
                     <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl font-bold text-gray-900">
-                        {pkg.price === 0 ? "Gratuit" : `${pkg.price}€`}
+                      <span className="text-lg font-semibold text-gray-500">
+                        {pkg.price === 0 ? "Gratuit" : "Sur devis"}
                       </span>
-                      {pkg.period && (
-                        <span className="text-gray-500">{pkg.period}</span>
-                      )}
                     </div>
                   </div>
 

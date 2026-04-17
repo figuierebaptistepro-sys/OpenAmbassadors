@@ -12,7 +12,7 @@ const FAQ_DATA = [
     { q: "Comment ajouter des vidéos ?", a: "Dans votre dashboard, cliquez sur 'Ajouter vidéo' et collez le lien de votre vidéo TikTok, Instagram ou YouTube." },
   ]},
   { category: "Premium", questions: [
-    { q: "Qu'est-ce que l'abonnement Premium ?", a: "L'abonnement Premium (19.99€/mois) vous donne accès aux missions exclusives, formations avancées et une visibilité boostée." },
+    { q: "Qu'est-ce que l'abonnement Premium ?", a: "L'abonnement Premium vous donne accès aux missions exclusives, formations avancées et une visibilité boostée. Contactez-nous pour en savoir plus." },
     { q: "Comment annuler mon abonnement ?", a: "Allez dans Paramètres > Abonnement et cliquez sur 'Annuler'. Votre accès reste actif jusqu'à la fin de la période." },
   ]},
   { category: "Missions", questions: [

@@ -140,7 +140,7 @@ const Sidebar = ({ userType, isPremium, onLogout }) => {
               }}
               className="block w-full py-2 px-4 bg-primary hover:bg-primary-hover text-white text-center rounded-lg font-medium text-sm transition-colors shadow-md shadow-primary/20"
             >
-              49€/mois
+              Passer Premium ✨
             </button>
           </div>
         </div>

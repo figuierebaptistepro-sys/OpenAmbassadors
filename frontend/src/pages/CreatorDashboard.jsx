@@ -956,7 +956,7 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                   <h4 className="font-heading font-bold text-sm mb-1">Passer Premium</h4>
                   <p className="text-white/80 text-xs mb-3">Boostez votre visibilité et accédez aux missions exclusives</p>
                   <Button onClick={() => setPremiumDialogOpen(true)} size="sm" className="w-full bg-white text-primary hover:bg-gray-100 text-xs">
-                    19.99€/mois
+                    Passer Premium ✨
                   </Button>
                 </CardContent>
               </Card>

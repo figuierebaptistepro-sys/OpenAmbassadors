@@ -213,7 +213,7 @@ const CreatorCardManagePage = ({ user, onUserUpdate }) => {
                     className="bg-gradient-to-r from-primary to-pink-500 hover:from-primary/90 hover:to-pink-500/90 shadow-lg shadow-primary/20"
                     data-testid="upgrade-premium-btn"
                   >
-                    Upgrade - 49€/mois
+                    Upgrade Premium ✨
                   </Button>
                 </div>
               </CardContent>
