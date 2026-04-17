@@ -338,22 +338,30 @@ const CreatorProfileV2 = ({ currentUser }) => {
       ═══════════════════════════════════════════════════════════ */}
       <div ref={heroRef} className="relative">
         {/* Bannière */}
-        <div className="h-48 sm:h-56 lg:h-64 bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 relative overflow-hidden">
+        <div className="h-48 sm:h-56 lg:h-64 relative overflow-hidden">
           {creator.banner ? (
-            <img 
-              src={getImageUrl(creator.banner)} 
-              alt="" 
+            <img
+              src={getImageUrl(creator.banner)}
+              alt=""
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0">
-              <div className="absolute top-10 left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-10 right-20 w-60 h-60 bg-pink-200/20 rounded-full blur-3xl" />
-              <div className="absolute top-20 right-40 w-32 h-32 bg-orange-200/20 rounded-full blur-2xl" />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 55%, #880e4f 100%)" }}>
+              {/* Blobs décoratifs */}
+              <div className="absolute -top-8 -right-8 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute top-6 left-1/3 w-32 h-32 rounded-full bg-white/8 blur-2xl" />
+              <div className="absolute -bottom-6 left-12 w-40 h-40 rounded-full bg-pink-300/20 blur-3xl" />
+              {/* Grille de points */}
+              <div className="absolute inset-0 opacity-10"
+                style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+              {/* Watermark */}
+              <div className="absolute bottom-4 left-5">
+                <span className="text-white/30 text-xs font-bold tracking-widest uppercase select-none">OpenAmbassadors</span>
+              </div>
             </div>
           )}
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+          {/* Overlay fade vers le bas */}
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent" />
         </div>
 
         {/* Profil Card */}
