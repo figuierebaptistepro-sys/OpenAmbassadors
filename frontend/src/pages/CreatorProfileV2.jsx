@@ -353,10 +353,6 @@ const CreatorProfileV2 = ({ currentUser }) => {
               <div className="absolute -bottom-10 left-0 w-56 h-56 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
               {/* Ligne décorative horizontale */}
               <div className="absolute bottom-8 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, #FF2E6330, transparent)" }} />
-              {/* Watermark minimaliste */}
-              <div className="absolute bottom-3 right-5">
-                <span className="text-[#FF2E63]/20 text-[11px] font-bold tracking-[0.2em] uppercase select-none">OpenAmbassadors</span>
-              </div>
             </div>
           )}
           {/* Fondu bas vers le blanc de la card */}

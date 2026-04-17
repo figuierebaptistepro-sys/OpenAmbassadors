@@ -493,10 +493,6 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
                       {/* Grand cercle primaire flou */}
                       <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
                       <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
-                      {/* Watermark */}
-                      <div className="absolute bottom-2 right-3">
-                        <span className="text-[#FF2E63]/20 text-[10px] font-bold tracking-[0.2em] uppercase select-none">OpenAmbassadors</span>
-                      </div>
                     </div>
                   )}
 
