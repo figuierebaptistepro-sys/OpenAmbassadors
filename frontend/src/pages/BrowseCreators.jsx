@@ -300,7 +300,10 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
   const hasVideos = videos.length > 0;
   const hasBrands = creator.brands_worked?.length > 0;
 
-  const gridCols = videos.length === 1 ? 'grid-cols-1' : videos.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
+  // 1 vidéo → on force 2 colonnes avec un placeholder à droite pour garder une hauteur raisonnable
+  const gridCols = videos.length >= 3 ? 'grid-cols-3' : 'grid-cols-2';
+  // Toujours afficher 2 slots min (placeholder gris si manquant)
+  const slots = videos.length === 0 ? [] : videos.length === 1 ? [videos[0], null] : videos;
 
   return (
     <motion.div
@@ -309,18 +312,35 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
       transition={{ delay: index * 0.04 }}
     >
       <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 group">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
 
           {/* ── Bannière vidéos ── */}
           <div className="relative">
             {hasVideos ? (
-              <div className={`grid gap-0.5 ${gridCols}`}>
-                {videos.map((v, i) => (
-                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
-                ))}
+              <div className={`grid gap-0.5 ${gridCols} max-h-48 overflow-hidden`}>
+                {slots.map((v, i) =>
+                  v ? (
+                    <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
+                  ) : (
+                    <div key={i} className="aspect-[9/16] bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center">
+                      <Video className="w-6 h-6 text-gray-300" />
+                    </div>
+                  )
+                )}
               </div>
             ) : (
-              <div className="h-36 bg-gradient-to-br from-primary/10 via-pink-50 to-rose-100" />
+              /* Pas de vidéo — placeholder propre avec avatar centré */
+              <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white shadow-md border border-gray-200">
+                  {creator.picture ? (
+                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-pink-100">
+                      <span className="text-2xl font-bold text-primary">{(creator.name || "C")[0]}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Badge commandes */}
@@ -330,7 +350,7 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
               </div>
             )}
 
-            {/* Disponible badge */}
+            {/* Badge disponible */}
             {creator.available && (
               <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
@@ -338,53 +358,55 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
               </div>
             )}
 
-            {/* Avatar chevauchant */}
-            <div className="absolute -bottom-6 left-4 z-10">
-              <div className="w-14 h-14 rounded-xl border-[3px] border-white shadow-lg overflow-hidden bg-gray-100">
-                {creator.picture ? (
-                  <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
-                    <span className="text-lg font-bold text-white">{(creator.name || "C")[0]}</span>
-                  </div>
-                )}
+            {/* Avatar chevauchant — seulement si la bannière est vidéo */}
+            {hasVideos && (
+              <div className="absolute -bottom-5 left-4 z-10">
+                <div className="w-12 h-12 rounded-xl border-[3px] border-white shadow-md overflow-hidden bg-gray-100">
+                  {creator.picture ? (
+                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
+                      <span className="text-base font-bold text-white">{(creator.name || "C")[0]}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* ── Logos marques ── */}
           {hasBrands ? (
-            <div className="px-4 pt-8 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none">
+            <div className={`px-4 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none ${hasVideos ? 'pt-7' : 'pt-3'}`}>
               {creator.brands_worked.slice(0, 5).map((brand, i) => (
                 <span key={i} className="text-[10px] font-bold text-gray-400 whitespace-nowrap uppercase tracking-widest">{brand}</span>
               ))}
             </div>
           ) : (
-            <div className="pt-8" />
+            <div className={hasVideos ? 'pt-7' : 'pt-3'} />
           )}
 
           {/* ── Infos ── */}
           <div className="px-4 pb-4">
             {/* Nom + rating */}
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-2 min-w-0">
-                <h3 className="font-bold text-gray-900 truncate">{creator.name || "Créateur"}</h3>
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h3 className="font-bold text-gray-900 truncate text-sm">{creator.name || "Créateur"}</h3>
                 {creator.is_premium && (
-                  <div className="w-4.5 h-4.5 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
+                  <div className="w-4 h-4 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white" />
                   </div>
                 )}
               </div>
               {creator.rating > 0 ? (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-bold text-gray-900">{creator.rating.toFixed(1)}</span>
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs font-bold text-gray-900">{creator.rating.toFixed(1)}</span>
                   {creator.reviews_count > 0 && (
-                    <span className="text-xs text-gray-400">({creator.reviews_count})</span>
+                    <span className="text-[11px] text-gray-400">({creator.reviews_count})</span>
                   )}
                 </div>
               ) : (
-                <span className="text-xs text-primary font-semibold">Nouveau</span>
+                <span className="text-[11px] text-gray-400 font-medium flex-shrink-0">Nouveau</span>
               )}
             </div>
 
@@ -392,36 +414,34 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
             <div className="space-y-1.5">
               {creator.city && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                  <span>{creator.city}</span>
+                  <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                  <span className="truncate">{creator.city}</span>
                 </div>
               )}
               {creator.languages?.length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                  <span>{creator.languages.join(", ")}</span>
+                  <Globe className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                  <span className="truncate">{creator.languages.join(", ")}</span>
                 </div>
               )}
               {creator.equipment?.length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Camera className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                  <Camera className="w-3 h-3 flex-shrink-0 text-gray-400" />
                   <span className="truncate">{creator.equipment.slice(0, 2).join(", ")}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-gray-500">
-                  <Clock className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                  <span>Temps de réponse moyen</span>
-                </div>
-                <span className="font-bold text-gray-900">{creator.response_time || "< 24h"}</span>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Clock className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                <span className="flex-1">Réponse</span>
+                <span className="font-semibold text-gray-700">{creator.response_time || "moins de 24h"}</span>
               </div>
             </div>
 
-            {/* Types de contenu */}
+            {/* Tags contenu + niches */}
             {creator.content_types?.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-100">
                 {creator.content_types.slice(0, 3).map(type => (
-                  <span key={type} className="px-2 py-0.5 bg-primary/8 text-primary text-[11px] font-medium rounded-full">{type}</span>
+                  <span key={type} className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-medium rounded-full">{type}</span>
                 ))}
                 {creator.niches?.slice(0, 2).map(n => {
                   const niche = NICHES.find(x => x.id === n);
