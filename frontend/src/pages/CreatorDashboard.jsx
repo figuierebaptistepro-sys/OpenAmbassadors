@@ -484,21 +484,41 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-0 shadow-sm overflow-hidden">
                 {/* Banner with edit button */}
-                <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 relative">
-                  {user?.banner && <img src={getImageUrl(user.banner)} alt="" className="w-full h-full object-cover" />}
-                  {/* Banner edit button - always visible */}
+                <div className="h-28 sm:h-36 relative overflow-hidden group/banner">
+                  {user?.banner ? (
+                    <img src={getImageUrl(user.banner)} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    /* Default branded banner */
+                    <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #FF2E63 0%, #c2185b 50%, #880e4f 100%)" }}>
+                      {/* Decorative blobs */}
+                      <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+                      <div className="absolute top-2 left-1/3 w-20 h-20 rounded-full bg-white/8 blur-xl" />
+                      <div className="absolute -bottom-4 left-8 w-24 h-24 rounded-full bg-pink-300/20 blur-2xl" />
+                      {/* Subtle dot grid */}
+                      <div className="absolute inset-0 opacity-10"
+                        style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+                      {/* Brand text watermark */}
+                      <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                        <span className="text-white/40 text-xs font-semibold tracking-widest uppercase select-none">OpenAmbassadors</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit overlay on hover */}
                   <button
                     onClick={() => bannerInputRef.current?.click()}
                     disabled={uploadingBanner}
-                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow-md transition-colors"
+                    className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/banner:bg-black/30 transition-all cursor-pointer"
                     data-testid="edit-banner-btn"
-                    title="Modifier la bannière"
                   >
-                    {uploadingBanner ? (
-                      <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-                    ) : (
-                      <Pencil className="w-4 h-4 text-gray-600" />
-                    )}
+                    <span className="flex items-center gap-2 bg-white/90 text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full shadow-md opacity-0 group-hover/banner:opacity-100 transition-all translate-y-1 group-hover/banner:translate-y-0">
+                      {uploadingBanner ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Pencil className="w-3.5 h-3.5" />
+                      )}
+                      {uploadingBanner ? "Upload..." : "Changer la bannière"}
+                    </span>
                   </button>
                   <input
                     ref={bannerInputRef}
@@ -1250,9 +1270,6 @@ const handleSubscribe = (packageId = "creator_premium_monthly") => {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <div className="text-center mb-4">
-              <p className="font-heading text-3xl font-bold text-gray-900">19.99€<span className="text-sm font-normal text-gray-500">/mois</span></p>
-            </div>
             <ul className="space-y-2 mb-4">
               {["Visibilité boostée", "Missions exclusives", "Formations premium", "Badge vérifié"].map((item, i) => (
                 <li key={i} className="flex items-center gap-2 text-sm">
