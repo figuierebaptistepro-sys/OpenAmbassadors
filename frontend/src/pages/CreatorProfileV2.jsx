@@ -360,8 +360,8 @@ const CreatorProfileV2 = ({ currentUser }) => {
               </div>
             </div>
           )}
-          {/* Overlay fade vers le bas */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent" />
+          {/* Overlay fade subtil tout en bas uniquement */}
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/60 to-transparent" />
         </div>
 
         {/* Profil Card */}
