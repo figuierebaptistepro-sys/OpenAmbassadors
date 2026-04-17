@@ -12,7 +12,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
-import { WORKFLOW_STATUSES, FORMULAS, FORMULA_MAP, getDeadlineInfo } from "../lib/agency";
+import { WORKFLOW_STATUSES, FORMULAS, FORMULA_MAP, STATUS_MAP, getDeadlineInfo } from "../lib/agency";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -228,7 +228,7 @@ export default function AgencyCampaignPage({ user }) {
             {packageMonths.map(m => {
               const isCurrent = m.campaign_id === id;
               const isNotStarted = m.status === "non_commence";
-              const st = STATUSES.find(s => s.key === m.status);
+              const st = STATUS_MAP[m.status];
               return (
                 <button
                   key={m.campaign_id}
@@ -237,7 +237,7 @@ export default function AgencyCampaignPage({ user }) {
                     ${isCurrent ? "bg-[#FF2E63] text-white border-[#FF2E63]" : isNotStarted ? "bg-gray-50 text-gray-400 border-gray-200 cursor-pointer hover:border-gray-300" : "bg-white text-gray-600 border-gray-200 cursor-pointer hover:border-gray-300"}`}
                 >
                   Mois {m.order}
-                  {isNotStarted ? <span className="opacity-60">· À venir</span> : <span className={`w-1.5 h-1.5 rounded-full ${st?.ring?.replace("ring-","bg-") || "bg-gray-400"}`} />}
+                  {isNotStarted ? <span className="opacity-60">· À venir</span> : <span className={`w-1.5 h-1.5 rounded-full ${st?.dot || "bg-gray-400"}`} />}
                 </button>
               );
             })}
@@ -428,13 +428,6 @@ export default function AgencyCampaignPage({ user }) {
         )}
       </div>
 
-      {/* Preview modal */}
-      {previewVideo && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setPreviewVideo(null)}>
-          <video src={previewVideo} controls autoPlay className="max-h-[90vh] max-w-full rounded-xl" onClick={e => e.stopPropagation()} />
-          <button onClick={() => setPreviewVideo(null)} className="absolute top-4 right-4 text-white"><X className="w-6 h-6" /></button>
-        </div>
-      )}
     </AppLayout>
   );
 }
