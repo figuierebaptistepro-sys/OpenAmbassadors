@@ -239,7 +239,7 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   );
 };
 
-/* ── Vignette vidéo dans la bannière de la card créateur ── */
+/* ── Vignette vidéo dans la bannière — remplit toute la hauteur disponible ── */
 const VideoBannerItem = ({ video, getImageUrl }) => {
   const [loaded, setLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -249,10 +249,7 @@ const VideoBannerItem = ({ video, getImageUrl }) => {
     video.url.includes('.webm') || video.type === 'uploaded'
   );
 
-  const handleEnter = () => {
-    setHovered(true);
-    videoRef.current?.play().catch(() => {});
-  };
+  const handleEnter = () => { setHovered(true); videoRef.current?.play().catch(() => {}); };
   const handleLeave = () => {
     setHovered(false);
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; }
@@ -260,7 +257,7 @@ const VideoBannerItem = ({ video, getImageUrl }) => {
 
   return (
     <div
-      className="relative aspect-[9/16] bg-gray-900 overflow-hidden"
+      className="relative h-full w-full bg-gray-900 overflow-hidden"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
@@ -294,16 +291,16 @@ const VideoBannerItem = ({ video, getImageUrl }) => {
   );
 };
 
-/* ── Carte créateur redesignée ── */
+/* ── Carte créateur — hauteur uniforme ── */
+const DEFAULT_BANNER_STYLE = {
+  background: "linear-gradient(160deg, #fff5f7 0%, #ffe0e9 40%, #ffd6e7 70%, #fce4ec 100%)"
+};
+
 const CreatorCard = ({ creator, index, getImageUrl }) => {
   const videos = creator.portfolio_videos?.slice(0, 3) || [];
   const hasVideos = videos.length > 0;
   const hasBrands = creator.brands_worked?.length > 0;
-
-  // 1 vidéo → on force 2 colonnes avec un placeholder à droite pour garder une hauteur raisonnable
-  const gridCols = videos.length >= 3 ? 'grid-cols-3' : 'grid-cols-2';
-  // Toujours afficher 2 slots min (placeholder gris si manquant)
-  const slots = videos.length === 0 ? [] : videos.length === 1 ? [videos[0], null] : videos;
+  const gridCols = videos.length >= 3 ? 'grid-cols-3' : videos.length === 2 ? 'grid-cols-2' : 'grid-cols-1';
 
   return (
     <motion.div
@@ -314,75 +311,64 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
       <Link to={`/creators/${creator.user_id}`} data-testid={`creator-card-${creator.user_id}`}>
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
 
-          {/* ── Bannière vidéos ── */}
-          <div className="relative">
+          {/* ── Bannière — hauteur fixe h-44 pour toutes les cards ── */}
+          <div className="relative h-44 overflow-hidden">
+
             {hasVideos ? (
-              <div className={`grid gap-0.5 ${gridCols} max-h-48 overflow-hidden`}>
-                {slots.map((v, i) =>
-                  v ? (
-                    <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
-                  ) : (
-                    <div key={i} className="aspect-[9/16] bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center">
-                      <Video className="w-6 h-6 text-gray-300" />
-                    </div>
-                  )
-                )}
+              /* Vidéos en grille qui remplissent exactement h-44 */
+              <div className={`absolute inset-0 grid gap-0.5 ${gridCols}`}>
+                {videos.map((v, i) => (
+                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
+                ))}
               </div>
             ) : (
-              /* Pas de vidéo — placeholder propre avec avatar centré */
-              <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white shadow-md border border-gray-200">
-                  {creator.picture ? (
-                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-pink-100">
-                      <span className="text-2xl font-bold text-primary">{(creator.name || "C")[0]}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Badge commandes */}
-            {creator.completed_projects > 0 && (
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                {creator.completed_projects} commandes
+              /* Bannière par défaut de l'app (blush gradient) */
+              <div className="absolute inset-0" style={DEFAULT_BANNER_STYLE}>
+                <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(circle, #FF2E6322 0%, transparent 70%)" }} />
+                <div className="absolute -bottom-6 left-0 w-36 h-36 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(circle, #c2185b18 0%, transparent 70%)" }} />
               </div>
             )}
 
             {/* Badge disponible */}
             {creator.available && (
-              <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <div className="absolute top-2 left-2 z-10 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 Disponible
               </div>
             )}
 
-            {/* Avatar chevauchant — seulement si la bannière est vidéo */}
-            {hasVideos && (
-              <div className="absolute -bottom-5 left-4 z-10">
-                <div className="w-12 h-12 rounded-xl border-[3px] border-white shadow-md overflow-hidden bg-gray-100">
-                  {creator.picture ? (
-                    <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
-                      <span className="text-base font-bold text-white">{(creator.name || "C")[0]}</span>
-                    </div>
-                  )}
-                </div>
+            {/* Badge commandes */}
+            {creator.completed_projects > 0 && (
+              <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                {creator.completed_projects} commandes
               </div>
             )}
+
+            {/* Avatar chevauchant — identique pour toutes les cards */}
+            <div className="absolute -bottom-5 left-4 z-10">
+              <div className="w-12 h-12 rounded-xl border-[3px] border-white shadow-md overflow-hidden bg-gray-100">
+                {creator.picture ? (
+                  <img src={getImageUrl(creator.picture)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-pink-400">
+                    <span className="text-base font-bold text-white">{(creator.name || "C")[0]}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* ── Logos marques ── */}
+          {/* ── Logos marques (si renseignés) ── */}
           {hasBrands ? (
-            <div className={`px-4 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none ${hasVideos ? 'pt-7' : 'pt-3'}`}>
+            <div className="px-4 pt-7 pb-2 flex items-center gap-3 overflow-x-auto scrollbar-none">
               {creator.brands_worked.slice(0, 5).map((brand, i) => (
                 <span key={i} className="text-[10px] font-bold text-gray-400 whitespace-nowrap uppercase tracking-widest">{brand}</span>
               ))}
             </div>
           ) : (
-            <div className={hasVideos ? 'pt-7' : 'pt-3'} />
+            <div className="pt-7" />
           )}
 
           {/* ── Infos ── */}
@@ -418,12 +404,6 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
                   <span className="truncate">{creator.city}</span>
                 </div>
               )}
-              {creator.languages?.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Globe className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                  <span className="truncate">{creator.languages.join(", ")}</span>
-                </div>
-              )}
               {creator.equipment?.length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Camera className="w-3 h-3 flex-shrink-0 text-gray-400" />
@@ -437,7 +417,7 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
               </div>
             </div>
 
-            {/* Tags contenu + niches */}
+            {/* Tags */}
             {creator.content_types?.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-100">
                 {creator.content_types.slice(0, 3).map(type => (
