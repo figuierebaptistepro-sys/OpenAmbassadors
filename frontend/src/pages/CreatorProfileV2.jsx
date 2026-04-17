@@ -663,31 +663,6 @@ const CreatorProfileV2 = ({ currentUser }) => {
           )}
         </section>
 
-        {/* GARANTIES */}
-        <section className="pt-8 border-t border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-gray-400" />
-            Garanties OpenAmbassadors
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-              <Shield className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700">Paiement sécurisé</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-              <CheckCircle className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Transaction protégée</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
-              <Users className="w-5 h-5 text-purple-600" />
-              <span className="text-sm font-medium text-gray-700">Support dédié</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
-              <FileText className="w-5 h-5 text-amber-600" />
-              <span className="text-sm font-medium text-gray-700">Gestion des droits</span>
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
