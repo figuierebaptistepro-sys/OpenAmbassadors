@@ -274,7 +274,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 onClick={() => handleNavClick("/dashboard")}
                 className="w-full py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-xs"
               >
-                19.99€/mois
+                Passer Premium ✨
               </button>
             </div>
           </div>
@@ -365,7 +365,7 @@ const AppLayout = ({ children, user, currentPlan }) => {
                 onClick={() => navigate("/dashboard", { state: { openPremium: true } })}
                 className="w-full py-2 px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm shadow-md shadow-primary/20"
               >
-                19.99€/mois
+                Passer Premium ✨
               </button>
             </div>
           </div>

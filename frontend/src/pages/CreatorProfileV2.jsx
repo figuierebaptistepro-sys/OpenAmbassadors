@@ -57,6 +57,72 @@ const DIFFUSION_TYPES = [
   { value: "ads-illimite", label: "Ads - Illimité" },
 ];
 
+// Video card with skeleton loading for profile page
+const VideoCard = ({ video, index, getImageUrl, onSelect }) => {
+  const [thumbLoaded, setThumbLoaded] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05 * index }}
+      className="group relative aspect-[9/16] bg-gray-200 rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+      onClick={() => onSelect(video)}
+      data-testid={`video-${index}`}
+    >
+      {/* Skeleton */}
+      {!thumbLoaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      )}
+
+      {video.thumbnail ? (
+        <img
+          src={getImageUrl(video.thumbnail)}
+          alt=""
+          className={`w-full h-full object-cover transition-opacity duration-300 ${thumbLoaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={() => setThumbLoaded(true)}
+        />
+      ) : (
+        <video
+          src={`${getImageUrl(video.url)}#t=0.5`}
+          className="w-full h-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          onLoadedData={() => setThumbLoaded(true)}
+          onMouseEnter={(e) => e.target.play().catch(() => {})}
+          onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0.5; }}
+        />
+      )}
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+
+      {/* Play button */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+          <Play className="w-6 h-6 text-white fill-white ml-1" />
+        </div>
+      </div>
+
+      {/* Badge type */}
+      {video.content_type && (
+        <span className="absolute top-3 left-3 text-xs font-semibold bg-white text-gray-800 px-2.5 py-1 rounded-lg shadow-sm">
+          {video.content_type}
+        </span>
+      )}
+
+      {/* Vues */}
+      {video.views && (
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white text-xs font-medium">
+          <Eye className="w-3.5 h-3.5" />
+          {video.views > 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views}
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 const CreatorProfileV2 = ({ currentUser }) => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -505,54 +571,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
           {hasVideos ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {creator.portfolio_videos.map((video, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * i }}
-                  className="group relative aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                  onClick={() => setSelectedVideo(video)}
-                  data-testid={`video-${i}`}
-                >
-                  {video.thumbnail ? (
-                    <img src={getImageUrl(video.thumbnail)} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <video 
-                      src={`${getImageUrl(video.url)}#t=0.5`} 
-                      className="w-full h-full object-cover" 
-                      muted 
-                      playsInline 
-                      preload="metadata"
-                      onMouseEnter={(e) => e.target.play().catch(() => {})}
-                      onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0.5; }}
-                    />
-                  )}
-                  
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                  
-                  {/* Play button */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
-                      <Play className="w-6 h-6 text-white fill-white ml-1" />
-                    </div>
-                  </div>
-
-                  {/* Badge type */}
-                  {video.content_type && (
-                    <span className="absolute top-3 left-3 text-xs font-semibold bg-white text-gray-800 px-2.5 py-1 rounded-lg shadow-sm">
-                      {video.content_type}
-                    </span>
-                  )}
-
-                  {/* Vues */}
-                  {video.views && (
-                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white text-xs font-medium">
-                      <Eye className="w-3.5 h-3.5" />
-                      {video.views > 1000 ? `${(video.views/1000).toFixed(1)}K` : video.views}
-                    </div>
-                  )}
-                </motion.div>
+                <VideoCard key={i} video={video} index={i} getImageUrl={getImageUrl} onSelect={setSelectedVideo} />
               ))}
             </div>
           ) : (
@@ -761,7 +780,7 @@ const CreatorProfileV2 = ({ currentUser }) => {
 
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Brief du projet *</Label>
-              <Textarea placeholder="Décrivez votre projet..." value={collabForm.brief} onChange={(e) => setCollabForm(p => ({ ...p, brief: e.target.value }))} rows={3} className="rounded-xl border-gray-200 resize-none" />
+              <Textarea placeholder="Décrivez votre projet..." value={collabForm.brief} onChange={(e) => setCollabForm(p => ({ ...p, brief: e.target.value }))} rows={3} className={`rounded-xl resize-none ${!collabForm.brief.trim() ? 'border-red-200' : 'border-gray-200'}`} />
             </div>
 
             <div>
@@ -796,9 +815,17 @@ const CreatorProfileV2 = ({ currentUser }) => {
       <AnimatePresence>
         {selectedVideo && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
-            <button onClick={() => setSelectedVideo(null)} className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20"><X className="w-6 h-6 text-white" /></button>
-            <div className="w-full max-w-sm aspect-[9/16]" onClick={(e) => e.stopPropagation()}>
-              <video src={getImageUrl(selectedVideo.url)} className="w-full h-full object-contain rounded-xl" controls autoPlay playsInline />
+            <button onClick={() => setSelectedVideo(null)} className="absolute top-4 right-4 z-10 p-2 bg-white/10 rounded-full hover:bg-white/20"><X className="w-6 h-6 text-white" /></button>
+            {/* Video fills screen proportionally — works for both portrait & landscape */}
+            <div className="relative flex items-center justify-center" style={{ maxHeight: "90vh", maxWidth: "90vw" }} onClick={(e) => e.stopPropagation()}>
+              <video
+                src={getImageUrl(selectedVideo.url)}
+                className="rounded-xl"
+                style={{ maxHeight: "90vh", maxWidth: "90vw", objectFit: "contain" }}
+                controls
+                autoPlay
+                playsInline
+              />
             </div>
           </motion.div>
         )}

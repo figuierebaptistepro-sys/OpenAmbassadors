@@ -122,6 +122,21 @@ const BillingPage = ({ user }) => {
   };
 
   const currentPack = packs.find(p => p.pack_id === stats?.selected_pack);
+
+  // Renewal date: from API if available, otherwise derive from subscription_start + 30d
+  const renewalLabel = (() => {
+    const raw = stats?.subscription_renewal || stats?.subscription_end;
+    if (raw) {
+      return new Date(raw).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    }
+    if (stats?.subscription_start) {
+      const d = new Date(stats.subscription_start);
+      d.setDate(d.getDate() + 30);
+      return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    }
+    return currentPack ? "—" : "N/A";
+  })();
+
   const invoices = [
     { id: "INV-001", date: "15 Jan 2025", amount: 299, plan: "Local Impact" },
     { id: "INV-002", date: "15 Déc 2024", amount: 299, plan: "Local Impact" },
@@ -211,7 +226,7 @@ const BillingPage = ({ user }) => {
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Renouvellement</p>
-                    <p className="font-medium text-gray-900 text-sm">15 Fév 2025</p>
+                    <p className="font-medium text-gray-900 text-sm">{renewalLabel}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Montant</p>

@@ -268,10 +268,11 @@ const BusinessDashboard = ({ user, onUserUpdate }) => {
             <Users className="w-4 h-4 mr-1.5" />
             <span className="hidden xs:inline">Trouver </span>créateur
           </Button>
-          <Button 
+          <Button
             onClick={handleCreateProject}
             size="sm"
-            className={`shadow-sm text-xs sm:text-sm ${canCreateProject ? "bg-primary hover:bg-primary-hover" : "bg-gray-300 cursor-not-allowed"}`}
+            title={!canCreateProject ? "Complétez d'abord votre profil entreprise (logo, secteur, description)" : undefined}
+            className={`shadow-sm text-xs sm:text-sm ${canCreateProject ? "bg-primary hover:bg-primary-hover" : "bg-gray-300 cursor-not-allowed opacity-70"}`}
             data-testid="new-project-btn"
           >
             <Plus className="w-4 h-4 mr-1.5" />
