@@ -302,7 +302,7 @@ const VideoBannerItem = ({ video, getImageUrl, eager = false }) => {
         <div className="absolute inset-0 bg-gray-800 animate-pulse" />
       )}
 
-      {/* Thumbnail — src injecté seulement si inView */}
+      {/* Thumbnail JPEG — chargé si inView */}
       {hasThumbnail && inView && (
         <img
           src={getImageUrl(video.thumbnail)}
@@ -314,14 +314,24 @@ const VideoBannerItem = ({ video, getImageUrl, eager = false }) => {
         />
       )}
 
-      {/* Pas de thumbnail : placeholder sombre + icône play */}
-      {!hasThumbnail && !hovered && (
+      {/* Pas de thumbnail JPEG :
+          - eager (cartes visibles) → on charge preload=metadata + #t=1 pour avoir la frame
+          - autres → placeholder sombre (pas de chargement réseau) */}
+      {!hasThumbnail && isVideo && eager && !hovered && (
+        <video
+          src={`${getImageUrl(video.url)}#t=1`}
+          muted playsInline preload="metadata"
+          className="absolute inset-0 w-full h-full object-cover"
+          onLoadedData={() => setThumbLoaded(true)}
+        />
+      )}
+      {!hasThumbnail && (!isVideo || !eager) && !hovered && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
           <Play className="w-6 h-6 text-white/40" />
         </div>
       )}
 
-      {/* Vidéo — montée SANS src (preload=none), src injecté au 1er hover */}
+      {/* Vidéo lecture au hover — SANS src (preload=none), src injecté au 1er hover */}
       {isVideo && (
         <video
           ref={videoRef}
