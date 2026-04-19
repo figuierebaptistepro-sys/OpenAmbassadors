@@ -241,16 +241,16 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
 
 /* ── Vignette vidéo dans la bannière ──
    Règles perf :
-   • thumbnail : src mis seulement quand la card entre dans le viewport (IntersectionObserver)
+   • thumbnail : chargé immédiatement si eager=true (cartes visibles au load)
+                 sinon IntersectionObserver avec rootMargin 600px (précharge tôt)
    • video     : élément monté SANS src → src ajouté impérativement au 1er hover
-                 → zéro requête réseau avant interaction
    • preload="none" sur toutes les vidéos
 ──────────────────────────────────────────── */
-const VideoBannerItem = ({ video, getImageUrl }) => {
-  const [inView, setInView]       = useState(false);
+const VideoBannerItem = ({ video, getImageUrl, eager = false }) => {
+  const [inView, setInView]           = useState(eager); // eager = charge immédiatement
   const [thumbLoaded, setThumbLoaded] = useState(false);
-  const [hovered, setHovered]     = useState(false);
-  const [videoReady, setVideoReady] = useState(false); // src a été injecté ?
+  const [hovered, setHovered]         = useState(false);
+  const [videoReady, setVideoReady]   = useState(false);
   const containerRef = useRef(null);
   const videoRef     = useRef(null);
 
@@ -260,17 +260,18 @@ const VideoBannerItem = ({ video, getImageUrl }) => {
   );
   const hasThumbnail = !!video?.thumbnail;
 
-  // ── IntersectionObserver : déclenche le chargement du thumbnail quand visible ──
+  // ── IntersectionObserver — seulement si pas eager ──
   useEffect(() => {
+    if (eager) return; // déjà chargé
     const el = containerRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
-      { rootMargin: "150px" }  // précharge 150px avant d'entrer dans le viewport
+      { rootMargin: "600px" }  // précharge 600px à l'avance → pas d'attente visible
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [eager]);
 
   // ── Hover handlers ──
   const handleEnter = () => {
@@ -342,6 +343,8 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
   const videos = creator.portfolio_videos?.slice(0, 3) || [];
   const hasVideos = videos.length > 0;
   const gridCols = videos.length >= 3 ? 'grid-cols-3' : videos.length === 2 ? 'grid-cols-2' : 'grid-cols-1';
+  // Les 9 premières cartes (3 lignes × 3 col) chargent leurs thumbnails immédiatement
+  const eager = index < 9;
 
   return (
     <motion.div
@@ -358,7 +361,7 @@ const CreatorCard = ({ creator, index, getImageUrl }) => {
             {hasVideos ? (
               <div className={`absolute inset-0 grid gap-0.5 ${gridCols}`}>
                 {videos.map((v, i) => (
-                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} />
+                  <VideoBannerItem key={i} video={v} getImageUrl={getImageUrl} eager={eager} />
                 ))}
               </div>
             ) : (
