@@ -2054,7 +2054,7 @@ async def upload_portfolio_media(
                 seek = min(1.0, duration * 0.1)
                 result = subprocess.run(
                     ["ffmpeg", "-ss", str(seek), "-i", tmp_video, "-vframes", "1",
-                     "-vf", "scale='min(480,iw)':-2", "-q:v", "3", tmp_thumb, "-y"],
+                     "-vf", "scale='min(320,iw)':-2", "-q:v", "8", tmp_thumb, "-y"],
                     capture_output=True, timeout=30
                 )
                 if result.returncode == 0 and os.path.exists(tmp_thumb):
@@ -3022,7 +3022,7 @@ async def upload_campaign_video(campaign_id: str, file: UploadFile = File(...), 
                 seek = min(1.5, duration * 0.1)
                 r = subprocess.run(
                     ["ffmpeg", "-ss", str(seek), "-i", tmp_in, "-vframes", "1",
-                     "-vf", "scale='min(640,iw)':-2", "-q:v", "3", tmp_out, "-y"],
+                     "-vf", "scale='min(480,iw)':-2", "-q:v", "8", tmp_out, "-y"],
                     capture_output=True, timeout=30
                 )
                 if r.returncode == 0 and os.path.exists(tmp_out):
