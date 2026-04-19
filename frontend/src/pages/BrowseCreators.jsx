@@ -239,17 +239,51 @@ const VideoCard = ({ video, index, onClick, getImageUrl }) => {
   );
 };
 
-/* ── Vignette vidéo dans la bannière — remplit toute la hauteur disponible ── */
+/* ── Vignette vidéo dans la bannière ──
+   Règles perf :
+   • thumbnail : src mis seulement quand la card entre dans le viewport (IntersectionObserver)
+   • video     : élément monté SANS src → src ajouté impérativement au 1er hover
+                 → zéro requête réseau avant interaction
+   • preload="none" sur toutes les vidéos
+──────────────────────────────────────────── */
 const VideoBannerItem = ({ video, getImageUrl }) => {
-  const [loaded, setLoaded] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const videoRef = useRef(null);
+  const [inView, setInView]       = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState(false);
+  const [hovered, setHovered]     = useState(false);
+  const [videoReady, setVideoReady] = useState(false); // src a été injecté ?
+  const containerRef = useRef(null);
+  const videoRef     = useRef(null);
+
   const isVideo = video?.url && (
     video.url.includes('.mp4') || video.url.includes('.mov') ||
     video.url.includes('.webm') || video.type === 'uploaded'
   );
+  const hasThumbnail = !!video?.thumbnail;
 
-  const handleEnter = () => { setHovered(true); videoRef.current?.play().catch(() => {}); };
+  // ── IntersectionObserver : déclenche le chargement du thumbnail quand visible ──
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { rootMargin: "150px" }  // précharge 150px avant d'entrer dans le viewport
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // ── Hover handlers ──
+  const handleEnter = () => {
+    setHovered(true);
+    if (!isVideo || !videoRef.current) return;
+    // Injecte le src une seule fois (reste en mémoire ensuite)
+    if (!videoReady) {
+      videoRef.current.src = getImageUrl(video.url);
+      setVideoReady(true);
+    }
+    videoRef.current.play().catch(() => {});
+  };
+
   const handleLeave = () => {
     setHovered(false);
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; }
@@ -257,34 +291,42 @@ const VideoBannerItem = ({ video, getImageUrl }) => {
 
   return (
     <div
+      ref={containerRef}
       className="relative h-full w-full bg-gray-900 overflow-hidden"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
-      {!loaded && <div className="absolute inset-0 bg-gray-800 animate-pulse" />}
-      {video?.thumbnail && (
+      {/* Skeleton tant que rien n'est chargé */}
+      {!thumbLoaded && !hovered && (
+        <div className="absolute inset-0 bg-gray-800 animate-pulse" />
+      )}
+
+      {/* Thumbnail — src injecté seulement si inView */}
+      {hasThumbnail && inView && (
         <img
           src={getImageUrl(video.thumbnail)}
           alt=""
-          loading="lazy"
-          className={`w-full h-full object-cover transition-all duration-300 ${loaded ? 'opacity-100' : 'opacity-0'} ${hovered ? 'scale-105' : 'scale-100'}`}
-          onLoad={() => setLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-300
+            ${thumbLoaded ? 'opacity-100' : 'opacity-0'}
+            ${hovered ? 'scale-105 brightness-75' : 'scale-100'}`}
+          onLoad={() => setThumbLoaded(true)}
         />
       )}
-      {!video?.thumbnail && isVideo && (
-        <video
-          src={`${getImageUrl(video.url)}#t=1`}
-          muted playsInline preload="metadata"
-          className="w-full h-full object-cover"
-          onLoadedData={() => setLoaded(true)}
-        />
+
+      {/* Pas de thumbnail : placeholder sombre + icône play */}
+      {!hasThumbnail && !hovered && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+          <Play className="w-6 h-6 text-white/40" />
+        </div>
       )}
-      {isVideo && hovered && (
+
+      {/* Vidéo — montée SANS src (preload=none), src injecté au 1er hover */}
+      {isVideo && (
         <video
           ref={videoRef}
-          src={getImageUrl(video.url)}
-          muted loop playsInline autoPlay
-          className="absolute inset-0 w-full h-full object-cover"
+          muted loop playsInline preload="none"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300
+            ${hovered ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
     </div>
