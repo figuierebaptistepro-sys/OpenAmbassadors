@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rushes Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#E91E63' }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .badge-pending    { background: #fef3c7; color: #92400e; }
+    .badge-assigned   { background: #dbeafe; color: #1e40af; }
+    .badge-in_progress{ background: #ede9fe; color: #5b21b6; }
+    .badge-done       { background: #d1fae5; color: #065f46; }
+    .badge-available  { background: #f3f4f6; color: #374151; }
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<div id="app">
+
+  <!-- ── LOGIN ───────────────────────────────────────── -->
+  <div v-if="!loggedIn" class="min-h-screen flex items-center justify-center p-4">
+    <div class="card p-8 w-full max-w-md">
+      <div class="text-center mb-8">
+        <div class="w-14 h-14 rounded-2xl bg-pink-500 flex items-center justify-center mx-auto mb-4">
+          <span class="text-2xl">🎬</span>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">Rushes Manager</h1>
+        <p class="text-gray-500 text-sm mt-1">Studio Savora</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-700 block mb-1">Email</label>
+          <input v-model="loginForm.email" type="email" placeholder="email@studio.com"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-pink-400 text-sm"
+            @keyup.enter="login" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700 block mb-1">Mot de passe</label>
+          <input v-model="loginForm.password" type="password" placeholder="••••••••"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-pink-400 text-sm"
+            @keyup.enter="login" />
+        </div>
+        <p v-if="loginError" class="text-red-500 text-sm">{{ loginError }}</p>
+        <button @click="login"
+          class="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-xl transition-colors">
+          Connexion
+        </button>
+        <p class="text-xs text-center text-gray-400">Admin: admin@studio.com / admin123</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── APP ─────────────────────────────────────────── -->
+  <div v-else v-cloak>
+
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-100 flex flex-col z-40">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-pink-500 flex items-center justify-center text-white text-lg">🎬</div>
+          <div>
+            <p class="font-bold text-gray-900 text-sm">Rushes Manager</p>
+            <p class="text-xs text-gray-400">{{ currentEditor?.name }}</p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-3 space-y-1">
+        <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+          :class="['w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left',
+            activeTab === tab.id ? 'bg-pink-50 text-pink-600 font-semibold' : 'text-gray-600 hover:bg-gray-50']">
+          <span>{{ tab.icon }}</span>{{ tab.label }}
+          <span v-if="tab.badge" class="ml-auto bg-pink-500 text-white text-xs rounded-full px-1.5 py-0.5">
+            {{ tab.badge }}
+          </span>
+        </button>
+      </nav>
+
+      <div class="p-3 border-t border-gray-100">
+        <button @click="logout"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+          <span>🚪</span> Déconnexion
+        </button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="ml-60 p-6 min-h-screen">
+
+      <!-- ── DASHBOARD ── -->
+      <div v-if="activeTab === 'dashboard'">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="card p-5">
+            <p class="text-3xl font-bold text-gray-900">{{ stats.total_projects || 0 }}</p>
+            <p class="text-sm text-gray-500 mt-1">Projets</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-3xl font-bold text-gray-900">{{ stats.total_batches || 0 }}</p>
+            <p class="text-sm text-gray-500 mt-1">Batches SD</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-3xl font-bold text-gray-900">{{ stats.total_editors || 0 }}</p>
+            <p class="text-sm text-gray-500 mt-1">Monteurs</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-3xl font-bold text-pink-500">{{ stats.pending_assignments || 0 }}</p>
+            <p class="text-sm text-gray-500 mt-1">En attente</p>
+          </div>
+        </div>
+
+        <!-- Assignments récentes -->
+        <div class="card p-5">
+          <h2 class="font-semibold text-gray-900 mb-4">Assignments récentes</h2>
+          <div v-if="assignments.length === 0" class="text-gray-400 text-sm text-center py-8">
+            Aucune assignment pour l'instant
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="a in assignments.slice(0,5)" :key="a.id"
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div>
+                <p class="font-medium text-sm text-gray-900">{{ a.project_name }} — {{ a.client }}</p>
+                <p class="text-xs text-gray-500">{{ a.editor_name }} · {{ formatDate(a.assigned_at) }}</p>
+              </div>
+              <span :class="['badge-' + a.status, 'text-xs font-medium px-2.5 py-1 rounded-full']">
+                {{ statusLabel(a.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROJETS ── -->
+      <div v-if="activeTab === 'projects'">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Projets</h1>
+          <button @click="showNewProject = true"
+            class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-xl transition-colors">
+            + Nouveau projet
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div v-for="p in projects" :key="p.id" class="card p-5 cursor-pointer hover:shadow-md transition-shadow"
+            @click="selectProject(p)">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="font-semibold text-gray-900">{{ p.name }}</p>
+                <p class="text-sm text-gray-500">{{ p.client }}</p>
+              </div>
+              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ p.status }}</span>
+            </div>
+            <div class="flex gap-4 text-sm text-gray-500">
+              <span>📦 {{ p.batch_count || 0 }} batches</span>
+              <span>🎬 {{ p.file_count || 0 }} fichiers</span>
+              <span>💾 {{ formatSize(p.total_size) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Détail projet -->
+        <div v-if="selectedProject" class="mt-6 card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold text-gray-900">{{ selectedProject.name }} — Batches</h2>
+            <button @click="selectedProject = null" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <div v-if="projectBatches.length === 0" class="text-gray-400 text-sm text-center py-6">
+            Aucun batch uploadé pour ce projet
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="b in projectBatches" :key="b.id"
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" :value="b.id" v-model="selectedBatches"
+                  class="w-4 h-4 accent-pink-500" />
+                <div>
+                  <p class="font-medium text-sm text-gray-900">{{ b.sd_label }}</p>
+                  <p class="text-xs text-gray-500">{{ b.file_count }} fichiers · {{ formatSize(b.total_size) }} · {{ formatDate(b.uploaded_at) }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span :class="['badge-' + b.status, 'text-xs font-medium px-2.5 py-1 rounded-full']">
+                  {{ b.status }}
+                </span>
+                <button @click.stop="deleteBatch(b.id)"
+                  class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-500 text-xs rounded-lg transition-colors"
+                  title="Supprimer ce batch de R2">
+                  🗑
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assigner à un monteur -->
+          <div v-if="selectedBatches.length > 0" class="mt-4 pt-4 border-t border-gray-100">
+            <p class="text-sm font-medium text-gray-700 mb-3">Assigner {{ selectedBatches.length }} batch(es) à :</p>
+            <div class="flex gap-3 flex-wrap">
+              <button v-for="e in editors" :key="e.id"
+                @click="assignBatches(e.id)"
+                class="px-4 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 text-sm font-medium rounded-xl transition-colors">
+                {{ e.name }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MONTEURS ── -->
+      <div v-if="activeTab === 'editors'">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Monteurs</h1>
+          <button @click="showNewEditor = true"
+            class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-xl transition-colors">
+            + Ajouter monteur
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div v-for="e in editors" :key="e.id" class="card p-5">
+            <div class="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 font-bold mb-3">
+              {{ e.name[0] }}
+            </div>
+            <p class="font-semibold text-gray-900">{{ e.name }}</p>
+            <p class="text-sm text-gray-500">{{ e.email }}</p>
+            <p class="text-xs text-gray-400 mt-1">Token : <code class="bg-gray-100 px-1 rounded">{{ e.id }}</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LIVRAISONS ── -->
+      <div v-if="activeTab === 'deliveries'">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Livraisons</h1>
+          <button @click="fetchDeliveries"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl transition-colors">
+            🔄 Rafraîchir
+          </button>
+        </div>
+
+        <div v-if="deliveries.length === 0" class="text-center py-16 text-gray-400">
+          <p class="text-4xl mb-3">📬</p>
+          <p>Aucune livraison pour l'instant</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div v-for="d in deliveries" :key="d.id" class="card p-5">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="font-semibold text-gray-900">{{ d.project_name }}</p>
+                  <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{{ d.client }}</span>
+                  <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">v{{ d.version }}</span>
+                </div>
+                <p class="text-sm text-gray-500">
+                  👤 {{ d.editor_name }} · {{ formatDate(d.delivered_at) }} · {{ formatSize(d.size) }}
+                </p>
+                <p class="text-sm font-medium text-gray-700 mt-1">📄 {{ d.filename }}</p>
+                <p v-if="d.note" class="text-sm text-gray-500 bg-yellow-50 p-2 rounded-lg mt-2">
+                  💬 {{ d.note }}
+                </p>
+              </div>
+              <span :class="{
+                'bg-yellow-100 text-yellow-700': d.status === 'pending_review',
+                'bg-green-100 text-green-700':   d.status === 'approved',
+                'bg-red-100 text-red-700':        d.status === 'needs_revision',
+              }" class="text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0">
+                {{ { pending_review: '⏳ À valider', approved: '✅ Approuvé', needs_revision: '🔄 Correction' }[d.status] }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <a :href="d.download_url" target="_blank" download
+                class="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-xl transition-colors">
+                ⬇ Télécharger
+              </a>
+              <button v-if="d.status === 'pending_review'" @click="reviewDelivery(d.id, 'approved')"
+                class="px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-xl transition-colors">
+                ✅ Valider
+              </button>
+              <button v-if="d.status !== 'needs_revision'" @click="askRevision(d.id)"
+                class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-xl transition-colors">
+                🔄 Demander correction
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DOUBLONS ── -->
+      <div v-if="activeTab === 'duplicates'">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Doublons</h1>
+            <p v-if="duplicates.total_wasted_space" class="text-sm text-red-500 mt-1">
+              💾 {{ formatSize(duplicates.total_wasted_space) }} gaspillés
+            </p>
+          </div>
+          <button @click="scanDuplicates"
+            class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-xl transition-colors">
+            🔍 Scanner
+          </button>
+        </div>
+
+        <div v-if="!duplicates.by_content" class="text-center py-16 text-gray-400">
+          <p class="text-4xl mb-3">🔍</p>
+          <p>Clique sur Scanner pour détecter les doublons</p>
+        </div>
+
+        <div v-else-if="duplicates.by_content.length === 0" class="text-center py-16 text-gray-400">
+          <p class="text-4xl mb-3">✅</p>
+          <p>Aucun doublon détecté !</p>
+        </div>
+
+        <div v-else>
+          <!-- Bouton supprimer tout -->
+          <div class="flex items-center justify-between mb-4 p-4 bg-red-50 rounded-xl">
+            <div>
+              <p class="font-semibold text-red-700">{{ duplicates.by_content.length }} groupe(s) de doublons</p>
+              <p class="text-sm text-red-500">{{ formatSize(duplicates.total_wasted_space) }} récupérables</p>
+            </div>
+            <button @click="deleteAllDuplicates"
+              class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl transition-colors">
+              🗑 Supprimer tous les doublons
+            </button>
+          </div>
+
+          <!-- Liste des groupes -->
+          <div class="space-y-4">
+            <div v-for="group in duplicates.by_content" :key="group.md5" class="card p-5">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <p class="font-medium text-gray-900">{{ group.keep.filename }}</p>
+                  <p class="text-xs text-gray-400 font-mono">MD5: {{ group.md5.substring(0,12) }}...</p>
+                </div>
+                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                  {{ group.count }} copies
+                </span>
+              </div>
+
+              <!-- Fichier à garder -->
+              <div class="bg-green-50 p-3 rounded-xl mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-green-600 text-xs font-bold">✅ GARDER</span>
+                  <span class="text-sm text-gray-700">{{ group.keep.filename }}</span>
+                </div>
+              </div>
+
+              <!-- Doublons à supprimer -->
+              <div v-for="dup in group.duplicates" :key="dup.id"
+                class="bg-red-50 p-3 rounded-xl mb-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-red-500 text-xs font-bold">🗑 DOUBLON</span>
+                  <span class="text-sm text-gray-700">{{ dup.filename }}</span>
+                  <span class="text-xs text-gray-400">{{ formatSize(dup.size) }}</span>
+                </div>
+                <button @click="deleteFile(dup.id)"
+                  class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors">
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MES RUSHS (vue monteur) ── -->
+      <div v-if="activeTab === 'my_rushes'">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Mes Rushs</h1>
+        <div v-if="myAssignments.length === 0" class="text-gray-400 text-sm text-center py-16">
+          Aucun rush assigné pour l'instant
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="a in myAssignments" :key="a.id" class="card p-5">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="font-semibold text-gray-900">{{ a.project_name }}</p>
+                <p class="text-sm text-gray-500">{{ a.client }} · {{ formatDate(a.assigned_at) }}</p>
+                <p v-if="a.notes" class="text-sm text-gray-600 mt-1 bg-yellow-50 p-2 rounded-lg">📝 {{ a.notes }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span :class="['badge-' + a.status, 'text-xs font-medium px-2.5 py-1 rounded-full']">
+                  {{ statusLabel(a.status) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Batches -->
+            <div class="space-y-2 mb-4">
+              <div v-for="b in a.batches" :key="b.id"
+                class="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">📦 {{ b.sd_label }}</p>
+                  <p class="text-xs text-gray-500">{{ b.file_count }} fichiers · {{ formatSize(b.total_size) }}</p>
+                </div>
+                <button @click="downloadBatch(b.id, a.id)"
+                  class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg transition-colors">
+                  ⬇ Télécharger
+                </button>
+              </div>
+            </div>
+
+            <!-- Actions statut -->
+            <div class="flex gap-2 flex-wrap">
+              <button v-if="a.status === 'pending'" @click="updateStatus(a.id, 'in_progress')"
+                class="px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium rounded-xl transition-colors">
+                ▶ Commencer le montage
+              </button>
+
+              <!-- Upload vidéo montée -->
+              <button v-if="['in_progress','needs_revision'].includes(a.status)"
+                @click="uploadingDelivery = a.id"
+                class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold rounded-xl transition-colors">
+                📤 Livrer la vidéo montée
+              </button>
+
+              <span v-if="a.status === 'delivered'" class="px-4 py-2 bg-green-50 text-green-700 text-sm font-medium rounded-xl">
+                ✅ Livré — en attente de validation
+              </span>
+              <span v-if="a.status === 'needs_revision'" class="px-4 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-xl">
+                🔄 Correction demandée — re-livre une nouvelle version
+              </span>
+            </div>
+
+            <!-- Panel upload -->
+            <div v-if="uploadingDelivery === a.id" class="mt-4 p-4 bg-pink-50 rounded-xl border border-pink-200">
+              <p class="font-medium text-gray-900 mb-3">📤 Livrer la vidéo montée</p>
+              <input type="file" accept="video/*"
+                @change="e => deliveryFile = e.target.files[0]"
+                class="w-full mb-3 text-sm text-gray-600" />
+              <textarea v-model="deliveryNote" placeholder="Note pour le client (optionnel)..." rows="2"
+                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm mb-3 resize-none focus:outline-none focus:border-pink-400" />
+              <div class="flex gap-2">
+                <button @click="uploadingDelivery = null; deliveryFile = null; deliveryNote = ''"
+                  class="flex-1 py-2 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">
+                  Annuler
+                </button>
+                <button @click="submitDelivery(a.id)" :disabled="!deliveryFile || uploading"
+                  class="flex-1 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors">
+                  {{ uploading ? '⏳ Upload...' : '📤 Envoyer' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+
+    <!-- ── MODAL Nouveau projet ── -->
+    <div v-if="showNewProject" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div class="card p-6 w-full max-w-md">
+        <h2 class="font-semibold text-gray-900 mb-4">Nouveau projet</h2>
+        <div class="space-y-3">
+          <input v-model="newProject.client" placeholder="Client (ex: Nike)"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+          <input v-model="newProject.name" placeholder="Nom du projet (ex: Campagne été 2025)"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+          <textarea v-model="newProject.description" placeholder="Description (optionnel)" rows="2"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 resize-none" />
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button @click="showNewProject = false"
+            class="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50">
+            Annuler
+          </button>
+          <button @click="createProject"
+            class="flex-1 py-2.5 bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold rounded-xl transition-colors">
+            Créer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL Nouveau monteur ── -->
+    <div v-if="showNewEditor" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div class="card p-6 w-full max-w-md">
+        <h2 class="font-semibold text-gray-900 mb-4">Ajouter un monteur</h2>
+        <div class="space-y-3">
+          <input v-model="newEditor.name" placeholder="Prénom Nom"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+          <input v-model="newEditor.email" type="email" placeholder="email@monteur.com"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+          <input v-model="newEditor.password" type="password" placeholder="Mot de passe"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400" />
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button @click="showNewEditor = false"
+            class="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50">
+            Annuler
+          </button>
+          <button @click="createEditor"
+            class="flex-1 py-2.5 bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold rounded-xl transition-colors">
+            Ajouter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL Fichiers batch ── -->
+    <div v-if="batchFiles" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div class="card p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold text-gray-900">Fichiers du batch</h2>
+          <button @click="batchFiles = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="overflow-y-auto flex-1 space-y-2">
+          <div v-for="f in batchFiles" :key="f.id"
+            class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ f.filename }}</p>
+              <p class="text-xs text-gray-500">{{ formatSize(f.size) }} · {{ f.type }}</p>
+            </div>
+            <a :href="f.download_url" target="_blank" download
+              class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg transition-colors">
+              ⬇ DL
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
+const API_KEY = localStorage.getItem('rushes_api_key') || 'change_this_secret_key';
+
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      loggedIn: false,
+      isAdmin: false,
+      currentEditor: null,
+      editorToken: null,
+      activeTab: 'dashboard',
+      loginForm: { email: '', password: '' },
+      loginError: '',
+
+      stats: {},
+      projects: [],
+      editors: [],
+      assignments: [],
+      myAssignments: [],
+
+      selectedProject: null,
+      projectBatches: [],
+      selectedBatches: [],
+      batchFiles: null,
+      duplicates: {},
+      duplicateCount: 0,
+      deliveries: [],
+      pendingDeliveries: 0,
+      uploadingDelivery: null,
+      deliveryFile: null,
+      deliveryNote: '',
+      uploading: false,
+
+      showNewProject: false,
+      showNewEditor: false,
+      newProject: { name: '', client: '', description: '' },
+      newEditor: { name: '', email: '', password: '' },
+    };
+  },
+
+  computed: {
+    tabs() {
+      if (this.isAdmin) {
+        return [
+          { id: 'dashboard',   icon: '📊', label: 'Dashboard' },
+          { id: 'projects',    icon: '📁', label: 'Projets', badge: this.stats.pending_assignments || 0 },
+          { id: 'deliveries',  icon: '📬', label: 'Livraisons', badge: this.pendingDeliveries },
+          { id: 'duplicates',  icon: '🔍', label: 'Doublons', badge: this.duplicateCount || 0 },
+          { id: 'editors',     icon: '👤', label: 'Monteurs' },
+        ];
+      }
+      return [
+        { id: 'my_rushes', icon: '🎬', label: 'Mes Rushs' },
+      ];
+    }
+  },
+
+  methods: {
+    async login() {
+      this.loginError = '';
+      // Essaie d'abord login admin (API key)
+      if (this.loginForm.email === 'admin@studio.com') {
+        // Login admin via éditeur
+      }
+      try {
+        const res = await fetch(`${API}/api/editor/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.loginForm),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        this.editorToken = data.token;
+        this.currentEditor = data;
+        this.isAdmin = data.email === 'admin@studio.com';
+        this.loggedIn = true;
+        localStorage.setItem('rushes_token', data.token);
+        this.activeTab = this.isAdmin ? 'dashboard' : 'my_rushes';
+        this.loadData();
+      } catch (e) {
+        this.loginError = e.message;
+      }
+    },
+
+    logout() {
+      this.loggedIn = false;
+      this.editorToken = null;
+      localStorage.removeItem('rushes_token');
+    },
+
+    adminHeaders() {
+      return { 'Content-Type': 'application/json', 'X-API-Key': API_KEY };
+    },
+    editorHeaders() {
+      return { 'Content-Type': 'application/json', 'X-Editor-Token': this.editorToken };
+    },
+
+    async loadData() {
+      if (this.isAdmin) {
+        await Promise.all([
+          this.fetchStats(),
+          this.fetchProjects(),
+          this.fetchEditors(),
+          this.fetchAssignments(),
+          this.fetchDeliveries(),
+        ]);
+      } else {
+        await this.fetchMyAssignments();
+      }
+    },
+
+    async fetchStats() {
+      const r = await fetch(`${API}/api/dashboard`, { headers: this.adminHeaders() });
+      this.stats = await r.json();
+    },
+    async fetchProjects() {
+      const r = await fetch(`${API}/api/projects`, { headers: this.adminHeaders() });
+      this.projects = await r.json();
+    },
+    async fetchEditors() {
+      const r = await fetch(`${API}/api/editors`, { headers: this.adminHeaders() });
+      this.editors = await r.json();
+    },
+    async fetchAssignments() {
+      const r = await fetch(`${API}/api/assignments`, { headers: this.adminHeaders() });
+      this.assignments = await r.json();
+    },
+    async fetchMyAssignments() {
+      const r = await fetch(`${API}/api/editor/assignments`, { headers: this.editorHeaders() });
+      this.myAssignments = await r.json();
+    },
+
+    async selectProject(p) {
+      this.selectedProject = p;
+      this.selectedBatches = [];
+      const r = await fetch(`${API}/api/projects/${p.id}/batches`, { headers: this.adminHeaders() });
+      this.projectBatches = await r.json();
+    },
+
+    async createProject() {
+      await fetch(`${API}/api/projects`, {
+        method: 'POST',
+        headers: this.adminHeaders(),
+        body: JSON.stringify(this.newProject),
+      });
+      this.showNewProject = false;
+      this.newProject = { name: '', client: '', description: '' };
+      await this.fetchProjects();
+    },
+
+    async createEditor() {
+      await fetch(`${API}/api/editors`, {
+        method: 'POST',
+        headers: this.adminHeaders(),
+        body: JSON.stringify(this.newEditor),
+      });
+      this.showNewEditor = false;
+      this.newEditor = { name: '', email: '', password: '' };
+      await this.fetchEditors();
+    },
+
+    async assignBatches(editorId) {
+      await fetch(`${API}/api/assignments`, {
+        method: 'POST',
+        headers: this.adminHeaders(),
+        body: JSON.stringify({
+          project_id: this.selectedProject.id,
+          editor_id: editorId,
+          batch_ids: this.selectedBatches,
+        }),
+      });
+      this.selectedBatches = [];
+      await this.selectProject(this.selectedProject);
+      await this.fetchStats();
+      alert('✅ Rushs assignés !');
+    },
+
+    async fetchDeliveries() {
+      const r = await fetch(`${API}/api/deliveries`, { headers: this.adminHeaders() });
+      this.deliveries = await r.json();
+      this.pendingDeliveries = this.deliveries.filter(d => d.status === 'pending_review').length;
+    },
+
+    async submitDelivery(assignmentId) {
+      if (!this.deliveryFile) return;
+      this.uploading = true;
+      try {
+        const form = new FormData();
+        form.append('file', this.deliveryFile);
+        form.append('note', this.deliveryNote);
+        const r = await fetch(`${API}/api/editor/assignments/${assignmentId}/deliver`, {
+          method: 'POST',
+          headers: { 'X-Editor-Token': this.editorToken },
+          body: form,
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail);
+        alert(`✅ Vidéo livrée ! Version ${data.version}`);
+        this.uploadingDelivery = null;
+        this.deliveryFile = null;
+        this.deliveryNote = '';
+        await this.fetchMyAssignments();
+      } catch (e) {
+        alert('❌ Erreur upload : ' + e.message);
+      } finally {
+        this.uploading = false;
+      }
+    },
+
+    async reviewDelivery(deliveryId, status) {
+      await fetch(`${API}/api/deliveries/${deliveryId}/review`, {
+        method: 'PATCH',
+        headers: this.adminHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      await this.fetchDeliveries();
+    },
+
+    async askRevision(deliveryId) {
+      const comment = prompt('Commentaire pour le monteur :');
+      if (comment === null) return;
+      await fetch(`${API}/api/deliveries/${deliveryId}/review`, {
+        method: 'PATCH',
+        headers: this.adminHeaders(),
+        body: JSON.stringify({ status: 'needs_revision', comment }),
+      });
+      await this.fetchDeliveries();
+    },
+
+    async scanDuplicates() {
+      const r = await fetch(`${API}/api/duplicates`, { headers: this.adminHeaders() });
+      this.duplicates = await r.json();
+      this.duplicateCount = this.duplicates.by_content?.length || 0;
+    },
+
+    async deleteFile(fileId) {
+      if (!confirm('Supprimer ce fichier de R2 et de la base ?')) return;
+      const r = await fetch(`${API}/api/files`, {
+        method: 'DELETE',
+        headers: this.adminHeaders(),
+        body: JSON.stringify({ file_ids: [fileId] }),
+      });
+      const data = await r.json();
+      alert(`✅ ${data.deleted} fichier supprimé — ${this.formatSize(data.freed_bytes)} libérés`);
+      await this.scanDuplicates();
+      await this.fetchStats();
+    },
+
+    async deleteAllDuplicates() {
+      if (!this.duplicates.by_content?.length) return;
+      const allDupeIds = this.duplicates.by_content.flatMap(g => g.duplicates.map(d => d.id));
+      if (!confirm(`Supprimer ${allDupeIds.length} doublons de R2 ? Cette action est irréversible.`)) return;
+      const r = await fetch(`${API}/api/files`, {
+        method: 'DELETE',
+        headers: this.adminHeaders(),
+        body: JSON.stringify({ file_ids: allDupeIds }),
+      });
+      const data = await r.json();
+      alert(`✅ ${data.deleted} doublons supprimés — ${this.formatSize(data.freed_bytes)} libérés !`);
+      await this.scanDuplicates();
+      await this.fetchStats();
+    },
+
+    async deleteBatch(batchId) {
+      if (!confirm('Supprimer tout ce batch de R2 ? Irréversible.')) return;
+      const r = await fetch(`${API}/api/batches/${batchId}`, {
+        method: 'DELETE',
+        headers: this.adminHeaders(),
+      });
+      const data = await r.json();
+      alert(`✅ ${data.deleted_files} fichiers supprimés — ${this.formatSize(data.freed_bytes)} libérés`);
+      await this.selectProject(this.selectedProject);
+      await this.fetchStats();
+    },
+
+    async downloadBatch(batchId, assignmentId) {
+      const r = await fetch(`${API}/api/editor/files/${batchId}`, { headers: this.editorHeaders() });
+      this.batchFiles = await r.json();
+    },
+
+    async updateStatus(assignmentId, status) {
+      await fetch(`${API}/api/editor/assignments/${assignmentId}/status`, {
+        method: 'PATCH',
+        headers: this.editorHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      await this.fetchMyAssignments();
+    },
+
+    formatSize(bytes) {
+      if (!bytes) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0;
+      while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+      return `${bytes.toFixed(1)} ${units[i]}`;
+    },
+
+    formatDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    },
+
+    statusLabel(s) {
+      return { pending: 'En attente', assigned: 'Assigné', in_progress: 'En cours', done: 'Terminé', available: 'Disponible' }[s] || s;
+    },
+  },
+
+  mounted() {
+    const token = localStorage.getItem('rushes_token');
+    if (token) {
+      // Auto-login si token sauvegardé
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
