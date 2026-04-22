@@ -50,6 +50,9 @@ from slowapi.errors import RateLimitExceeded
 # Google OAuth imports
 from google_oauth import oauth, GOOGLE_CLIENT_ID
 
+# Apple Sign In imports
+from apple_oauth import verify_apple_id_token, APPLE_CLIENT_ID as APPLE_SVC_ID
+
 # Creator Card imports
 from creator_card import create_creator_card_routes
 
@@ -1807,6 +1810,102 @@ async def get_google_client_id():
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google OAuth not configured")
     return {"client_id": GOOGLE_CLIENT_ID}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Apple Sign In
+# ──────────────────────────────────────────────────────────────────────────────
+
+@api_router.get("/auth/apple/client-id")
+async def get_apple_client_id():
+    """Expose le Service ID Apple au frontend"""
+    return {"client_id": APPLE_SVC_ID or ""}
+
+
+@api_router.post("/auth/apple/verify-token")
+async def apple_verify_token(request: Request, response: Response):
+    """
+    Reçoit le id_token JWT d'Apple (envoyé par le JS SDK frontend).
+    Vérifie la signature, crée ou connecte l'utilisateur.
+    Même logique que google_callback.
+    """
+    if not APPLE_SVC_ID:
+        raise HTTPException(status_code=503, detail="Apple Sign In non configuré")
+
+    data = await request.json()
+    id_token = data.get("id_token")
+    user_info_from_apple = data.get("user") or {}  # nom/email envoyé seulement au 1er login
+
+    if not id_token:
+        raise HTTPException(status_code=400, detail="id_token manquant")
+
+    try:
+        payload = await verify_apple_id_token(id_token)
+    except Exception as e:
+        logging.warning(f"Apple token invalid: {e}")
+        raise HTTPException(status_code=401, detail="Token Apple invalide")
+
+    apple_sub = payload.get("sub")          # identifiant Apple unique (stable)
+    email     = payload.get("email")        # présent seulement au 1er login
+    name_data = user_info_from_apple.get("name", {})
+    name      = (
+        f"{name_data.get('firstName', '')} {name_data.get('lastName', '')}".strip()
+        or email or "Utilisateur Apple"
+    )
+
+    # Apple peut masquer l'email → on utilise sub comme identifiant de secours
+    lookup_email = email or f"{apple_sub}@privaterelay.appleid.com"
+
+    existing_user = await db.users.find_one(
+        {"$or": [{"email": lookup_email}, {"apple_sub": apple_sub}]}, {"_id": 0}
+    )
+
+    if existing_user:
+        user_id   = existing_user["user_id"]
+        user_type = existing_user.get("user_type")
+        is_new    = False
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"apple_sub": apple_sub, "name": name or existing_user.get("name")}}
+        )
+    else:
+        user_id   = f"user_{uuid.uuid4().hex[:12]}"
+        user_type = None
+        is_new    = True
+        await db.users.insert_one({
+            "user_id":    user_id,
+            "email":      lookup_email,
+            "name":       name,
+            "apple_sub":  apple_sub,
+            "user_type":  None,
+            "is_premium": False,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+    # Crée la session (même logique que Google)
+    session_token = f"sess_{uuid.uuid4().hex}"
+    await db.sessions.insert_one({
+        "session_token": session_token,
+        "user_id":       user_id,
+        "created_at":    datetime.now(timezone.utc).isoformat(),
+        "expires_at":    (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+    })
+
+    response.set_cookie(
+        key="session_token", value=session_token,
+        httponly=True, secure=True, samesite="lax",
+        max_age=30 * 24 * 3600, path="/"
+    )
+
+    return {
+        "success":   True,
+        "is_new":    is_new,
+        "user_id":   user_id,
+        "user_type": user_type,
+        "name":      name,
+        "email":     lookup_email,
+    }
+
 
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
