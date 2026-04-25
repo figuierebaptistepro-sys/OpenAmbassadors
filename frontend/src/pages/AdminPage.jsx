@@ -82,7 +82,6 @@ const AdminPage = ({ user }) => {
   const [deliveryUploading, setDeliveryUploading] = useState(false);
   const [deliveryProgress, setDeliveryProgress] = useState(0);
   const deliveryInputRef = useRef(null);
-  const [shareLink, setShareLink] = useState(null); // { url, token, subscriber_count } | null
   const AGENCY_STATUSES = [
     { key: "brief_recu", label: "Brief reçu" },
     { key: "casting", label: "Casting" },
@@ -535,68 +534,6 @@ const AdminPage = ({ user }) => {
       delivered_videos: (prev.delivered_videos || []).filter(v => v.video_id !== videoId)
     }));
   };
-
-  // ----- Share-link handlers -----
-  const fetchShareLink = async (campaignId) => {
-    try {
-      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${campaignId}/share-link`, { credentials: "include" });
-      if (r.ok) {
-        const j = await r.json();
-        setShareLink(j.exists ? j : null);
-      } else {
-        setShareLink(null);
-      }
-    } catch {
-      setShareLink(null);
-    }
-  };
-
-  const createShareLink = async () => {
-    if (!editingCampaign) return;
-    try {
-      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/share-link`, {
-        method: "POST", credentials: "include"
-      });
-      if (r.ok) {
-        const j = await r.json();
-        setShareLink({ ...j, subscriber_count: 0 });
-        toast.success("Lien de partage généré");
-      } else {
-        toast.error("Erreur lors de la génération");
-      }
-    } catch { toast.error("Erreur réseau"); }
-  };
-
-  const revokeShareLink = async () => {
-    if (!editingCampaign) return;
-    if (!window.confirm("Révoquer ce lien ? Tous les inscrits seront désabonnés.")) return;
-    try {
-      const r = await fetch(`${API_URL}/api/admin/agency/campaigns/${editingCampaign.campaign_id}/share-link`, {
-        method: "DELETE", credentials: "include"
-      });
-      if (r.ok) {
-        setShareLink(null);
-        toast.success("Lien révoqué");
-      }
-    } catch { toast.error("Erreur réseau"); }
-  };
-
-  const copyShareLink = async () => {
-    if (!shareLink?.url) return;
-    try {
-      await navigator.clipboard.writeText(shareLink.url);
-      toast.success("Lien copié dans le presse-papier");
-    } catch { toast.error("Impossible de copier"); }
-  };
-
-  // Auto-fetch share link when opening a campaign for edit
-  useEffect(() => {
-    if (editingCampaign?.campaign_id) {
-      fetchShareLink(editingCampaign.campaign_id);
-    } else {
-      setShareLink(null);
-    }
-  }, [editingCampaign?.campaign_id]); // eslint-disable-line
 
   const updateCampaignStatus = async (id, status) => {
     try {
@@ -1886,42 +1823,6 @@ const AdminPage = ({ user }) => {
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Note de livraison</label>
                         <Textarea className="text-sm min-h-[50px]" placeholder="Instructions..." value={campaignForm.delivery_notes} onChange={e => setCampaignForm(f => ({ ...f, delivery_notes: e.target.value }))} />
-                      </div>
-
-                      {/* Share link */}
-                      <div className="border-t border-gray-100 pt-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Lien de partage public</p>
-                          {shareLink && (
-                            <span className="text-[10px] text-gray-400">{shareLink.subscriber_count || 0} inscrit{(shareLink.subscriber_count || 0) > 1 ? "s" : ""}</span>
-                          )}
-                        </div>
-                        {shareLink?.url ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5">
-                              <Link className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                              <input readOnly value={shareLink.url} className="flex-1 bg-transparent text-xs text-gray-700 truncate outline-none" onFocus={e => e.target.select()} />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={copyShareLink}>
-                                <Copy className="w-3 h-3 mr-1" /> Copier
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={createShareLink}>
-                                <RefreshCw className="w-3 h-3 mr-1" /> Régénérer
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 hover:bg-red-50" onClick={revokeShareLink}>
-                                <X className="w-3 h-3 mr-1" /> Révoquer
-                              </Button>
-                            </div>
-                            <p className="text-[10px] text-gray-400">
-                              Les visiteurs peuvent s'inscrire pour être notifiés des nouveaux fichiers.
-                            </p>
-                          </div>
-                        ) : (
-                          <Button size="sm" variant="outline" className="h-8 text-xs w-full border-dashed" onClick={createShareLink}>
-                            <Link className="w-3 h-3 mr-1.5" /> Générer un lien de partage
-                          </Button>
-                        )}
                       </div>
                     </div>
 
