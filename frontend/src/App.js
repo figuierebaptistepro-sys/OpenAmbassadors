@@ -36,7 +36,6 @@ import BusinessProjectsPage from "./pages/BusinessProjectsPage";
 import ProjectApplicationsPage from "./pages/ProjectApplicationsPage";
 import { InboxPage, ConversationPage } from "./pages/MessagesPage";
 import ExternalReviewPage from "./pages/ExternalReviewPage";
-import SharePage from "./pages/SharePage";
 import AffiliatePage from "./pages/AffiliatePage";
 import CreatorCardPage from "./pages/CreatorCardPage";
 import CreatorCardManagePage from "./pages/CreatorCardManagePage";
@@ -224,8 +223,6 @@ function AppRouter({ onUserChange }) {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/review/external" element={<ExternalReviewPage />} />
-      <Route path="/share/:token" element={<SharePage />} />
-      <Route path="/share/:token/unsubscribe" element={<SharePage />} />
       
       {/* Public Creator Card - /c/:username */}
       <Route path="/c/:username" element={<CreatorCardPublicWrapper />} />
