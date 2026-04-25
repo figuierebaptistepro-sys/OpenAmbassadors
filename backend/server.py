@@ -3175,12 +3175,19 @@ async def upload_campaign_video(campaign_id: str, file: UploadFile = File(...), 
     campaign_doc = await db.agency_campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
     if campaign_doc:
         client = await db.users.find_one({"user_id": campaign_doc["client_id"]}, {"_id": 0})
+        videos_count = len(campaign_doc.get("delivered_videos", []))
         if client and client.get("email"):
-            videos_count = len(campaign_doc.get("delivered_videos", [])) + 1
             asyncio.create_task(send_agency_video_delivered_email(
                 client["email"], client.get("name", ""), campaign_doc.get("title", ""),
                 original_filename, videos_count, campaign_id
             ))
+        # Notify external subscribers via share link (if any)
+        try:
+            asyncio.create_task(notify_share_subscribers_video(
+                campaign_id, original_filename, videos_count
+            ))
+        except NameError:
+            pass  # share_links module not yet wired
     return video_entry
 
 @api_router.delete("/admin/agency/campaigns/{campaign_id}/delivered-videos/{video_id}")
@@ -5336,6 +5343,12 @@ setup_affiliate_routes(api_router, db, get_current_user, FRONTEND_URL)
 # Setup article/learn content routes
 from articles import setup_articles_routes
 setup_articles_routes(api_router, db, get_current_user, upload_to_r2, ADMIN_EMAILS)
+
+# Setup share-links routes (public file-sharing pages with email subscriptions)
+from share_links import setup_share_routes
+notify_share_subscribers_video = setup_share_routes(
+    api_router, db, get_current_user, send_email, FRONTEND_URL, ADMIN_EMAILS
+)
 
 # Setup Creator Card routes
 creator_card_router = create_creator_card_routes(db, get_current_user)
